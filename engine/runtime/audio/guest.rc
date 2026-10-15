@@ -1,0 +1,24 @@
+# Guest has a virtual output. Only the Host opens physical audio devices.
+service rootvmos_audio /system/bin/app_process /system/bin com.rootvmos.audio.AudioBridge guest /data/rootvmos_audio/pcm.sock /data/rootvmos_audio/token /data/rootvmos_audio/guest.status 0 ROOTVMOS_SESSION
+    class late_start
+    user root
+    group root audio
+    seclabel u:r:su:s0
+    setenv CLASSPATH /system/framework/rootvmos-audio.jar
+    disabled
+    restart_period 5
+
+on property:sys.boot_completed=1
+    start rootvmos_audio
+
+# Observe Guest window readiness; private Traceur masking occurs before init.
+service rootvmos_health /system/bin/sh /system/etc/rootvmos-health.sh
+    class core
+    user root
+    group root
+    seclabel u:r:su:s0
+    oneshot
+    disabled
+
+on post-fs-data
+    start rootvmos_health

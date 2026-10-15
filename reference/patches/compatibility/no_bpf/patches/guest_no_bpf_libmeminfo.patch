@@ -1,0 +1,24 @@
+diff --git a/sysmeminfo.cpp b/sysmeminfo.cpp
+--- a/sysmeminfo.cpp
++++ b/sysmeminfo.cpp
+@@ -310,3 +310,9 @@
+ bool ReadPerProcessGpuMem([[maybe_unused]] std::unordered_map<uint32_t, uint64_t>* out) {
+ #if defined(__ANDROID__) && !defined(__ANDROID_APEX__) && !defined(__ANDROID_VNDK__)
++    // Guest has a private empty bpffs. Never open the Host GPU accounting map.
++    if (getenv("IRIS_GUEST_NO_BPF") != nullptr) {
++        if (out) out->clear();
++        return false;
++    }
++
+     static constexpr const char kBpfGpuMemTotalMap[] = "/sys/fs/bpf/map_gpu_mem_gpu_mem_total_map";
+@@ -371,4 +377,10 @@
+ bool ReadProcessGpuUsageKb([[maybe_unused]] uint32_t pid, [[maybe_unused]] uint32_t gpu_id,
+                            uint64_t* size) {
+ #if defined(__ANDROID__) && !defined(__ANDROID_APEX__) && !defined(__ANDROID_VNDK__)
++    // GPU accounting is unavailable in this no-network Guest experiment.
++    if (getenv("IRIS_GUEST_NO_BPF") != nullptr) {
++        if (size) *size = 0;
++        return false;
++    }
++
+     static constexpr const char kBpfGpuMemTotalMap[] = "/sys/fs/bpf/map_gpu_mem_gpu_mem_total_map";

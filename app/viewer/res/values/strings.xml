@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">IrisBox · Android Container</string>
+    <string name="ui_2695de9b78f3" formatted="false">"\nStartup log"</string>
+    <string name="ui_3383d777d4d8" formatted="false">"\nRoot is currently "</string>
+    <string name="ui_90f4e75c6910" formatted="false">"\nNew instances will use it. Existing instances keep their ROM."</string>
+    <string name="ui_9eef47300b92" formatted="false">"\nApps, accounts, game progress and imported files in this instance will be erased. The app cannot undo this.\nEnter instance number "</string>
+    <string name="ui_5f6720f567bc" formatted="false">"\nSelect Open Magisk, then Enter to view the authorization list."</string>
+    <string name="ui_7f293b95fed9" formatted="false">"\nExisting instance data is preserved. Select a file to retry."</string>
+    <string name="ui_9e92c4cb6d22" formatted="false">" · Memory limit"</string>
+    <string name="ui_0392436f28b0" formatted="false">" · Resolution"</string>
+    <string name="ui_a005d2b0e33d" formatted="false">" · Remaining "</string>
+    <string name="ui_3b0267254d6b" formatted="false">" · Waited "</string>
+    <string name="ui_b9ebebdde63f" formatted="false">" · App root"</string>
+    <string name="ui_21cf7ddb41e1" formatted="false">" · Files"</string>
+    <string name="ui_4958d1bb5dd6" formatted="false">" · Last action incomplete"</string>
+    <string name="ui_637d53cd9da4" formatted="false">" · Connecting"</string>
+    <string name="ui_fc4b4d491ceb" formatted="false">" · Long-press to copy"</string>
+    <string name="ui_8f2085358747" formatted="false">" instances"</string>
+    <string name="ui_371b8345ec33" formatted="false">" to confirm."</string>
+    <string name="ui_d9ad5055c354" formatted="false">" s"</string>
+    <string name="ui_4a22b12d9909" formatted="false">" s ago"</string>
+    <string name="ui_6fe2770f2a49" formatted="false">" · "</string>
+    <string name="ui_1225ee44356f" formatted="false">"1 GiB = 1024 MiB; default 1.25 GiB."</string>
+    <string name="ui_719fc1bb80cb" formatted="false">"1 · Authorize and check"</string>
+    <string name="ui_982ab1425740" formatted="false">"1280×720 · Balanced"</string>
+    <string name="ui_22e8a8bf13a8" formatted="false">"1600×900 · Higher detail"</string>
+    <string name="ui_29150070c055" formatted="false">"1920×1080 · Highest detail and resource use"</string>
+    <string name="ui_5f6b5ee42ec1" formatted="false">"2 · Install engine"</string>
+    <string name="ui_ed63f2ba7598" formatted="false">"3 · Import ROM"</string>
+    <string name="ui_697394547d6e" formatted="false">"4 · Manage instances"</string>
+    <string name="ui_a4275512346c" formatted="false">"960×540 · Performance"</string>
+    <string name="ui_88e5fa8dc7d4" formatted="false">"Android is starting"</string>
+    <string name="ui_89e719c391f4" formatted="false">"Android is starting; waiting for the desktop"</string>
+    <string name="ui_dc3ebc1fd0b4" formatted="false">"Insufficient App staging space; required: "</string>
+    <string name="ui_93676a2553d5" formatted="false">"IrisBox_Instance"</string>
+    <string name="ui_2ab6b84bab8e" formatted="false">"ROM imported: "</string>
+    <string name="ui_cf7d4d56122d" formatted="false">"ROM is missing "</string>
+    <string name="ui_43e0c6de9e24" formatted="false">"ROM compatibility files do not match this engine: "</string>
+    <string name="ui_49ab86367807" formatted="false">"ROM image is too small"</string>
+    <string name="ui_84d265278316" formatted="false">"A matched Raspberry Pi 4 AOSP 13 ARM64 ROM is required"</string>
+    <string name="ui_624266d31bd4" formatted="false">"ROM and engine"</string>
+    <string name="ui_a6e0efe3cd4f" formatted="false">"ROM: not imported"</string>
+    <string name="ui_acfea807c04b" formatted="false">"Root was denied. Allow IrisBox in host Magisk, then select Reconnect."</string>
+    <string name="ui_4e1c76b3df0a" formatted="false">"Root action failed ("</string>
+    <string name="ui_c90dc17c7d0f" formatted="false">"Root action timed out. Check Magisk authorization; incomplete ROM imports are not registered."</string>
+    <string name="ui_0218a26e7532" formatted="false">"Root settings incomplete. Check the latest status and retry."</string>
+    <string name="ui_aaa44cd7a45d" formatted="false">"IrisBox · Instances"</string>
+    <string name="ui_8ae4101b0f19" formatted="false">"IrisBox · Raspberry Pi Android"</string>
+    <string name="ui_d554ebd78752" formatted="false">"IrisBox setup"</string>
+    <string name="ui_eac94fb94a6b" formatted="false">"Root: off"</string>
+    <string name="ui_cd7761cd9dba" formatted="false">"Root: starting"</string>
+    <string name="ui_624b011b8eaa" formatted="false">"Root: enabled"</string>
+    <string name="ui_2c37c4f350ec" formatted="false">"Root: rescue mode"</string>
+    <string name="ui_38ce86b1ada5" formatted="false">"Root: unavailable"</string>
+    <string name="ui_edf72b391180" formatted="false">"Root: not ready"</string>
+    <string name="ui_95471e8317e2" formatted="false">"Root: manage"</string>
+    <string name="ui_b72827b39c61" formatted="false">"Root: loading"</string>
+    <string name="ui_63265c9e9d1a" formatted="false">"Root: invalid configuration"</string>
+    <string name="ui_2fbc9da21a8d" formatted="false">"_startup_log.txt"</string>
+    <string name="ui_785dd9ea5202" formatted="false">". Open it inside the instance under Downloads / IrisExchange."</string>
+    <string name="ui_b41561d80765" formatted="false">"Previous"</string>
+    <string name="ui_251c4e30277a" formatted="false">"Previous transfer is finishing. Refresh shortly."</string>
+    <string name="ui_20275ef27d3a" formatted="false">"Previous"</string>
+    <string name="ui_510aa6e5ed10" formatted="false">"Previous startup log (stopped)"</string>
+    <string name="ui_e46dc134cd0d" formatted="false">"Last action incomplete. Check the log."</string>
+    <string name="ui_389284dd8300" formatted="false">"Previous data cleanup is incomplete. Retry that action."</string>
+    <string name="ui_984a52c7c7dc" formatted="false">"Previous log"</string>
+    <string name="ui_67a246a344ae" formatted="false">"Next"</string>
+    <string name="ui_3ea894a932dd" formatted="false">"Next startup memory limit: "</string>
+    <string name="ui_e0c5746ef927" formatted="false">"Next startup resolution: "</string>
+    <string name="ui_d96fc7526625" formatted="false">"Cannot create working folder"</string>
+    <string name="ui_97d351c230ee" formatted="false">"Cannot create staging folder"</string>
+    <string name="ui_5e1466abc843" formatted="false">"Cannot clean staging file"</string>
+    <string name="ui_6bac12d05195" formatted="false">"Exchange folder: Downloads / IrisExchange. Files go only to this instance; confirm APK installation inside it."</string>
+    <string name="ui_9a15c8d8f000" formatted="false">"Showing only this instance\'s exchange folder"</string>
+    <string name="ui_c2013c9c102f" formatted="false">"Transfer cancelled"</string>
+    <string name="ui_d423be219c7c" formatted="false">"Transfer incomplete: "</string>
+    <string name="ui_ba74fe0a6d30" formatted="false">"Transfer exceeded two minutes"</string>
+    <string name="ui_7a920ae53c2a" formatted="false">"Transfer exceeded two minutes and was cancelled"</string>
+    <string name="ui_c941c5958c8c" formatted="false">"Preview · "</string>
+    <string name="ui_fadf24dbc5a9" formatted="false">"Save"</string>
+    <string name="ui_30f209548d85" formatted="false">"Save incomplete. Check the status before retrying."</string>
+    <string name="ui_6d9bea7b8726" formatted="false">"Save for next startup"</string>
+    <string name="ui_a17f70a8d3d6" formatted="false">"Stop"</string>
+    <string name="ui_9e3667cb5ffd" formatted="false">"Allow apps to request root (Magisk)"</string>
+    <string name="ui_7403656d2fd1" formatted="false">"Authorize root and check the host, then install the engine and import a ROM."</string>
+    <string name="ui_6c14bd7f6f9e" formatted="false">"Close"</string>
+    <string name="ui_d014ab77038c" formatted="false">"Memory"</string>
+    <string name="ui_01ab180f0a34" formatted="false">"Memory limit (GiB)"</string>
+    <string name="ui_ccdfdd38867f" formatted="false">"Memory limit: unavailable"</string>
+    <string name="ui_a059ca83fc97" formatted="false">"Memory limit: loading"</string>
+    <string name="ui_8e15a45a13bf" formatted="false">"New starts are rejected when memory is insufficient. Running instances are preserved."</string>
+    <string name="ui_3204497ae97d" formatted="false">"Invalid memory configuration. Restore the default."</string>
+    <string name="ui_cde9b52b2395" formatted="false">"Resolution"</string>
+    <string name="ui_e11e911cfd24" formatted="false">"Could not apply resolution. Stop and restart; check this session log."</string>
+    <string name="ui_edad71729ca7" formatted="false">"Invalid resolution configuration. Restore the default."</string>
+    <string name="ui_e96adf072c24" formatted="false">"Resolution: unavailable"</string>
+    <string name="ui_88069eee8fdf" formatted="false">"Resolution: loading"</string>
+    <string name="ui_fcbd0932929e" formatted="false">"Create"</string>
+    <string name="ui_5dd2ec509b6f" formatted="false">"Creation is not confirmed yet. Check the list before trying again."</string>
+    <string name="ui_3755f56f2f83" formatted="false">"Delete"</string>
+    <string name="ui_b1b8c89c34e7" formatted="false">"Deleting removes this instance and all its data."</string>
+    <string name="ui_6e73a5ffa5cc" formatted="false">"Delete instance"</string>
+    <string name="ui_bd82e40e45a0" formatted="false">"Refresh"</string>
+    <string name="ui_0e7a97389d3f" formatted="false">"Package file count exceeds the limit"</string>
+    <string name="ui_0377600969cb" formatted="false">"Unsupported package format or compatibility profile"</string>
+    <string name="ui_1b47c364b953" formatted="false">"Invalid file in package manifest: "</string>
+    <string name="ui_11931beed48f" formatted="false">"Package manifest exceeds the limit"</string>
+    <string name="ui_d1bf6a488f11" formatted="false">"Truncated package; declared files are missing"</string>
+    <string name="ui_c80b0e307e63" formatted="false">"Extracted package exceeds the size limit"</string>
+    <string name="ui_610dc926d655" formatted="false">"The page has closed. Export the log again."</string>
+    <string name="ui_4d0b4688c787" formatted="false">"Cancel"</string>
+    <string name="ui_965b34119adf" formatted="false">"Cancel transfer"</string>
+    <string name="ui_a43c7b66fb3a" formatted="false">"Another transfer is running. Retry shortly."</string>
+    <string name="ui_ebd26da42171" formatted="false">"Start"</string>
+    <string name="ui_b28f7fc03b17" formatted="false">"This startup log is retained from the first line. Scroll to read or long-press to copy it."</string>
+    <string name="ui_abaa5827dc73" formatted="false">"The actual log for this startup will appear here."</string>
+    <string name="ui_17ebdf18caeb" formatted="false">"This startup log will appear here after starting."</string>
+    <string name="ui_8ad868abbca6" formatted="false">"Startup log"</string>
+    <string name="ui_8e4f83eef218" formatted="false">"Startup log\n"</string>
+    <string name="ui_ee42ae7c12d7" formatted="false">"Installing the independent engine"</string>
+    <string name="ui_ffed807bad4f" formatted="false">"Full startup log saved"</string>
+    <string name="ui_1150ec9bec2f" formatted="false">"Instance "</string>
+    <string name="ui_3b229178f89f" formatted="false">"Instance shared storage is not ready"</string>
+    <string name="ui_e8e681da73a2" formatted="false">"Guest geometry mismatch; input paused"</string>
+    <string name="ui_361960e14c40" formatted="false">"Instance stopped"</string>
+    <string name="ui_5fc688314cb0" formatted="false">"The instance stopped or restarted. Return to the list and select it again."</string>
+    <string name="ui_7637fa012880" formatted="false">"Instance changed or a file with this name already exists"</string>
+    <string name="ui_fc03a16921a8" formatted="false">"The instance changed. Return to the list and select it again."</string>
+    <string name="ui_428cbfb8a4e1" formatted="false">"Instance home"</string>
+    <string name="ui_e1216a93fd24" formatted="false">"Instance is displayed fullscreen"</string>
+    <string name="ui_91b40ea9119e" formatted="false">"Instance number"</string>
+    <string name="ui_c01087274984" formatted="false">"Instance identity changed; refusing the file"</string>
+    <string name="ui_e4377db610c0" formatted="false">"Invalid instance identity"</string>
+    <string name="ui_870379d0d76d" formatted="false">"Instance back"</string>
+    <string name="ui_d5a6a98e28f7" formatted="false">"No save-location picker is available on the host"</string>
+    <string name="ui_4fae6a2dba6f" formatted="false">"No file picker is available on the host"</string>
+    <string name="ui_f135d8912da5" formatted="false">"Install and configure Magisk root on the host first."</string>
+    <string name="ui_47cf8cc253d6" formatted="false">"Host checks passed: Magisk root, six host namespaces, matched AOSP 13, Permissive, Binder/Overlay, GPU, cgroups and Wi-Fi"</string>
+    <string name="ui_60e2bcad85ac" formatted="false">"Import"</string>
+    <string name="ui_233cfdb13ce4" formatted="false">"Import ROM"</string>
+    <string name="ui_32e568babef7" formatted="false">"Import receipt verification failed. Refresh the folder to check the result."</string>
+    <string name="ui_2295848aae55" formatted="false">"Import complete: "</string>
+    <string name="ui_8fb6f00ec5b5" formatted="false">"Import file"</string>
+    <string name="ui_188896795f1d" formatted="false">"Export"</string>
+    <string name="ui_f1dc2ddf285a" formatted="false">"Export complete: "</string>
+    <string name="ui_8c3afb3b80b3" formatted="false">"No instances yet. Select New instance."</string>
+    <string name="ui_b0569c4c4048" formatted="false">"No preview yet"</string>
+    <string name="ui_0ea00180a025" formatted="false">"not ready. Check this startup log. Stop the instance to disable root or retry."</string>
+    <string name="ui_10b0999596e9" formatted="false">"Configuration unavailable. Select Authorize and check to continue."</string>
+    <string name="ui_2ecfd7e9af20" formatted="false">"disabled."</string>
+    <string name="ui_0a522ea5c033" formatted="false">"File selection cancelled"</string>
+    <string name="ui_54309b76b734" formatted="false">"Full log for this startup copied"</string>
+    <string name="ui_80099027100f" formatted="false">"Installed ROM: "</string>
+    <string name="ui_780a4c8c9b91" formatted="false">"Request accepted. Waiting for status."</string>
+    <string name="ui_4bd157a9d214" formatted="false">"Memory limit submitted. Waiting for confirmation."</string>
+    <string name="ui_87016bfffbd7" formatted="false">"Resolution submitted. Waiting for confirmation."</string>
+    <string name="ui_ad3b13c31706" formatted="false">"Left the files page; transfer cancelled"</string>
+    <string name="ui_4a3c8724af26" formatted="false">"Apps request Root through Magisk and still require your approval inside the instance. Authorizations, modules and Zygisk settings are separate for each instance.\nInstall module ZIPs on the Magisk Modules page; enable Zygisk in Magisk settings. Then return to IrisBox, stop and start this instance.\nIf a module prevents booting, stop the instance and enable Rescue boot. This disables modules and Zygisk while preserving apps, accounts and module files for repair. Disable rescue after repair, then re-enable components as needed.\nTurning Root off preserves records. Resetting data clears them. Flashing upgrades and global kernel/SELinux changes are unsupported."</string>
+    <string name="ui_a1174bf6c57c" formatted="false">"Apps request root from Magisk; you still authorize each app inside the instance. Authorizations, modules and Zygisk settings are independent.\nInstall module ZIP files in Magisk and enable Zygisk in its settings. Then return to IrisBox and stop and start this instance.\nIf a module prevents startup, stop the instance and enable rescue startup. It disables modules and Zygisk while preserving apps, accounts and module files so you can repair them in Magisk. Disable rescue afterwards.\nTurning root off preserves records; resetting data erases them. Firmware flashing and global kernel/SELinux changes are unsupported.\n"</string>
+    <string name="ui_7ae34f47b8bb" formatted="false">"Enable app root (Magisk; authorize each app separately)"</string>
+    <string name="ui_e49153879bdd" formatted="false">"Engine installation and ROM import"</string>
+    <string name="ui_005bf385d786" formatted="false">"Engine installed. Select and import a ROM package."</string>
+    <string name="ui_a28d875aa888" formatted="false">"Engine installed. You can import a ROM."</string>
+    <string name="ui_7974c4e8615f" formatted="false">"Engine version mismatch"</string>
+    <string name="ui_dd0fb9f395bc" formatted="false">"Engine: "</string>
+    <string name="ui_f82f850f42fc" formatted="false">"Engine: not installed"</string>
+    <string name="ui_ba5758a6244b" formatted="false">"Duplicate, unsafe or undeclared archive file: "</string>
+    <string name="ui_f7b17b599ecd" formatted="false">"Input does not support this rotation or crop yet"</string>
+    <string name="ui_e6b83064ea2c" formatted="false">"No startup log is available yet. Waiting for the instance."</string>
+    <string name="ui_a191935bc678" formatted="false">"Restore default"</string>
+    <string name="ui_7744147917be" formatted="false">"Open Magisk"</string>
+    <string name="ui_02ce5b187ab6" formatted="false">"Refusing to clean a symbolic link folder"</string>
+    <string name="ui_735e5a8789a6" formatted="false">"Authorize host root → Install engine → Import ROM → Create and start an instance"</string>
+    <string name="ui_9eeeaf573a19" formatted="false">"Action incomplete. Check the latest status before retrying."</string>
+    <string name="ui_b96f65eefc0b" formatted="false">"Action incomplete. Wait for a status update before retrying."</string>
+    <string name="ui_4a5b3e65561d" formatted="false">"Too many pending actions. Retry shortly."</string>
+    <string name="ui_2ee3bbeeb565" formatted="false">"Supported profile: Raspberry Pi 4 / ARM64 / rpi4-a13-v1"</string>
+    <string name="ui_0d8fd3900016" formatted="false">"Hide log"</string>
+    <string name="ui_f7a937916bc3" formatted="false">"Rescue startup: disable modules and Zygisk; preserve data"</string>
+    <string name="ui_49deaf7da20d" formatted="false">"Files"</string>
+    <string name="ui_a4de6c507772" formatted="false">"Invalid IrisBox package; the first entry must be "</string>
+    <string name="ui_fbc96d57a5de" formatted="false">"File content verification failed"</string>
+    <string name="ui_6a061766d816" formatted="false">"File list exceeds the limit"</string>
+    <string name="ui_826bfe2082bf" formatted="false">"Use a plain filename without path separators (up to 128 bytes)"</string>
+    <string name="ui_fa1703117195" formatted="false">"File size differs from its declaration"</string>
+    <string name="ui_e93aa5b43616" formatted="false">"File size exceeds the limit"</string>
+    <string name="ui_2450efc254e9" formatted="false">"File changed. Refresh and export again."</string>
+    <string name="ui_0d1f7519216b" formatted="false">"File provider returned no content"</string>
+    <string name="ui_0b5c6942aaa2" formatted="false">"File ended before its declared size"</string>
+    <string name="ui_15130545f4d3" formatted="false">"File checksum mismatch: "</string>
+    <string name="ui_c99f4f63f0d4" formatted="false">"File access or connection failed"</string>
+    <string name="ui_2a5e7a625b48" formatted="false">"File exceeds the 128 MiB limit"</string>
+    <string name="ui_9ee8dd7a5773" formatted="false">"File exceeds its declared size: "</string>
+    <string name="ui_7d5bec2673bb" formatted="false">"File selection expired. Refresh the folder."</string>
+    <string name="ui_4b95f6df9752" formatted="false">"New instance"</string>
+    <string name="ui_c567011ba629" formatted="false">"Could not create instance. Check the manager log."</string>
+    <string name="ui_96d7a34ea8df" formatted="false">"ROM for new instances: "</string>
+    <string name="ui_83ff48e09334" formatted="false">"Each instance has its own apps, accounts and files.\nDefault: 960×540, OpenGL, 1.25 GiB memory limit (1.5 GiB with Google).\nOn a 4 GB Raspberry Pi, available memory and app workloads determine how many instances can run together."</string>
+    <string name="ui_8c9d5291cf02" formatted="false">"Cannot write to the selected location"</string>
+    <string name="ui_63bda37a9075" formatted="false">"Cannot open selected file"</string>
+    <string name="ui_a6112556325f" formatted="false">"Cannot obtain host root. Check Magisk and reconnect."</string>
+    <string name="ui_42edfd06d964" formatted="false">"Cannot verify the target instance"</string>
+    <string name="ui_f636fbcd54c5" formatted="false">"Cannot read folder: "</string>
+    <string name="ui_a2f2e13bab88" formatted="false">"Could not save the log. Retry."</string>
+    <string name="ui_b89eacc953d5" formatted="false">"The log exceeds clipboard capacity. Save the full log to a file."</string>
+    <string name="ui_64a55b299843" formatted="false">"Legacy: 1080p content scaled to 540p"</string>
+    <string name="ui_cb6d970c41b1" formatted="false">"Clock"</string>
+    <string name="ui_4bd5dfa2f736" formatted="false">"Switching display; preview paused"</string>
+    <string name="ui_ce176ecb85fd" formatted="false">"Staging folder must be empty"</string>
+    <string name="ui_bdefa3f1511a" formatted="false">"No preview"</string>
+    <string name="ui_96c0ba63a840" formatted="false">"Cannot verify instance status yet. Refresh shortly."</string>
+    <string name="ui_ec0d69e062e3" formatted="false">"Last action incomplete: "</string>
+    <string name="ui_f225019fde8f" formatted="false">"Not started.\n"</string>
+    <string name="ui_9807d3930434" formatted="false">"Not started.\n\n"</string>
+    <string name="ui_f5064e36fb9d" formatted="false">"Not completed: "</string>
+    <string name="ui_b81c17cb6353" formatted="false">"MagiskSU not found. Install Magisk on the host and authorize IrisBox."</string>
+    <string name="ui_831cdf82e2aa" formatted="false">"Unknown setup action"</string>
+    <string name="ui_b2ba9634d9cf" formatted="false">"Stopped"</string>
+    <string name="ui_f2f3e9803ccb" formatted="false">"Disconnected"</string>
+    <string name="ui_7fd47e102e12" formatted="false">"Current"</string>
+    <string name="ui_442f1f0429ab" formatted="false">"Current startup log"</string>
+    <string name="ui_c89faf618244" formatted="false">"Verifying the bundled engine"</string>
+    <string name="ui_33742d3f06d1" formatted="false">"Verified. Copying to the root-managed ROM library; please wait."</string>
+    <string name="ui_dd920408cf5b" formatted="false">"Preview appears when the desktop is ready"</string>
+    <string name="ui_3fa4a5d1287b" formatted="false">"Desktop ready"</string>
+    <string name="ui_79eff70947fd" formatted="false">"Checking host"</string>
+    <string name="ui_79b3bc1a9795" formatted="false">"Checking host and Magisk authorization"</string>
+    <string name="ui_2df5017f4099" formatted="false">"Saving memory limit"</string>
+    <string name="ui_2715af053797" formatted="false">"Saving memory limit…"</string>
+    <string name="ui_6cde44994952" formatted="false">"Saving resolution"</string>
+    <string name="ui_49cb08761631" formatted="false">"Saving resolution…"</string>
+    <string name="ui_7cf8fe398e9f" formatted="false">"Saving app Root settings"</string>
+    <string name="ui_0e6529e156a5" formatted="false">"Saving app root settings…"</string>
+    <string name="ui_a028ba2adbf0" formatted="false">"Stopping the instance"</string>
+    <string name="ui_b1d5c9a2bcc4" formatted="false">"Preparing"</string>
+    <string name="ui_91783c475b4b" formatted="false">"Preparing export…"</string>
+    <string name="ui_300d18c126af" formatted="false">"Preparing display and pointer input…"</string>
+    <string name="ui_e29e654d3987" formatted="false">"Preparing the first preview"</string>
+    <string name="ui_4a6fc3dd7805" formatted="false">"Creating instance…"</string>
+    <string name="ui_87533ec64f72" formatted="false">"Creating an independent instance…"</string>
+    <string name="ui_729dc7d8433a" formatted="false">"Deleting instance"</string>
+    <string name="ui_a3f772ee79f4" formatted="false">"Deleting instance…"</string>
+    <string name="ui_6017dccf86b2" formatted="false">"Starting"</string>
+    <string name="ui_75557073ffee" formatted="false">"Importing: "</string>
+    <string name="ui_cb04ad9ba1b5" formatted="false">"Exporting: "</string>
+    <string name="ui_7bd6558138e4" formatted="false">"Opening app"</string>
+    <string name="ui_a693a667f993" formatted="false">"Opening display"</string>
+    <string name="ui_7fb4ae902ad7" formatted="false">"Starting the instance"</string>
+    <string name="ui_c508f63c1389" formatted="false">"Requesting host root. Allow IrisBox in Magisk on first use…"</string>
+    <string name="ui_84cb10f62524" formatted="false">"Checking instance and exchange folder"</string>
+    <string name="ui_73685fac59f8" formatted="false">"Waiting for the previous transfer to finish; keeping the current folder view…"</string>
+    <string name="ui_bd6948a6f441" formatted="false">"Loading the full history. Wait before copying."</string>
+    <string name="ui_5a510839d8b1" formatted="false">"Loading instances"</string>
+    <string name="ui_98bcb8fa5647" formatted="false">"Loading instances…"</string>
+    <string name="ui_9f4a28e615cf" formatted="false">"Loading instance status"</string>
+    <string name="ui_cc8c3ff296c3" formatted="false">"Reading selected file…"</string>
+    <string name="ui_1f0d991f5ec0" formatted="false">"Opening "</string>
+    <string name="ui_6e6fbca5c994" formatted="false">"Connecting to the manager"</string>
+    <string name="ui_df9e3f1b3ad9" formatted="false">"Connecting to the manager through host Magisk…"</string>
+    <string name="ui_5e0e1dd4e1a9" formatted="false">"Reconnecting to the manager…"</string>
+    <string name="ui_24af1956d124" formatted="false">"Resetting instance data…"</string>
+    <string name="ui_d92e0903ab35" formatted="false">"Resetting data"</string>
+    <string name="ui_d32e536f4db2" formatted="false">"This source did not provide the file size. Save it in host Downloads and select it again."</string>
+    <string name="ui_b6d520e0511f" formatted="false">"Up to 128 MiB per file; existing names are not overwritten."</string>
+    <string name="ui_a655ea55c447" formatted="false">"Add Google Play components (separate sign-in required)"</string>
+    <string name="ui_5f46da0526f1" formatted="false">"Select Previous log to view the last startup record."</string>
+    <string name="ui_e8b0602f9b64" formatted="false">"Select New instance at the top right to create a fresh Android environment."</string>
+    <string name="ui_56f4916f8177" formatted="false">"Select a preview to enter. Storage limits the number of instances; memory and performance limit how many can run together."</string>
+    <string name="ui_c490e74b8ded" formatted="false">"Status temporarily unavailable"</string>
+    <string name="ui_910383278517" formatted="false">"Transfer cancelled by user"</string>
+    <string name="ui_33819f63ed13" formatted="false">"Invalid frame position"</string>
+    <string name="ui_b9e4148e0282" formatted="false">"This folder is empty. Select Import file to begin."</string>
+    <string name="ui_16ff9253f805" formatted="false">"Folder refresh cancelled"</string>
+    <string name="ui_3c06abe11651" formatted="false">"Confirm deletion"</string>
+    <string name="ui_30a6079ce340" formatted="false">"Confirm reset"</string>
+    <string name="ui_f495347d6acf" formatted="false">"Page "</string>
+    <string name="ui_81d95e0dc5fe" formatted="false">"Waiting for Magisk authorization and checking the host…"</string>
+    <string name="ui_d9dce1b78d9e" formatted="false">"Waiting for instance startup"</string>
+    <string name="ui_1316079be06d" formatted="false">"Waiting for the instance desktop"</string>
+    <string name="ui_1226729a0d9e" formatted="false">"Waiting for this startup\'s first preview"</string>
+    <string name="ui_f1665ef75544" formatted="false">"Waiting for a complete frame"</string>
+    <string name="ui_652033f9b4dc" formatted="false">"Folder cleanup exceeded five seconds"</string>
+    <string name="ui_11be8eec3f7c" formatted="false">"Folder cleanup exceeded five seconds. Refresh shortly."</string>
+    <string name="ui_e14790af8958" formatted="false">"Waiting for window geometry"</string>
+    <string name="ui_f04e11a0ff14" formatted="false">"Manager did not start. Check host Magisk authorization and runtime files, then reconnect."</string>
+    <string name="ui_a3415b5adf19" formatted="false">"Manager response is too large"</string>
+    <string name="ui_8551a052e534" formatted="false">"Manager receipt has a different instance identity"</string>
+    <string name="ui_34cbe1449ed7" formatted="false">"Manager connection expired. Reopen from the list."</string>
+    <string name="ui_b22e5edeb5a7" formatted="false">"Valid file verification data is missing; export refused"</string>
+    <string name="ui_249d1f176718" formatted="false">"Extracting and verifying "</string>
+    <string name="ui_7debf9cb0372" formatted="false">"Settings"</string>
+    <string name="ui_28c63e19176b" formatted="false">"Open an instance from the list"</string>
+    <string name="ui_ab08390623d4" formatted="false">"Allow IrisBox in the host Magisk prompt. Connecting…"</string>
+    <string name="ui_e9813c6d4b9f" formatted="false">"Install the engine and import a compatible ROM first.\n"</string>
+    <string name="ui_f82e3b292bba" formatted="false">"Request sent. Processing…"</string>
+    <string name="ui_4216aa6e21bd" formatted="false">"Request incomplete ("</string>
+    <string name="ui_75f8cff9ecbb" formatted="false">"Enter "</string>
+    <string name="ui_62553256518f" formatted="false">"Enter 0.5–2.5 with up to three decimal places"</string>
+    <string name="ui_5b489b8fb50c" formatted="false">"Choose a trusted IrisBox ROM adapted for Raspberry Pi AOSP 13. After verification, it will be used for new instances."</string>
+    <string name="ui_fca4b0aaeb83" formatted="false">"Select a ROM using the system file picker"</string>
+    <string name="ui_09cb521a07d3" formatted="false">"Loading status"</string>
+    <string name="ui_5fce454fd37b" formatted="false">"Path escapes the staging folder"</string>
+    <string name="ui_976a4799e83f" formatted="false">"Enter 0.5–2.5 GiB, for example 1.25 or 2.5.\nThis is a usage ceiling, not reserved RAM, and does not increase CPU or GPU performance.\n2.5 GiB is intended for single-instance testing. The host and other instances need memory too; the runtime guard can stop an instance if host memory becomes critically low.\nStop the instance before saving; changes apply at next startup."</string>
+    <string name="ui_7570be66f8ac" formatted="false">"Connecting input"</string>
+    <string name="ui_b69bd19456b6" formatted="false">"Input: touch"</string>
+    <string name="ui_eaa5b90e3aa4" formatted="false">"Input: mouse"</string>
+    <string name="ui_594249700590" formatted="false">"Running"</string>
+    <string name="ui_37a78c8dc0a6" formatted="false">"Running memory limit: "</string>
+    <string name="ui_da31dfc47974" formatted="false">"Running resolution: "</string>
+    <string name="ui_53505b1fcd1a" formatted="false">"Back to list"</string>
+    <string name="ui_5abb2c0afb2b" formatted="false">"Back to preview"</string>
+    <string name="ui_9e3a5417b05e" formatted="false">"This is the actual rendering size. Higher resolution uses more graphics resources and memory.\nUse 960×540 when diagnosing slow rendering. Legacy mode still renders at 1080p and scales the display.\nStop the instance before saving; changes apply at next startup."</string>
+    <string name="ui_0e25578e8fa1" formatted="false">"Enter"</string>
+    <string name="ui_7d536627a3c1" formatted="false">"Connection cancelled. Select Reconnect."</string>
+    <string name="ui_2c23c90e1f3a" formatted="false">"Connection ended. Reopen the instance."</string>
+    <string name="ui_b8f44104e192" formatted="false">"Connection timed out. Check Magisk authorization and select Reconnect."</string>
+    <string name="ui_bd76d510bf82" formatted="false">"Invalid configuration. Select Restore default first."</string>
+    <string name="ui_bac95e1e52fe" formatted="false">"Reconnect"</string>
+    <string name="ui_3d81345303ab" formatted="false">"Reset"</string>
+    <string name="ui_13357ab34dca" formatted="false">"Reset creates fresh Android data while keeping the instance, resolution, memory limit, root option and Google component selection."</string>
+    <string name="ui_b1dd040286c1" formatted="false">"Reset data"</string>
+    <string name="ui_67f5da279d03" formatted="false">"Raw ext4 image required; sparse/boot/super is unsupported: "</string>
+    <string name="ui_dca586ba4d8b" formatted="false">"Page closed"</string>
+    <string name="ui_6c0c3a871ed5" formatted="false">"Page closed; transfer cancelled"</string>
+    <string name="ui_aa135ad31231" formatted="false">"Preview expired; waiting for a new frame"</string>
+    <string name="ui_2b1557f6ad3d" formatted="false">"Preview unavailable; retrying shortly"</string>
+    <string name="ui_c7d02585d66f" formatted="false">"Previews update about once a second. Fullscreen uses a separate stream. Returning to this list keeps instances running; select Stop to stop one."</string>
+    <string name="ui_8dec65600663" formatted="false">"Supported: Raspberry Pi 4 · Matched AOSP 13 · ARM64 · Magisk · Permissive"</string>
+    <string name="ui_8bf7092bfac6" formatted="false">"Mouse and keyboard enabled"</string>
+    <string name="ui_3d4cf10d60ad" formatted="false">"Touch emulation · Keyboard enabled"</string>
+    <string name="ui_43d8ec69b3ed" formatted="false">" (reopen after expiry)"</string>
+    <string name="ui_5d8e922bf35b" formatted="false">"; finishing transfer…"</string>
+    <string name="ui_7e893fad9c38" formatted="false">"; import is unconfirmed. Refresh the folder."</string>
+    <string name="ui_0aaab18dfb19" formatted="false">"; check the selected location for a partial file."</string>
+</resources>

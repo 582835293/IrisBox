@@ -1,0 +1,37 @@
+--- a/cros_gralloc/cros_gralloc_driver.cc
++++ b/cros_gralloc/cros_gralloc_driver.cc
+@@ -10,6 +10,7 @@
+ #include <fcntl.h>
+ #include <hardware/gralloc.h>
+ #include <sys/mman.h>
++#include <sys/stat.h>
+ #include <syscall.h>
+ #include <xf86drm.h>
+ 
+@@ -301,8 +302,24 @@
+ 		hnd->fds[hnd->num_planes] = ret;
+ 	}
+ 
+-	static std::atomic<uint32_t> next_buffer_id{ 1 };
+-	hnd->id = next_buffer_id++;
++	// Iris Guest-only library. Independent allocators cannot share a local
++	// counter: Host mapper caches by this ID, including Host taskbar buffers.
++	// All planes refer to one kernel buffer (validated above). Its live inode
++	// is shared across PID namespaces and persists through FD duplication.
++	// Reserve the high bit for Guests; stock Host IDs use the low range.
++	{
++		struct stat identity{};
++		if (fstat(hnd->fds[0], &identity)) {
++			ret = -errno;
++			goto destroy_hnd;
++		}
++		if (!identity.st_ino || uint64_t(identity.st_ino) > 0x7fffffffU) {
++			ALOGE("Iris Guest buffer inode outside reserved ID range.");
++			ret = -EOVERFLOW;
++			goto destroy_hnd;
++		}
++		hnd->id = 0x80000000U | uint32_t(identity.st_ino);
++	}
+ 	hnd->width = drv_bo_get_width(bo);
+ 	hnd->height = drv_bo_get_height(bo);
+ 	hnd->format = drv_bo_get_format(bo);

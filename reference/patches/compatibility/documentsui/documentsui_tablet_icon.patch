@@ -1,0 +1,11 @@
+--- a/packages/apps/DocumentsUI/res/layout-sw720dp/item_doc_list.xml
++++ b/packages/apps/DocumentsUI/res/layout-sw720dp/item_doc_list.xml
+@@ -34,7 +34,7 @@
+         android:orientation="horizontal" >
+ 
+         <FrameLayout
+-            android:id="@android:id/icon"
++            android:id="@+id/icon"
+             android:pointerIcon="hand"
+             android:layout_width="@dimen/list_item_width"
+             android:layout_height="@dimen/list_item_height"

@@ -1,0 +1,64 @@
+{
+  "component": "iris-magisk-30.7-extensions-v2",
+  "upstreamTag": "v30.7",
+  "upstreamApkSha256": "e0d32d2123532860f97123d927b1bb86c4e08e6fd8a48bfc6b5bee0afae9ebd5",
+  "upstreamSourceZipSha256": "9674a85414b6ec2f7ab15367f40e166dace70717ce3c60fc01bd24707dfbbec2",
+  "sourceUrl": "https://github.com/topjohnwu/Magisk/tree/v30.7",
+  "mode": "application authorization, standard file/prop/script modules and ARM64/ARM32 Zygisk; no boot flashing or global SELinux policy",
+  "nativeConstants": [
+    {
+      "old": "u:r:magisk:s0",
+      "new": "u:r:su:s0",
+      "offsets": [
+        50032
+      ]
+    },
+    {
+      "old": "u:object_r:magisk_file:s0",
+      "new": "u:object_r:system_file:s0",
+      "offsets": [
+        43818,
+        47504,
+        50336
+      ]
+    },
+    {
+      "old": "u:object_r:magisk_log_file:s0",
+      "new": "u:object_r:system_file:s0",
+      "offsets": [
+        50800
+      ]
+    }
+  ],
+  "nativeOriginalSha256": "2d8419018dda41f7d9aca94c0ca8f926f3b8447ca5cf7fb71faeb8d05e29694e",
+  "nativePatchedSha256": "3106b25ccd6a35225374b4f0925bff8aa4de59c826e8e9b37e9ad00e807c7e1f",
+  "native32Constants": [
+    {
+      "old": "u:r:magisk:s0",
+      "new": "u:r:su:s0",
+      "offsets": [
+        34808
+      ]
+    },
+    {
+      "old": "u:object_r:magisk_file:s0",
+      "new": "u:object_r:system_file:s0",
+      "offsets": [
+        30060,
+        31532,
+        31596
+      ]
+    },
+    {
+      "old": "u:object_r:magisk_log_file:s0",
+      "new": "u:object_r:system_file:s0",
+      "offsets": [
+        35516
+      ]
+    }
+  ],
+  "native32OriginalSha256": "750da5f48869be0dd90ed268e06ae5c324008b3342fba0e501f52ec0ce8e3b32",
+  "native32PatchedSha256": "46a0da9388b4ee42674e57581bc207def1eefe30ec402fd12f04f826ad80d297",
+  "managerResigned": true,
+  "signatureVerificationBypass": false
+}

@@ -1,0 +1,55 @@
+# ==============================================================================
+# Batch 1-E: 相机子系统正规缴械 (原二进制 + override disabled oneshot)
+# ==============================================================================
+
+# 27. 外接 USB 摄像头 HAL (剥夺 class hal 自启权)
+service vendor.camera-provider-2-5-ext /system/bin/true   
+    override    
+    disabled    
+    oneshot
+
+# 2829. 板载 CSI 摄像头 HAL (剥夺 class hal 自启权)
+service vendor.camera-provider-2-5 /system/bin/true  
+    override    
+    disabled    
+    oneshot
+
+# ==============================================================================
+# Batch 1-G: 板载单板死重与模拟外设 (TV/LED/Mock Thermal) (共 5 项)
+# ==============================================================================
+# 32. 有线数字电视条件接收 CAS HAL
+service vendor.cas-hal-1-2 /system/bin/true    
+    override    
+    disabled    
+    oneshot
+
+# 33-36无法简单禁用
+# 33. 电池健康管理模拟服务 (单板无电池)
+# 34. 板载指示灯/背光 HAL
+# 35. 模拟温控 HAL
+# 36. HDMI 电视遥控联动 CEC HAL
+
+# ==============================================================================
+# Batch 1-H (Vendor 轨): 多媒体硬件编解码与 DRM HAL (共 5 项)
+# ==============================================================================
+# 41. ClearKey DRM 硬件密钥解析
+# Restored 2026-10-09: vendor.drm-clearkey-service uses its stock init definition.
+
+# 4243. V4L2 硬件编解码器 (Codec2 3264位)
+service android-hardware-media-c2-v4l2-hal-1-0 /system/bin/true    
+    override    
+    disabled    
+    oneshot
+
+# 44. FFmpeg 软件编解码器
+service android-hardware-media-c2-ffmpeg-hal-1-2 /system/bin/true    
+    override    
+    disabled    
+    oneshot
+
+# 45. 传统 OpenMAX 编解码兼容层
+service vendor.media.omx /system/bin/true    
+    override    
+    disabled    
+    oneshot
+

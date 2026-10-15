@@ -1,0 +1,232 @@
+# ==========================================
+# 禁用批次 1-A:系统性能打点与时序追踪 (Perfetto)(7项)
+# ==========================================
+# 1.禁Atrace 开机性能时序追踪
+service boottrace /system/bin/true
+    override
+    disabled
+    oneshot
+    
+
+# 2.禁用Perfetto 核心追踪服务
+service traced /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 3.禁用Perfetto 追踪数据收集服务
+service traced_probes /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 4.禁用内存事件追踪器
+service mm_events /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 5.禁用开机自启性能追踪器
+service perfetto_trace_on_boot /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 6.禁用系统性能画像收集器
+service profcollectd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 7.禁用Perf 硬件采样剖析器
+service traced_perf /system/bin/true
+    override
+    disabled
+    oneshot
+
+# ==========================================
+# 禁用批次 1-B: 诊断转储与崩溃记录 (7 项)
+# ==========================================
+# 8.内核日志轮询转储守护
+service dmesgd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 9.禁用系统状态转储核心工具
+service dumpstate /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 10.压缩版 Bug 报告导出器
+service dumpstatez /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 11.Bug 报告后台服务
+service bugreportd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 12.禁用原生 C/C++ 内存堆栈采样器
+service heapprofd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 13.禁用辅助跨架构 native 进程的内存堆栈采样器
+service heapprofd_secondary /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 14.系统突发事故崩溃报告转储
+service incidentd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# ==========================================
+# 禁用批次 1-C: 废弃网络协议与升级快照 (8 项)
+# ==========================================
+# 15.通用镜像 (GSI) 动态安装服务
+service gsid /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 16.Logcat 自动写盘守护进程
+service logcatd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 17.动态逻辑分区转储服务。导出 Super 动态分区表结构
+service lpdumpd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 18.mDNS 局域网多播服务发现
+service mdnsd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 19.陈旧过时的PPTP/L2TP 点对点隧道 VPN
+service mtpd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 20.IPsec IKE 密钥交换守护。
+# 用于建立传统企业级加密 VPN 隧道
+service racoon /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 21.用户空间快照合并守护。用于 A/B 动态分区静默平滑 OTA 升级与差分数据合并
+service snapuserd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 22.快照合并过渡代理,代理 A/B 动态分区快照合并阶段的 socket 通信
+service snapuserd_proxy /system/bin/true
+    override
+    disabled
+    oneshot
+
+# ==========================================
+# 禁用批次1-D: Recovery 与 BCB 死重 (3 项)
+# ==========================================
+# 23.Recovery 升级包解密工具
+service uncrypt /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 24.Bootloader 控制块配置器
+service setup-bcb /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 25.Bootloader 控制块清除器
+service clear-bcb /system/bin/true
+    override
+    disabled
+    oneshot
+
+# ==========================================
+# 禁用批次1-E: 相机子系统全链路闭环 (1 项) 
+# ==========================================
+# 系统相机框架调度器
+# 26.系统相机框架调度器 (剥夺 class main 自启权)
+service cameraserver /system/bin/true   
+    override    
+    disabled    
+    oneshot
+# 外接 USB 摄像头 HAL (在vendor分区禁用) 
+# 板载 CSI 摄像头 64 位 HAL (在vendor分区禁用)
+
+# ==========================================
+# Batch 1-F: 音频子系统全链路斩首(2项)有问题，暂不能禁用
+# ==========================================
+
+# ==============================================================================
+# Batch 1-H (System 轨): 多媒体播放与解析核心 (共 4 项，独占 25.8MB PSS)
+# ==============================================================================
+
+# 37. 数字版权管理 DRM Server
+service drm /system/bin/true    
+    override    
+    disabled    
+    oneshot
+
+# 38. 媒体文件格式解封装器
+service mediaextractor /system/bin/true    
+    override    
+    disabled    
+    oneshot
+
+# 40. 多媒体播放核心 mediaserver
+# Restored 2026-10-09: media uses its stock init definition.
+
+# ==============================================================================
+# Batch 2-A: 屏幕休眠与系统看门狗 (共 4 项)
+# ==============================================================================
+# 1. 熄屏控制器
+service blank_screen /system/bin/true    
+    override    
+    disabled    
+    oneshot
+
+# 2. Live Lockup 看门狗 (Debug)
+service llkd-1 /system/bin/true    
+    override    
+    disabled    
+    oneshot
+
+# 3. Live Lockup 看门狗 (正式)
+service llkd-0 /system/bin/true    
+    override    
+    disabled    
+    oneshot
+
+# 4. 内存峰值标记重置工具
+service rss_hwm_reset /system/bin/true    
+    override    
+    disabled    
+    oneshot
+
+# ==============================================================================
+# Batch 2-B: 应用安装与动态换肤 (共 2 项，经测试无法禁用)
+# ==============================================================================
+# 5. 动态换肤资源覆盖映射器
+# 6. 应用安装管理服务 (极简探底测试)
+

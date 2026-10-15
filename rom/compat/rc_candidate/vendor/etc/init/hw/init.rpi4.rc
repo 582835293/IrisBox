@@ -1,0 +1,25 @@
+# Iris Guest: Host owns Raspberry Pi USB gadget.
+# Original: import /vendor/etc/init/hw/init.rpi4.usb.rc
+
+on init
+    symlink /sdcard /storage/sdcard0
+
+on fs
+    # Iris Guest: Private data readiness and its original events must be implemented before launch.
+    # Original: mount_all /vendor/etc/fstab.rpi4
+
+on post-fs-data
+    # Create the directories used by the Wireless subsystem
+    mkdir /data/vendor/wifi 0770 wifi wifi
+    mkdir /data/vendor/wifi/wpa 0770 wifi wifi
+    mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
+
+on property:sys.boot_completed=1
+    # Reinit lmkd to reconfigure lmkd properties
+    setprop lmkd.reinit 1
+
+service suspend_blocker_rpi /vendor/bin/suspend_blocker_rpi
+    class early_hal # Start together with system_suspend HAL
+    group system
+    user root
+

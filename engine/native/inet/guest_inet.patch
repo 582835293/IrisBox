@@ -1,0 +1,15 @@
+diff --git a/service/native/TrafficController.cpp b/service/native/TrafficController.cpp
+--- a/service/native/TrafficController.cpp
++++ b/service/native/TrafficController.cpp
+@@ -197,2 +197,11 @@
+ Status TrafficController::start() {
++    // Iris mounts only this Guest's UID permission table before second-stage init.
++    // Keep Android's PermissionMonitor/setPermissionForUids lifecycle unchanged.
++    // Other BPF tables belong to the Host and must not be opened from a Guest.
++    const char* guest = getenv("IRIS_GUEST_NO_BPF");
++    if (guest != nullptr && strcmp(guest, "1") == 0) {
++        std::lock_guard guard(mMutex);
++        RETURN_IF_NOT_OK(mUidPermissionMap.init(UID_PERMISSION_MAP_PATH));
++        return netdutils::status::ok;
++    }
+     RETURN_IF_NOT_OK(initMaps());

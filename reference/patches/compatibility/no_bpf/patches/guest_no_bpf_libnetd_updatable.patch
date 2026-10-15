@@ -1,0 +1,27 @@
+diff --git a/netd/NetdUpdatable.cpp b/netd/NetdUpdatable.cpp
+--- a/netd/NetdUpdatable.cpp
++++ b/netd/NetdUpdatable.cpp
+@@ -15,6 +15,9 @@
+ 
+ #define LOG_TAG "NetdUpdatable"
+ 
++#include <cstdlib>
++#include <cstring>
++
+ #include "NetdUpdatable.h"
+ 
+ #include <android-base/logging.h>
+@@ -26,5 +29,13 @@ int libnetd_updatable_init(const char* cg2_path) {
+     android::base::InitLogging(/*argv=*/nullptr);
+     LOG(INFO) << __func__ << ": Initializing";
+ 
++    // First-frame-only Guest mode: no network traffic accounting or BPF attachment.
++    // Keep gNetdUpdatable null so tag/untag requests fail with EPERM below.
++    const char* guestNoBpf = std::getenv("IRIS_NETD_NO_BPF");
++    if (guestNoBpf != nullptr && std::strcmp(guestNoBpf, "1") == 0) {
++        LOG(WARNING) << __func__ << ": Guest mode, skipping BPF initialization";
++        return 0;
++    }
++
+     android::net::gNetdUpdatable = android::net::NetdUpdatable::getInstance();
+     android::netdutils::Status ret = android::net::gNetdUpdatable->mBpfHandler.init(cg2_path);

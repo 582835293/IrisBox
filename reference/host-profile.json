@@ -1,0 +1,24 @@
+{
+  "profile": "rpi4-a13-v1",
+  "fingerprint": "Raspberry/aosp_rpi4/rpi4:13/TQ3A.230901.001/eng.lijiaq.20260916.141216:userdebug/test-keys",
+  "aospBaseline": "android-13.0.0_r75",
+  "localManifest": "https://github.com/raspberry-vanilla/android_local_manifest/tree/android-13.0",
+  "repositories": [
+    {"path": "device/brcm/rpi4", "url": "https://github.com/raspberry-vanilla/android_device_brcm_rpi4", "revision": "e03895bd830d77a34e78b55ae771096aaa968677", "localTreeHasLaterExperiments": true},
+    {"path": "device/brcm/rpi4-kernel", "url": "https://github.com/raspberry-vanilla/android_device_brcm_rpi4-kernel", "revision": "3e59a5a69258d47debcd8c7fbcb1c33f6ab60822"},
+    {"path": "vendor/brcm", "url": "https://github.com/raspberry-vanilla/proprietary_vendor_brcm", "revision": "639d82b5f5923077647f6125cc327c28cb737891"},
+    {"path": "kernel source", "url": "https://github.com/raspberry-vanilla/android_kernel_brcm_rpi", "revision": "b951c20ef4d009cbde200a3c4c436210689d1280"}
+  ],
+  "kernel": "5.15.150-v8-gb951c20ef4d0",
+  "kernelBuildManifest": "https://github.com/raspberry-vanilla/android_kernel_manifest/tree/android-13.0",
+  "kernelBuildCommand": "BUILD_CONFIG=common/build.config.rpi4 build/build.sh",
+  "hostMagisk": "user-installed; not in clean flash image",
+  "busybox": "APK verified payload at /data/rootvmos/host/bin/busybox; no system partition installation",
+  "selinux": "Permissive required; App does not change policy",
+  "staticImagePartitionsVerified": true,
+  "freshUserdata": true,
+  "freshCardFlashTested": false,
+  "firstHostMagiskInstallationTested": false,
+  "freshDispatcherCreationTested": false,
+  "fullFactoryBuildReproducedFromScratch": false
+}

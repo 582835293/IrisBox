@@ -1,0 +1,821 @@
+{
+  "status": "STATIC_AUDIT_PASS_NOT_DEVICE_ACCEPTANCE",
+  "upstream": "NikGapps-core-arm64-13-20260204-signed.zip",
+  "upstream_sha256": "d969df417bc3ea9c79e4219c8dd955d8d5f6d31597cbe5f88dc51518a3fc9613",
+  "android_sdk": 33,
+  "architecture": "arm64 with upstream 32-bit ancillary libraries; universal APKs may include x86 ABIs",
+  "installer_executed": false,
+  "device_deployed": false,
+  "files": [
+    {
+      "path": "system/product/app/GoogleCalendarSyncAdapter/GoogleCalendarSyncAdapter.apk",
+      "bytes": 2484539,
+      "sha256": "044cc57bce2f6ae3930c28fd784ae12a1781ff09d204db50e775093ecef12661",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GoogleCalendarSyncAdapter",
+      "source": "AppSet/Core/GoogleCalendarSyncAdapter.zip!___app___GoogleCalendarSyncAdapter/GoogleCalendarSyncAdapter.apk"
+    },
+    {
+      "path": "system/product/app/GoogleContactsSyncAdapter/GoogleContactsSyncAdapter.apk",
+      "bytes": 1571497,
+      "sha256": "b680052da895d9a198b856162148de78bc5ad550e46d92239ee9c9308c86ee04",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GoogleContactsSyncAdapter",
+      "source": "AppSet/Core/GoogleContactsSyncAdapter.zip!___app___GoogleContactsSyncAdapter/GoogleContactsSyncAdapter.apk"
+    },
+    {
+      "path": "system/product/etc/default-permissions/default-permissions-nikgapps.xml",
+      "bytes": 9543,
+      "sha256": "b4949073718b07158a3ba8cbfddc942eebbceb348e8dbf89b3bbc72515ae7598",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___default-permissions/default-permissions-nikgapps.xml"
+    },
+    {
+      "path": "system/product/etc/firmware/music_detector.descriptor",
+      "bytes": 1057,
+      "sha256": "bfe6e9ffe376dd093066a4e6318dd2f9190e6703ea9fff4e6649f04202d8ccf4",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___firmware/music_detector.descriptor"
+    },
+    {
+      "path": "system/product/etc/firmware/music_detector.sound_model",
+      "bytes": 22992,
+      "sha256": "15f075a52f19c8df8f4dd9ff728ab4788039a6ef1801fd97318886d172213e66",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___firmware/music_detector.sound_model"
+    },
+    {
+      "path": "system/product/etc/firmware/music_detector.sound_model_2",
+      "bytes": 216320,
+      "sha256": "7a86281a6deed41095ffb85088255f813bae9adbbc890d7eadb36865297a31bb",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___firmware/music_detector.sound_model_2"
+    },
+    {
+      "path": "system/product/etc/firmware/music_detector.sound_model_tflite",
+      "bytes": 22992,
+      "sha256": "15f075a52f19c8df8f4dd9ff728ab4788039a6ef1801fd97318886d172213e66",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___firmware/music_detector.sound_model_tflite"
+    },
+    {
+      "path": "system/product/etc/permissions/NikGapps-privapp-permissions-google-p.xml",
+      "bytes": 47846,
+      "sha256": "0f50c5525df3644c5f949beeed693743e0049b1110dc2f25e98df2b04a7ec6d6",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___permissions/NikGapps-privapp-permissions-google-p.xml"
+    },
+    {
+      "path": "system/product/etc/permissions/NikGapps-privapp-permissions-google-se.xml",
+      "bytes": 14278,
+      "sha256": "8a312b86a30df7d10a29813ae57b551d6ea122b0315135882707c0df9563c30e",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___permissions/NikGapps-privapp-permissions-google-se.xml"
+    },
+    {
+      "path": "system/product/etc/permissions/NikGapps-privapp-permissions-google.xml",
+      "bytes": 5329,
+      "sha256": "2b0cee8523577eb4b2201bd1d289c13de050928ac541f7d611664525250b1a6e",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___permissions/NikGapps-privapp-permissions-google.xml"
+    },
+    {
+      "path": "system/product/etc/permissions/NikGapps-split-permissions-google.xml",
+      "bytes": 919,
+      "sha256": "73a160b4ec5ee9fd7ebb3ad8947d37c699302732584a90cc6a03956005cada12",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___permissions/NikGapps-split-permissions-google.xml"
+    },
+    {
+      "path": "system/product/etc/permissions/com.android.vending.xml",
+      "bytes": 8758,
+      "sha256": "215d0be713eb54b0543dd9dfcddcfce7f4f3b808e6966e8bcc2f53b0ef2fde6b",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GooglePlayStore",
+      "source": "AppSet/Core/GooglePlayStore.zip!___etc___permissions/com.android.vending.xml"
+    },
+    {
+      "path": "system/product/etc/permissions/com.google.android.dialer.support.xml",
+      "bytes": 144,
+      "sha256": "8076b7bc45cf5f138bb68dc88d50da7b38d7ffed4a147d893f614e62cf117f76",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "installer library declaration adapted to canonical /product path; no unrelated Dialer feature advertisement"
+    },
+    {
+      "path": "system/product/etc/permissions/com.google.android.gms.xml",
+      "bytes": 23498,
+      "sha256": "100af12d8b1caf21c8326707e2f1f15e286f221ce29afbf76ed919934255e8f0",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___etc___permissions/com.google.android.gms.xml"
+    },
+    {
+      "path": "system/product/etc/permissions/com.google.android.maps.xml",
+      "bytes": 124,
+      "sha256": "942dff7fae6941220df5c9dc780592ed02587434f5f992c4abe3b72a8ecc6b00",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "installer library declaration adapted to canonical /product path; no unrelated Dialer feature advertisement"
+    },
+    {
+      "path": "system/product/etc/security/fsverity/gms_fsverity_cert.der",
+      "bytes": 1484,
+      "sha256": "1a78f5d70b87441c7d13384179e377f4f3105be25814eef05cd95d1b736775b9",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___security___fsverity/gms_fsverity_cert.der"
+    },
+    {
+      "path": "system/product/etc/security/fsverity/play_store_fsi_cert.der",
+      "bytes": 1422,
+      "sha256": "37aabd485044e3af6d84755268faf8392e226ca0d188be6a80335525ce0ec6ff",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___security___fsverity/play_store_fsi_cert.der"
+    },
+    {
+      "path": "system/product/etc/sysconfig/GoogleCamera_6gb_or_more_ram.xml",
+      "bytes": 343,
+      "sha256": "522147d25b84c8c63acc03ee4f4691fb361b617f5587630f42506d3d98cd174d",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/GoogleCamera_6gb_or_more_ram.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/NikGapps-google-hiddenapi-package-whitelist.xml",
+      "bytes": 7407,
+      "sha256": "ae227b5f58b6517de8d28d12d2eb57ea1c9eb7abeb4ecd5fd6c3f54838d8f1b6",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/NikGapps-google-hiddenapi-package-whitelist.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/NikGapps-google-install-constraints-package-allowlist.xml",
+      "bytes": 3201,
+      "sha256": "f86c08c073098ddee4c4d9d1ee82230157c8f0edf1b964e43c8b4f4cbf069dfe",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/NikGapps-google-install-constraints-package-allowlist.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/NikGapps-google-staged-installer-whitelist.xml",
+      "bytes": 394,
+      "sha256": "c074b60ed9d74bdf5f65145a47caf9565417099fbed1bc59c5f4966f126024e2",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/NikGapps-google-staged-installer-whitelist.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/NikGapps-preinstalled-packages-product-pixel-2017-and-newer.xml",
+      "bytes": 7422,
+      "sha256": "e36fb9ccb3389a4f48a53fb7d9c0c3d03c20d2d0e9c3797ad331ff1985cfb8d3",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/NikGapps-preinstalled-packages-product-pixel-2017-and-newer.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/adaptivecharging.xml",
+      "bytes": 334,
+      "sha256": "8ec9cff3169211edec332fa82f9bc95be6714804a2b981c0b7d9d7a809b5b247",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/adaptivecharging.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/d2d_cable_migration_feature.xml",
+      "bytes": 136,
+      "sha256": "364372d5bb87bbf22b2628b14e2b56d521fb17ce27df804713c6fbea2eb2088c",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/d2d_cable_migration_feature.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/dreamliner.xml",
+      "bytes": 321,
+      "sha256": "8c787652f092a131930f8f467965d96110fede91443f126abc9b3c0bcf9d65dc",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/dreamliner.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/google.xml",
+      "bytes": 8134,
+      "sha256": "80e7581641dca6b4e700f253d95a7a454d3901b92ebee002e0be8c3d7c22b03e",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/google.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/google_build.xml",
+      "bytes": 1106,
+      "sha256": "724875dc95f7fb7eb950714f9a474a9a304e081626d9364647e02409e4bdae9c",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/google_build.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/nexus.xml",
+      "bytes": 3532,
+      "sha256": "cb039405fd665ff8acf0a8aa701ee9136798a626a0c18688df5916fea6d4a016",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/nexus.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/nga.xml",
+      "bytes": 327,
+      "sha256": "c08f3701474733fbe7bcba47a2dcee0b18145cc267556b2ad8f9661b9d5b18a7",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/nga.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/pixel_experience_2017.xml",
+      "bytes": 4123,
+      "sha256": "500e9a246957eee688662586f7dd17dd94e372ed07e1e13e028b99ecb82a9f3b",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/pixel_experience_2017.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/pixel_experience_2023_midyear.xml",
+      "bytes": 336,
+      "sha256": "34466c0de3085df10f8f85d917e992274b037633c44e91c9f7047edc388e4cde",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/pixel_experience_2023_midyear.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/pixel_experience_2024_midyear.xml",
+      "bytes": 336,
+      "sha256": "8a826883bd7d4e71cd6df55024a1d3435c25d1f6de1f7db952429157d8e0254e",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/pixel_experience_2024_midyear.xml"
+    },
+    {
+      "path": "system/product/etc/sysconfig/quick_tap.xml",
+      "bytes": 303,
+      "sha256": "0ad849297d36a9686380630dec52b768cf856dae0ef1ec4f0c52c5c4011e09d1",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___etc___sysconfig/quick_tap.xml"
+    },
+    {
+      "path": "system/product/framework/com.google.android.dialer.support.jar",
+      "bytes": 898,
+      "sha256": "4ad20ccbbc3f4527386cdee69bc14e6f6d548149de4703c38c3e4ae11ea3ea83",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___framework/com.google.android.dialer.support.jar"
+    },
+    {
+      "path": "system/product/framework/com.google.android.maps.jar",
+      "bytes": 323685,
+      "sha256": "c2a794cc475efbe640290d501d52a2958f451daffaa45a3fdd74d6fee97f6f69",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___framework/com.google.android.maps.jar"
+    },
+    {
+      "path": "system/product/lib/libjni_latinimegoogle.so",
+      "bytes": 943652,
+      "sha256": "442a2a8bfcb25489564bc9433a916fa4dc0dba9000fe6f6f03f5939b985091e6",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___lib/libjni_latinimegoogle.so"
+    },
+    {
+      "path": "system/product/lib64/libgdx.so",
+      "bytes": 291152,
+      "sha256": "dbb66c8d0e07cee88ebfe1974c40dfa35518159d94e7beeb4a72eb5bec0708d3",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___lib64/libgdx.so"
+    },
+    {
+      "path": "system/product/lib64/libjni_latinimegoogle.so",
+      "bytes": 1112352,
+      "sha256": "b1049983e6ac5cfc6d1c66e38959751044fad213dff0637a6cf1d2a2703e754f",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "ExtraFiles",
+      "source": "AppSet/Core/ExtraFiles.zip!___lib64/libjni_latinimegoogle.so"
+    },
+    {
+      "path": "system/product/overlay/GmsCoreOverlay.apk",
+      "bytes": 20818,
+      "sha256": "583be5a8dfe6d45f25c155c30f4e1673de7cb95fc24e1cbe1474b23dfd951f4c",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___overlay/GmsCoreOverlay.apk"
+    },
+    {
+      "path": "system/product/priv-app/Phonesky/Phonesky.apk",
+      "bytes": 62577394,
+      "sha256": "873d4b6ee50da8fc6afd2c8493b17ae1f00bd0a3563f3f3edf4ba269808b2a84",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GooglePlayStore",
+      "source": "AppSet/Core/GooglePlayStore.zip!___priv-app___Phonesky/Phonesky.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/PrebuiltGmsCoreSc.apk",
+      "bytes": 126784318,
+      "sha256": "47ae38d126bc4ebd6abcb17bd85d034eecb1c8565d5ef30b21ed85de349ae0f8",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore/PrebuiltGmsCoreSc.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_AdsDynamite.apk",
+      "bytes": 3688041,
+      "sha256": "0e687df8c4ae48a2c17ed11754b807b70d4517e99fe96bde72ea2d11aff27eba",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___app_chimera___m/PrebuiltGmsCoreSc_AdsDynamite.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_CronetDynamite.apk",
+      "bytes": 8478423,
+      "sha256": "357b9bec1eb1f7cb260137ca44fa0e6da81d20073fb8c979fcdd1b761d8befdc",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___app_chimera___m/PrebuiltGmsCoreSc_CronetDynamite.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_DynamiteLoader.apk",
+      "bytes": 177183,
+      "sha256": "3a3fa15a9660042701b47b4bb7c269a6a15f8ee87747866cc52e9f421f7df699",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___app_chimera___m/PrebuiltGmsCoreSc_DynamiteLoader.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_DynamiteModulesA.apk",
+      "bytes": 818178,
+      "sha256": "fa60fe8a50086b1839eed0de3e7dba7970e9a73d8cf2becb61868806a84f85f3",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___app_chimera___m/PrebuiltGmsCoreSc_DynamiteModulesA.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_DynamiteModulesC.apk",
+      "bytes": 1307821,
+      "sha256": "719dcf3097c1a9ec8c7181cad99a9bec4ddc5bb92397345bc7cf486853d4c68c",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___app_chimera___m/PrebuiltGmsCoreSc_DynamiteModulesC.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_GoogleCertificates.apk",
+      "bytes": 254943,
+      "sha256": "93def606bf1c3f74102cbbaa18cf017ff3ea6769519d41426a248a5948c5be69",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___app_chimera___m/PrebuiltGmsCoreSc_GoogleCertificates.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_MapsDynamite.apk",
+      "bytes": 2201456,
+      "sha256": "71ece88297af6a54dca8b2ea90a57b1a4ea67dd454a4f3b0ad5dee85cbc3a44e",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___app_chimera___m/PrebuiltGmsCoreSc_MapsDynamite.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_MeasurementDynamite.apk",
+      "bytes": 390174,
+      "sha256": "b2a06cc6611d47bbd78bcc1c89ee4ddea0bd3c8dc7ef59c4008ebfa0dade6c9c",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___app_chimera___m/PrebuiltGmsCoreSc_MeasurementDynamite.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/m/independent/AndroidPlatformServices.apk",
+      "bytes": 13841872,
+      "sha256": "e41c84c7981babf0338b61b4dcf406c9e274318f5ddda5b78f73fb0f4fe41f2e",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___m___independent/AndroidPlatformServices.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/m/optional/MlkitBarcodeUIPrebuilt.apk",
+      "bytes": 5613076,
+      "sha256": "c018191067f3232cbcd0c7a924cdc0c754c2ae332fb3c22c6d2c6b699b281eec",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___m___optional/MlkitBarcodeUIPrebuilt.apk"
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/m/optional/VisionBarcodePrebuilt.apk",
+      "bytes": 4218891,
+      "sha256": "ee9d95d27b0671cae43b86faad9a6b410bd3597ed768258e69bdeb5bff5b2ecf",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GmsCore",
+      "source": "AppSet/Core/GmsCore.zip!___priv-app___PrebuiltGmsCore___m___optional/VisionBarcodePrebuilt.apk"
+    },
+    {
+      "path": "system/system_ext/etc/permissions/com.google.android.gsf.xml",
+      "bytes": 8429,
+      "sha256": "019937aa64ac2414fd74ca56cd314f29057be8595397e4ea1ed8216a8186531b",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GoogleServicesFramework",
+      "source": "AppSet/Core/GoogleServicesFramework.zip!___etc___permissions/com.google.android.gsf.xml"
+    },
+    {
+      "path": "system/system_ext/priv-app/GoogleServicesFramework/GoogleServicesFramework.apk",
+      "bytes": 7557656,
+      "sha256": "91b2cf53158dd3c5cc00a22a8c8dc75f8b537578d096eece63a7f19912d4fd95",
+      "mode": "0644",
+      "uid": 0,
+      "gid": 0,
+      "group": "GoogleServicesFramework",
+      "source": "AppSet/Core/GoogleServicesFramework.zip!___priv-app___GoogleServicesFramework/GoogleServicesFramework.apk"
+    }
+  ],
+  "bytes": 245080909,
+  "apks": [
+    {
+      "path": "system/product/app/GoogleContactsSyncAdapter/GoogleContactsSyncAdapter.apk",
+      "package": "com.google.android.syncadapters.contacts",
+      "version_code": "31",
+      "version_name": "12-8361351",
+      "minimum_sdk": 31,
+      "certificate_sha256": [
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [],
+      "standalone_system_app": true
+    },
+    {
+      "path": "system/product/app/GoogleCalendarSyncAdapter/GoogleCalendarSyncAdapter.apk",
+      "package": "com.google.android.syncadapters.calendar",
+      "version_code": "2017039780",
+      "version_name": "2021.41.2-406147485-release",
+      "minimum_sdk": 30,
+      "certificate_sha256": [
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [],
+      "standalone_system_app": true
+    },
+    {
+      "path": "system/system_ext/priv-app/GoogleServicesFramework/GoogleServicesFramework.apk",
+      "package": "com.google.android.gsf",
+      "version_code": "33",
+      "version_name": "13",
+      "minimum_sdk": 33,
+      "certificate_sha256": [
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053"
+      ],
+      "native_abis": [],
+      "standalone_system_app": true
+    },
+    {
+      "path": "system/product/priv-app/Phonesky/Phonesky.apk",
+      "package": "com.android.vending",
+      "version_code": "83042110",
+      "version_name": "30.4.21-21 [0] [PR] 475636937",
+      "minimum_sdk": 21,
+      "certificate_sha256": [
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86",
+        "x86_64"
+      ],
+      "standalone_system_app": true
+    },
+    {
+      "path": "system/product/overlay/GmsCoreOverlay.apk",
+      "package": "com.nikgapps.overlay.gmscore",
+      "version_code": "33",
+      "version_name": "13",
+      "minimum_sdk": 33,
+      "certificate_sha256": [
+        "c8a2e9bccf597c2fb6dc66bee293fc13f2fc47ec77bc6b2b0d52c11f51192ab8"
+      ],
+      "native_abis": [],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/m/independent/AndroidPlatformServices.apk",
+      "package": "com.google.android.gms.policy_sidecar_aps",
+      "version_code": "2052073",
+      "version_name": "2052073.215491873.215491873",
+      "minimum_sdk": 28,
+      "certificate_sha256": [
+        "afee62fb653c9d863d1a6d6046b35225bf6380dd4657b105e8331a1de49f9f91"
+      ],
+      "native_abis": [],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_DynamiteLoader.apk",
+      "package": "com.google.android.gms.dynamite_dynamiteloader",
+      "version_code": "224619099",
+      "version_name": "22.46.19 (190408-0)",
+      "minimum_sdk": 31,
+      "certificate_sha256": [
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053",
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_MeasurementDynamite.apk",
+      "package": "com.google.android.gms.dynamite_measurementdynamite",
+      "version_code": "224619099",
+      "version_name": "22.46.19 (190408-0)",
+      "minimum_sdk": 31,
+      "certificate_sha256": [
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053",
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_GoogleCertificates.apk",
+      "package": "com.google.android.gms.dynamite_googlecertificates",
+      "version_code": "224619099",
+      "version_name": "22.46.19 (190408-0)",
+      "minimum_sdk": 31,
+      "certificate_sha256": [
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053",
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_DynamiteModulesA.apk",
+      "package": "com.google.android.gms.dynamite_dynamitemodulesa",
+      "version_code": "224619099",
+      "version_name": "22.46.19 (190408-0)",
+      "minimum_sdk": 31,
+      "certificate_sha256": [
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053",
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_CronetDynamite.apk",
+      "package": "com.google.android.gms.dynamite_cronetdynamite",
+      "version_code": "224619099",
+      "version_name": "22.46.19 (190408-0)",
+      "minimum_sdk": 31,
+      "certificate_sha256": [
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053",
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [
+        "arm64-v8a",
+        "armeabi-v7a"
+      ],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_AdsDynamite.apk",
+      "package": "com.google.android.gms.policy_ads_fdr_dynamite",
+      "version_code": "223712200",
+      "version_name": "223712200057.473771314.473771314",
+      "minimum_sdk": 28,
+      "certificate_sha256": [
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053",
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_DynamiteModulesC.apk",
+      "package": "com.google.android.gms.dynamite_dynamitemodulesc",
+      "version_code": "224619099",
+      "version_name": "22.46.19 (190408-0)",
+      "minimum_sdk": 31,
+      "certificate_sha256": [
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053",
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/app_chimera/m/PrebuiltGmsCoreSc_MapsDynamite.apk",
+      "package": "com.google.android.gms.dynamite_mapsdynamite",
+      "version_code": "224619099",
+      "version_name": "22.46.19 (190408-0)",
+      "minimum_sdk": 31,
+      "certificate_sha256": [
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053",
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/m/optional/MlkitBarcodeUIPrebuilt.apk",
+      "package": "com.google.android.gms.optional_mlkit_barcode_ui",
+      "version_code": "224619057",
+      "version_name": "22.46.19 (100000-0)",
+      "minimum_sdk": 28,
+      "certificate_sha256": [
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/m/optional/VisionBarcodePrebuilt.apk",
+      "package": "com.google.android.gms.policy_vision_barcode_dynamite",
+      "version_code": "221180404",
+      "version_name": "221180404065.456661180.456661180",
+      "minimum_sdk": 28,
+      "certificate_sha256": [
+        "afee62fb653c9d863d1a6d6046b35225bf6380dd4657b105e8331a1de49f9f91"
+      ],
+      "native_abis": [
+        "arm64-v8a",
+        "armeabi-v7a"
+      ],
+      "standalone_system_app": false
+    },
+    {
+      "path": "system/product/priv-app/PrebuiltGmsCore/PrebuiltGmsCoreSc.apk",
+      "package": "com.google.android.gms",
+      "version_code": "224619045",
+      "version_name": "22.46.19 (190408-515739919)",
+      "minimum_sdk": 31,
+      "certificate_sha256": [
+        "7ce83c1b71f3d572fed04c8d40c5cb10ff75e6d87d9df6fbd53f0468c2905053",
+        "f0fd6c5b410f25cb25c3b53346c8972fae30f8ee7411df910480ad6b2d60db83"
+      ],
+      "native_abis": [
+        "arm64-v8a",
+        "armeabi-v7a"
+      ],
+      "standalone_system_app": true
+    }
+  ],
+  "partitions": {
+    "GoogleContactsSyncAdapter": "product",
+    "GoogleCalendarSyncAdapter": "product",
+    "ExtraFiles": "product",
+    "GoogleServicesFramework": "system_ext",
+    "GooglePlayStore": "product",
+    "GmsCore": "product"
+  },
+  "permission_audit": [
+    {
+      "package": "com.google.android.gsf",
+      "partition": "system_ext",
+      "allowlist_files": [
+        "system/system_ext/etc/permissions/com.google.android.gsf.xml"
+      ]
+    },
+    {
+      "package": "com.android.vending",
+      "partition": "product",
+      "allowlist_files": [
+        "system/product/etc/permissions/NikGapps-privapp-permissions-google-p.xml",
+        "system/product/etc/permissions/com.android.vending.xml"
+      ]
+    },
+    {
+      "package": "com.google.android.gms",
+      "partition": "product",
+      "allowlist_files": [
+        "system/product/etc/permissions/NikGapps-privapp-permissions-google.xml",
+        "system/product/etc/permissions/NikGapps-privapp-permissions-google-p.xml",
+        "system/product/etc/permissions/com.google.android.gms.xml"
+      ]
+    }
+  ],
+  "deviations": [
+    "Do not execute updater/debloater/addon.d or Magisk integration.",
+    "No deletion/replacement of AOSP apps, no SetupWizard, no global permission enforcement changes.",
+    "Generate maps and dialer shared-library declarations only for included JAR files; omit installer declarations for absent Widevine and media.effects JARs.",
+    "Keep all 52 upstream Core payload files unchanged, including optional GMS modules."
+  ]
+}

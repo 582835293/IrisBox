@@ -1,0 +1,32 @@
+# 阅读说明：inner复制到system的zz_iris_guest.rc，原厂init解析事件/override。
+# 只补容器环境，不伪造boot_completed/APEX/data就绪；私有UID表另由外层准备。
+# Concentrated Guest-only additions to the stock RC and existing zz_disable.
+# Never asserts boot completion, APEX activation or user-data readiness.
+on early-init
+    setprop ro.zygote.disable_gl_preload true
+
+on fs
+    # /data is a real private bind mount; there is no encrypted Guest block device.
+    setprop ro.crypto.state unsupported
+    setprop ro.crypto.type none
+
+# Host already supplies the private, unencrypted /data mount. There is no
+# Guest mount_all to queue this stock event; retain its normal class semantics.
+on boot
+    trigger nonencrypted
+
+# Guest does not load the Host BPF programs. Statistics compatibility remains;
+# the private UID permission map is supplied separately before second-stage init.
+# bpf.progs_loaded remains the stock phase barrier, not proof of loaded maps.
+service bpfloader /system/bin/true
+    override
+    disabled
+    oneshot
+
+# Device nodes are supplied by the container entry. class_start core would
+# otherwise revive stock critical ueventd despite removing its explicit start.
+service ueventd /system/bin/ueventd
+    override
+    disabled
+    oneshot
+    seclabel u:r:ueventd:s0

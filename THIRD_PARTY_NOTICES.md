@@ -1,0 +1,18 @@
+# Third-party notices / 第三方组件
+
+IrisBox / 虹膜空间 is an independent integration. Components keep their upstream licenses; no blanket relicensing of AOSP, the kernel, firmware or Magisk is intended. Project-specific source currently has no blanket license grant. VMOS, Android, Raspberry Pi and other names identify their respective products or comparison targets, not endorsement.
+
+| Component | Source / license and supplied materials |
+|---|---|
+| AOSP 13 userspace, DocumentsUI, init and Android libraries | [AOSP](https://source.android.com/docs/setup/about/licenses), baseline android-13.0.0_r75; individual Apache/BSD/MIT/other notices preserved in the image and `reference/licenses/AOSP-NOTICE.xml.gz`. Integration changes are in `reference/patches` and `engine/native/inet`. |
+| Raspberry Pi device integration | [Raspberry Vanilla Android13 manifest](https://github.com/raspberry-vanilla/android_local_manifest/tree/android-13.0); exact known repository revisions in `reference/host-profile.json`. Source-built factory partitions are used; no unrelated third-party prebuilt Android distribution is substituted. |
+| Linux kernel | GPL-2.0, [5.15.150 rpi commit b951c20ef4d0](https://github.com/raspberry-vanilla/android_kernel_brcm_rpi/tree/b951c20ef4d009cbde200a3c4c436210689d1280); [matching build instructions](https://github.com/raspberry-vanilla/android_kernel_manifest/tree/android-13.0). Source archive accompanies release. |
+| Broadcom/Raspberry Pi boot firmware and vendor files | Their own notices and redistribution conditions, including `reference/licenses/LICENCE.broadcom` and the original vendor NOTICE. Firmware is not covered by a project-wide source license. |
+| Mesa/DRM/gralloc and connectivity adaptation | Matched Android/vendor libraries; keep individual notices. Integration patches are retained under `reference/patches`, and source provenance is recorded. No claim of a full from-zero rebuild of every fixed prebuilt. |
+| Magisk 30.7 guest component | [Official v30.7 source](https://github.com/topjohnwu/Magisk/tree/v30.7), GPL-3.0. `engine/runtime/root/magisk_30_7` retains LICENSE, adaptation.json, native constant changes, APK asset patch and per-file hashes. The Manager is a modified/re-signed container adapter; it is not an official unmodified release. No signature verification bypass is added. Boot flashing/global policy are unsupported inside guests. |
+| BusyBox 1.36.1.1 | GPL-2.0; [BusyBox 1.36.1](https://busybox.net/downloads/) with [topjohnwu's kitchen](https://github.com/topjohnwu/ndk-box-kitchen/tree/14d189ea3070a8167b3576bf83fe070d4a3441af). The exact unchanged ARM64 payload is from Magisk's official busybox-1.36.1.1 archive. It is also installed into the project-private host tools directory. Configuration/patches and upstream source accompany release. |
+| Optional Google components | **Not included in public ROM or Git source.** Google programs retain their own licenses. Users must independently supply authorized, matched components; code support is not redistribution permission. No accounts, tokens, running-instance data or extracted user updates are distributed. |
+
+`IrisBox-upstream-sources.zip` contains pinned source archives and an SHA-256 index. Magisk submodule repositories are archived at the v30.7 gitlink commits. Kitchen patches/config and native-constant/APK adaptation metadata are supplied; building the modified Manager requires your own signing key and upstream Android build dependencies. Dependency retrieval and build instructions remain in the upstream source. This preview does not claim bit-for-bit reproduction of upstream signed artifacts.
+
+宿主 Magisk 由用户自行安装，不放入宿主刷机镜像。实例 Root 保留既有适配组件，其许可证、修改说明与源码来源随发行提供。镜像及组件来源不能替代逐组件许可；网盘镜像与 GitHub 附件适用同样要求。

@@ -1,0 +1,35 @@
+{
+  "product": "IrisBox",
+  "chineseName": "虹膜空间",
+  "release": "v0.1.2-preview",
+  "repository": "https://github.com/582835293/IrisBox",
+  "package": "com.rootvmos.viewer",
+  "versionName": "0.1.2",
+  "versionCode": 109,
+  "engineVersion": "0.1.2-e12",
+  "publicRomGoogleIncluded": false,
+  "hostMagiskIncluded": false,
+  "freshCardFlashTested": false,
+  "artifacts": [
+    {
+      "file": "IrisBox-0.1.2.apk",
+      "bytes": 15749873,
+      "sha256": "bd395839b09dded3e5227b6f87a5b70ae6918e8991c981469702c06039124675"
+    },
+    {
+      "file": "IrisBox-rpi4-a13-aosp.irisrom",
+      "bytes": 700475643,
+      "sha256": "04d586a15459dec7fca963b37450b6b5cc722d3fe9477f58eaa3b5a5411ef629"
+    },
+    {
+      "file": "IrisBox-host-aosp13-rpi4-20260916-clean-preview.img.xz",
+      "bytes": 537835072,
+      "sha256": "72639c8f997b65377fa119df2f41e3231502619c2f6519dc460f48ae12a47e4a"
+    },
+    {
+      "file": "IrisBox-host-aosp13-rpi4-20260916-clean-preview.json",
+      "bytes": 1455,
+      "sha256": "eafb242a5af19c4ac03d080ecd0dca7740a72ee1f2865a7bc5ed4fb452c40e75"
+    }
+  ]
+}

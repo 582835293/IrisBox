@@ -1,0 +1,14 @@
+{
+  "binarySha256": "076678d1f3b87fa8ed6df2813eef24f5edd5c7d7dd1ad5c107b4112e2f960570",
+  "deviceTested": true,
+  "record": "docs/07_登录后回归与修复.md",
+  "previewCapturesBeforeHostReboot": 100,
+  "previewDimensions": [
+    640,
+    360
+  ],
+  "fullscreenVideoRendered": true,
+  "previewCapturesAfterHostReboot": 20,
+  "postRebootGuestBootCrashes": 0,
+  "installedApkSha256": "1af89623d4d48ed5df0df0d9977f4e90ad5599d6d766fd3eb458025bff396650"
+}

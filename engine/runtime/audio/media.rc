@@ -1,0 +1,9 @@
+# Stock media demuxing is required by MediaPlayer and browser video playback.
+service mediaextractor /system/bin/mediaextractor
+    override
+    class main
+    user mediaex
+    group drmrpc mediadrm
+    ioprio rt 4
+    task_profiles ProcessCapacityHigh
+

@@ -1,0 +1,61 @@
+# 阅读说明：仅覆盖Guest vendor，服务定义留vendor侧，不改Host。
+# 实体Wi-Fi/USB/CEC交Host，Guest用虚拟通道；媒体服务仍影响存储/编解码/Google依赖。
+# Vendor overrides belong to vendor, matching stock init's Treble boundary.
+service suspend_blocker_rpi /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.wifi_hal_legacy /system/bin/true
+    override
+    disabled
+    oneshot
+
+service wpa_supplicant /system/bin/true
+    override
+    disabled
+    oneshot
+
+service hostapd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.cec-hal-1-0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.usb-hal-1-0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+# MediaProvider initializes codecs before its FUSE service becomes available.
+# Restore just the ROM's stock OMX provider; other trimmed services stay scoped.
+# Source: /vendor/etc/init/android.hardware.media.omx@1.0-service.rc
+service vendor.media.omx /vendor/bin/hw/android.hardware.media.omx@1.0-service
+    override
+    class main
+    user mediacodec
+    group camera drmrpc mediadrm
+    ioprio rt 4
+    task_profiles ProcessCapacityHigh
+
+# Codec enumeration waits for each declared store. Restore the two stock stores.
+service android-hardware-media-c2-ffmpeg-hal-1-2 /vendor/bin/hw/android.hardware.media.c2@1.2-service-ffmpeg
+    override
+    class hal
+    user media
+    group mediadrm drmrpc
+    ioprio rt 4
+    task_profiles ProcessCapacityHigh
+
+service android-hardware-media-c2-v4l2-hal-1-0 /vendor/bin/hw/android.hardware.media.c2@1.0-service-v4l2-64
+    override
+    class hal
+    user media
+    group mediadrm drmrpc
+    ioprio rt 4
+    task_profiles ProcessCapacityHigh
+    setenv MESA_GLSL_CACHE_DISABLE 1

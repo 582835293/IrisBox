@@ -1,0 +1,33 @@
+# Loaded only when this particular instance has application root enabled.
+service iris-magisk /system/bin/sh /system/etc/iris-root/boot.sh
+    user root
+    group root inet readproc
+    seclabel u:r:su:s0
+    disabled
+    oneshot
+
+service iris-magisk-manager /system/bin/sh /system/etc/iris-root/boot.sh manager
+    user root
+    group root inet readproc
+    seclabel u:r:su:s0
+    disabled
+    oneshot
+
+service iris-magisk-service /system/bin/sh /system/etc/iris-root/boot.sh service
+    user root
+    group root inet readproc
+    seclabel u:r:su:s0
+    disabled
+    oneshot
+
+on post-fs-data
+    exec_start iris-magisk
+
+on nonencrypted
+    start iris-magisk-service
+
+on property:vold.decrypt=trigger_restart_framework
+    start iris-magisk-service
+
+on property:sys.boot_completed=1
+    start iris-magisk-manager

@@ -1,0 +1,1096 @@
+{
+  "reference": "Previous Project Iris V3.0, read-only provenance",
+  "archive_sha256": "b8ae188067f7704250d28856b77064c315480dcff20dd044d32c33d3df730a5c",
+  "files": [
+    {
+      "file": "common.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\common.sh",
+      "source_sha256": "a13240f4e1adf754a58fbf054c94fde695adfe403bab5519a2e000cd64b626cd",
+      "mode": "0o666"
+    },
+    {
+      "file": "ctl.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\ctl.sh",
+      "source_sha256": "97ce21684bbc9f2bb209730a9fbc171e33b4f1faeb94f20f4626cbc3c59af724",
+      "mode": "0o755"
+    },
+    {
+      "file": "display/broker.jar",
+      "source": "frozen-20261010/display/broker.jar",
+      "source_sha256": "d70b77aeeb910350e87083186e3f10757d60c40b63a7709f036b57f7cbaf3824",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/buffer_bridge/gateway.jar",
+      "source": "frozen-20261010/display/buffer_bridge/gateway.jar",
+      "source_sha256": "92cf2b8d41e715c539a2db68e1f2007244404af8166a16c646d162b82f5fe925",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/buffer_bridge/iris_buffer_producer",
+      "source": "frozen-20261010/display/buffer_bridge/iris_buffer_producer",
+      "source_sha256": "c15512537d985c0364259f64f1543b03f8b4ad84a0872e348e534faeef3e26d8",
+      "mode": "0o755"
+    },
+    {
+      "file": "display/buffer_bridge/probe.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_bridge\\probe.sh",
+      "source_sha256": "642c5cc61ad69731ed74ce5717403d9ca126c3351225652933e321128c4b4e2c",
+      "mode": "0o755"
+    },
+    {
+      "file": "display/buffer_viewer/broker.jar",
+      "source": "frozen-20261010/display/buffer_viewer/broker.jar",
+      "source_sha256": "0da59f9f560dea5f6bd9169fecd1ab24d8ae0d48c8202c0767d9e0de291d175d",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/buffer_viewer/display.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\display.sh",
+      "source_sha256": "503f80747cd4b9d6e424fb8788f30e3f3df93446bf5d756463ab1c75090fefc2",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/buffer_viewer/gateway.jar",
+      "source": "frozen-20261010/display/buffer_viewer/gateway.jar",
+      "source_sha256": "884354fcfd1e79896d8b739715e73ad1f07922611db1e6f765a3cf6157486ecc",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/buffer_viewer/manager.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\manager.sh",
+      "source_sha256": "7423b3adbf68f22f7504dc3d6faafb931d3b6e4d069db9febc71d06ac3f70cca",
+      "mode": "0o755"
+    },
+    {
+      "file": "display/capture_loop.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\capture_loop.sh",
+      "source_sha256": "c46e8abb4191f584031d46197c748178659a811d8276987a0293f779deba77e5",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/manager.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\manager.sh",
+      "source_sha256": "13ac9d87abe0365884d8a7067b005e8c078ba6ed66e371223070908e9c4fa541",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/stop_capture.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\stop_capture.sh",
+      "source_sha256": "2b388c6f60cedb9019bbedbfbe1a5cde63e6028c73f3307078e0ba43724d6920",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/stream/broker.jar",
+      "source": "frozen-20261010/display/stream/broker.jar",
+      "source_sha256": "53454474834975e92c8f556abf95a6f2a2f52bbdd10012e9fc84a9572afc4e32",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/stream/input.jar",
+      "source": "frozen-20261010/display/stream/input.jar",
+      "source_sha256": "7ebaeb765c990f6795f6834244d72808e544af1c6f600adadcd1cac5ac26fc64",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/stream/iris_stream_capture",
+      "source": "frozen-20261010/display/stream/iris_stream_capture",
+      "source_sha256": "5118489fad50ba33f1e7848a46460f34561baa4ea66561ec050984b6bfb765a8",
+      "mode": "0o755"
+    },
+    {
+      "file": "display/stream/manager.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\stream\\manager.sh",
+      "source_sha256": "112f37cce717bcef55486c3df573244b81db77da9fae83adc464be0c96b15727",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/stream/start_input.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\stream\\start_input.sh",
+      "source_sha256": "b3bcb11583f26f56541783b9a604ba17af747a7648fda01ee1d1b3102932911e",
+      "mode": "0o644"
+    },
+    {
+      "file": "display/stream/stop_input.sh",
+      "source": "frozen-20261010/display/stream/stop_input.sh",
+      "source_sha256": "dfa683ef0b9b560acf143f105c219195fd66100a75f815c7387f39988860c4a8",
+      "mode": "0o644"
+    },
+    {
+      "file": "file_exchange/guest.jar",
+      "source": "frozen-20261010/file_exchange/guest.jar",
+      "source_sha256": "0b05e256d473a79b3fc39d403f11abcbcaeda80b377ea646c06ef5511d28b76b",
+      "mode": "0o644"
+    },
+    {
+      "file": "google/a13_arm64/component.id",
+      "source": "frozen-20261010/google/a13_arm64/component.id",
+      "source_sha256": "6c147c7dc8ce82d818493422846bedfa36cbc9e7bfa1779def2b145d16aa8ed0",
+      "mode": "0o644"
+    },
+    {
+      "file": "google/a13_arm64/component_manifest.json",
+      "source": "experiments\\init_migration\\runtime_v1\\google\\a13_arm64\\component_manifest.json",
+      "source_sha256": "e4dc70eaa3278db0e669391fce60949d7610f70b970d42cad390796172872258",
+      "mode": "0o644"
+    },
+    {
+      "file": "google/a13_arm64/files.sha256",
+      "source": "frozen-20261010/google/a13_arm64/files.sha256",
+      "source_sha256": "bfdb7e584e23d2b41a1e40140f327f7bda890a32dd58b0b87e07bf5db9159f6d",
+      "mode": "0o644"
+    },
+    {
+      "file": "google/a13_arm64/guest_layer.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\google\\a13_arm64\\guest_layer.sh",
+      "source_sha256": "b31c42751c648f2392c4f1398ee7500bf792b9ef2bd7491d9c720210674e8b9d",
+      "mode": "0o755"
+    },
+    {
+      "file": "graphics.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\graphics.sh",
+      "source_sha256": "d99883e761bee7446b22df2c668dc09dedefddc5434c0a00d6ade1c9a03eae03",
+      "mode": "0o755"
+    },
+    {
+      "file": "guest.rc",
+      "source": "experiments\\init_migration\\runtime_v1\\guest.rc",
+      "source_sha256": "b1380f20c00d0b9236bdc25106fe64a6e982e15b972630d20fba4ba116090f82",
+      "mode": "0o666"
+    },
+    {
+      "file": "guest_vendor.rc",
+      "source": "experiments\\init_migration\\runtime_v1\\guest_vendor.rc",
+      "source_sha256": "d07d8f09c6189454b71113075d157c3313fa13e6a4c25788ae15ed7d096a6c23",
+      "mode": "0o644"
+    },
+    {
+      "file": "inner.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\inner.sh",
+      "source_sha256": "8ccc94d099bd71e78dde7e1cd3922aa23f95c337fca0f3900e9286c1258ed01a",
+      "mode": "0o755"
+    },
+    {
+      "file": "instances.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\instances.sh",
+      "source_sha256": "69bb3518f17a69a358dc7d9ac1a224e66c1484465a9ecabdb067799daeff7a50",
+      "mode": "0o755"
+    },
+    {
+      "file": "iris_init",
+      "source": "frozen-20261010/iris_init",
+      "source_sha256": "6c200ea65062e03e1f10db933c233a0509826679ecef1a6c1a164efc74d19490",
+      "mode": "0o755"
+    },
+    {
+      "file": "iris_runtime_ns",
+      "source": "frozen-20261010/iris_runtime_ns",
+      "source_sha256": "c268e9acc7cac0a582f11f940a8e9c7d79b28fc057183a1c796560ab9de56695",
+      "mode": "0o755"
+    },
+    {
+      "file": "loaded_files.txt",
+      "source": "frozen-20261010/loaded_files.txt",
+      "source_sha256": "495be478fa6028edad622381103961bfe4850096b422d1e4205bb7a53589de28",
+      "mode": "0o666"
+    },
+    {
+      "file": "memory.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\memory.sh",
+      "source_sha256": "f357ba24962366210be60bebf3b2f7cc4574dc277ecd4b896bdf5cb37214b42c",
+      "mode": "0o755"
+    },
+    {
+      "file": "network.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\network.sh",
+      "source_sha256": "3293370bcf2842a8961aaa63b567a6e94ad3d8237be850ca3a6750f909ba042e",
+      "mode": "0o755"
+    },
+    {
+      "file": "payload/DocumentsUI.apk",
+      "source": "experiments\\init_migration\\runtime_v1\\payload\\DocumentsUI.apk",
+      "source_sha256": "e36b30fd2c56a6d9019e5551b6823b3226e9f8d5b73d08472607e80ea7cfb046",
+      "mode": "0o644"
+    },
+    {
+      "file": "payload/libmeminfo_no_bpf.so",
+      "source": "frozen-20261010/payload/libmeminfo_no_bpf.so",
+      "source_sha256": "c1b8b7f5b4a5a16b630179af73989239cbd4c8bfad9e19a78917022d2ed45f2b",
+      "mode": "0o666"
+    },
+    {
+      "file": "payload/libminigbm_gralloc_gbm_mesa_guest_ids.so",
+      "source": "experiments\\init_migration\\runtime_v1\\payload\\libminigbm_gralloc_gbm_mesa_guest_ids.so",
+      "source_sha256": "53bbea687ec03dfda3c3b035b695f7840dcfcf3283f15f0aa58cdd46e5a5c506",
+      "mode": "0o644"
+    },
+    {
+      "file": "payload/libnetd_updatable_no_bpf.so",
+      "source": "frozen-20261010/payload/libnetd_updatable_no_bpf.so",
+      "source_sha256": "255e06c03cc8b35f2d0fb66a093ea83fc0061824005e34431edd435134764595",
+      "mode": "0o644"
+    },
+    {
+      "file": "payload/libnetworkstats_no_bpf.so",
+      "source": "frozen-20261010/payload/libnetworkstats_no_bpf.so",
+      "source_sha256": "38745468c884939e8a4bd03aea6a766bd9bea42a60ba166061e75d64d055811e",
+      "mode": "0o644"
+    },
+    {
+      "file": "payload/netd_no_bpf",
+      "source": "frozen-20261010/payload/netd_no_bpf",
+      "source_sha256": "004d138e5786c04418342be0f6f1daac05da4c32a6bdf87829954d1049036344",
+      "mode": "0o755"
+    },
+    {
+      "file": "payload/service-connectivity_uid_cleanup.jar",
+      "source": "experiments\\init_migration\\runtime_v1\\payload\\service-connectivity_uid_cleanup.jar",
+      "source_sha256": "10a32972cb343de14bafa51e35837d0d9b274b661360cc474db340eaa1d342fc",
+      "mode": "0o644"
+    },
+    {
+      "file": "prepare_groups.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\prepare_groups.sh",
+      "source_sha256": "e9e71f0c3a6448c3e6c542832de2dcb2b534e6888442dd84ccb32cd82b0c5f8b",
+      "mode": "0o755"
+    },
+    {
+      "file": "prepare_rom.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\prepare_rom.sh",
+      "source_sha256": "f8c7db74118e624ea7238261d2c4d3ddc01da617a4312324b3e2f4f5c38fd787",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/apex/com.android.adbd/etc/init.rc",
+      "source": "frozen-20261010/rc_candidate/apex/com.android.adbd/etc/init.rc",
+      "source_sha256": "8c4616cf413f243405836e49366a665b7fc363941fd334d7b9a2e760eea05003",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/apex/com.android.art/etc/init.rc",
+      "source": "frozen-20261010/rc_candidate/apex/com.android.art/etc/init.rc",
+      "source_sha256": "10ec13c3860d173f2e6aba763cbee3080ed890888a8102e123e66b3637d0fc34",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/apex/com.android.compos/etc/init.rc",
+      "source": "frozen-20261010/rc_candidate/apex/com.android.compos/etc/init.rc",
+      "source_sha256": "239247ad9a734abf6c7ba3aa03aea5a83d43dc343baec0504107cd2217d4db66",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/apex/com.android.media.swcodec/etc/mediaswcodec.rc",
+      "source": "frozen-20261010/rc_candidate/apex/com.android.media.swcodec/etc/mediaswcodec.rc",
+      "source_sha256": "b500bd76f6bfe179a62fd9e4988ea57dfe796227782694138318311b3d6dd32a",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/apex/com.android.media/etc/mediatranscoding.rc",
+      "source": "frozen-20261010/rc_candidate/apex/com.android.media/etc/mediatranscoding.rc",
+      "source_sha256": "99b682f368456b08d24683d394965c1266626f4cf749cd77bdfd8c101207cc1d",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/apex/com.android.os.statsd/etc/init.rc",
+      "source": "frozen-20261010/rc_candidate/apex/com.android.os.statsd/etc/init.rc",
+      "source_sha256": "5ac46e210db511c06cba410ac2aa1d6fc11a90951cca149764a497f5628d2736",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/apex/com.android.sdkext/etc/derive_classpath.rc",
+      "source": "frozen-20261010/rc_candidate/apex/com.android.sdkext/etc/derive_classpath.rc",
+      "source_sha256": "a9e65b0c114408e5cb8356bdb435a6b48d0a67cd7879915c52ffa094a267f607",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/apex/com.android.sdkext/etc/derive_sdk.rc",
+      "source": "frozen-20261010/rc_candidate/apex/com.android.sdkext/etc/derive_sdk.rc",
+      "source_sha256": "fb920b4c90551f31c789b721774f25ffac9e4c7de2b31e3ae64ab4267362c660",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/apex/com.android.virt/etc/init.rc",
+      "source": "frozen-20261010/rc_candidate/apex/com.android.virt/etc/init.rc",
+      "source_sha256": "07629fb5ebc696c863851c912504d32fa36d57291408efc565d8d1d07787ce2a",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/init.environ.rc",
+      "source": "frozen-20261010/rc_candidate/init.environ.rc",
+      "source_sha256": "cb612c1ab9a5edf2a70664a881e6f80aa3b97088c98ef7a8dca69d569c1a8b14",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/product/etc/init/zz_disable_system.rc",
+      "source": "frozen-20261010/rc_candidate/product/etc/init/zz_disable_system.rc",
+      "source_sha256": "129abea8b21f9e1ceaa6956f41f54839c5e53c1d870fb852aaa3bf8718a09279",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/android.hidl.allocator@1.0-service.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/android.hidl.allocator@1.0-service.rc",
+      "source_sha256": "a56e76ce0cb3933dcda463c7b401aee5bf15c78d16279edc98db7bda23bf4ec9",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/android.system.suspend@1.0-service.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/android.system.suspend@1.0-service.rc",
+      "source_sha256": "c7164caf27ccdc9df71555d54006d087be131ef0afa5bd380b42bb9c5726eb67",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/apexd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/apexd.rc",
+      "source_sha256": "67bddb68d26d6cfac1cc62b743b25e75b34e78cd3df92d73490b82e27dbfdc44",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/atrace.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/atrace.rc",
+      "source_sha256": "ccba3c186939c987a3cbd15eb77fc8ac0785e9cc7577246a53b7d17d7b0357dd",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/atrace_userdebug.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/atrace_userdebug.rc",
+      "source_sha256": "ed0454077942cb018f3a406d2924ad1c078a4f7c6ba36e629a225dd6b6d32687",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/audioserver.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/audioserver.rc",
+      "source_sha256": "f9a2aed1b5a524f1d804aa3c8c87b746529f3d5cd1123901749ed1229d858d7d",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/blank_screen.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/blank_screen.rc",
+      "source_sha256": "1e4d509471f2f88e46a15c1247bb0e5d8a4732b2dcc066eaa09aa70019e525be",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/bootanim.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/bootanim.rc",
+      "source_sha256": "d7854acbd566ba7985fefa5aa87602c42814ed5a7ea5904d2628ac4f9444f77f",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/bootstat-debug.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/bootstat-debug.rc",
+      "source_sha256": "18ffe824e55a6caba58f72b7ad6cee05bd4bec5aebf4b6e030a3c24a7ea3f440",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/bootstat.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/bootstat.rc",
+      "source_sha256": "cfd91b1021066d911301b1a40d9f014ec89ca1f318e44c7641a60ca964b14c66",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/bpfloader.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/bpfloader.rc",
+      "source_sha256": "aef3af91463902a43d4c00c6e8ed641f35e66db69ba04f3ee533c6a4246d0670",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/cameraserver.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/cameraserver.rc",
+      "source_sha256": "0e4a8267a696dea00b5a82d208f5ee763404a1420867af82de739d31422611bd",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/clean_scratch_files.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/clean_scratch_files.rc",
+      "source_sha256": "0b55b0753c46ee622c8ea193e053a736e3161a05e17727509b7d4e43f8dbfa68",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/credstore.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/credstore.rc",
+      "source_sha256": "438e38856cdf410379144d7dfacff0f37a961007b238a0acba1d442bc900faac",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/dmesgd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/dmesgd.rc",
+      "source_sha256": "58200f8fc2ee7277ba59859cc256b57676d9dbd45f68538a265237685e13b683",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/drmserver.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/drmserver.rc",
+      "source_sha256": "e35d0f49ea371744d2acfda7305112ed5d72d1f59401fb1518a99bbe4b3cb4de",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/dumpstate.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/dumpstate.rc",
+      "source_sha256": "e52fefbb05c6c993cedf26466d0c059d1e4f7a036782e385b1164d8eafc9b1f1",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/flags_health_check.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/flags_health_check.rc",
+      "source_sha256": "76c3bf64f41057bc9c9ce0ca433f71c5d6a0f42cd4bd17c0b696debb97763239",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/gatekeeperd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/gatekeeperd.rc",
+      "source_sha256": "d03a1ca16e4db87a11d47d03433f5d31cce5c9251f3cf8f5bd52f74bf3a9ae64",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/gpuservice.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/gpuservice.rc",
+      "source_sha256": "a4f71d84d4c830c08aae58a434727691fa972a40a2b5cb8e2288d2d80d42f7de",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/gsid.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/gsid.rc",
+      "source_sha256": "891aa13d00c847784594e2f24ed25763a1778a3a57fae8fff5d25cd81759992f",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/heapprofd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/heapprofd.rc",
+      "source_sha256": "325c7e57909523e3c617a4d28311f5f15c575b69c0ccbf96c99d6d657b0a6475",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/hw/init.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/hw/init.rc",
+      "source_sha256": "80d3ef1c7f706ae33e32dbe2bcf7f137e90d74341aa710a181b4c5fce9c1c314",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/hw/init.usb.configfs.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/hw/init.usb.configfs.rc",
+      "source_sha256": "1384154db54fe5a8b3fb62f9c8e9c6732c379066c941364c25d853ac55aa994b",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/hw/init.usb.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/hw/init.usb.rc",
+      "source_sha256": "91e79aab1c819397fc050c27b21853253c0e1711423760c9ee3f5af7ed10d59b",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/hw/init.zygote32.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/hw/init.zygote32.rc",
+      "source_sha256": "e3857dd9ac01857a5913e2a22866a5de505f72b559c37a954be6bd2436942a1d",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/hw/init.zygote64_32.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/hw/init.zygote64_32.rc",
+      "source_sha256": "d0882d7226e5bdd8008cfb72f408e08e3b398258db7856f50b0e851e482ead24",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/hwservicemanager.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/hwservicemanager.rc",
+      "source_sha256": "e74c6f117deacdf0d59e799eb807311775a2ee888a2f9208e210f6bcf2de73f8",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/idmap2d.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/idmap2d.rc",
+      "source_sha256": "4dc195022f473d4b93770b441997d7086dfa07de82f73a713167bf6d62596779",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/incidentd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/incidentd.rc",
+      "source_sha256": "a989c870659f49b09f9fa618513cab952878326142331af9b7d2a2e59629c7ca",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/init-debug.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/init-debug.rc",
+      "source_sha256": "765aa7ca0a86d80cf16b04c6e9daa6fae0a8f8abd6da23075c95db702046bf74",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/installd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/installd.rc",
+      "source_sha256": "4d81a436ef00b40621ea0b2e4138064e4ef669bd0b27b0cb4ccebdc7720cf91a",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/keystore2.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/keystore2.rc",
+      "source_sha256": "5a34941c7935ecd3b6e3e58487c0ab51365a52feae297cdf63de11e163f8068a",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/llkd-debuggable.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/llkd-debuggable.rc",
+      "source_sha256": "dba4be8eb941e222f97bc441561c27f6edbd5c0dae9e154bf0ff2c4c5fe6b540",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/llkd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/llkd.rc",
+      "source_sha256": "915ed69cf1cca279e4a0a8ce03d9b79fd4e274f688cd07d47bdb85e13e93a5c3",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/lmkd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/lmkd.rc",
+      "source_sha256": "64188198fd2d0913a7e5ed60667c2032769ed3ea18c214838607265b55eb1fe4",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/logcatd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/logcatd.rc",
+      "source_sha256": "da2f4ec465d257c402eaee2e81291415dea4b53b8920fd7a68b4acebdac5964d",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/logd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/logd.rc",
+      "source_sha256": "42d49cb06c2f6fd317a4d145e4c260d095a35d9258c1cf93a72cd5b9695a7078",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/logtagd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/logtagd.rc",
+      "source_sha256": "a510559d0c95d2f084389a15aa27138c7ec1eef458e8a60b06868f680436a737",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/lpdumpd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/lpdumpd.rc",
+      "source_sha256": "8bc75276337f68cbf977e1bb732e95cde28d5a928f4d3a96155c52c3f5b73b5a",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/mdnsd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/mdnsd.rc",
+      "source_sha256": "6dcc3f787ed0bb94abb3843504604625c62852072219d8bf15e8628baef2cb95",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/mediaextractor.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/mediaextractor.rc",
+      "source_sha256": "679f6722ee487f9ea335754f74198ff5969e57b163830ccd8fb31ae4401321b4",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/mediametrics.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/mediametrics.rc",
+      "source_sha256": "9a5101b1399525b66ace536a371dd48ee3513c4976f842fef544ed7e52ef2130",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/mediaserver.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/mediaserver.rc",
+      "source_sha256": "73c95a8e8e10fcbb3d4d0c92ce87ec920c1c7f26096edf0320fab77a7ac00c39",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/mtpd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/mtpd.rc",
+      "source_sha256": "242323dcf2fa1517f0c89e2dd58697aa4f378df1da0c9223270171f7e9e9a380",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/netd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/netd.rc",
+      "source_sha256": "d0a5520f745e5da5f2438d75bc389906484328475a6957166408caa20fe78962",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/odsign.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/odsign.rc",
+      "source_sha256": "251584c9838bd57312193e498e20c4516fc6a96fea5332a9c79459a1d8a1aef1",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/perfetto.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/perfetto.rc",
+      "source_sha256": "3d6ca06d18a768e1c68b0e795f2de2bed6c32ea41cb8cace16429dc0a6a70764",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/prng_seeder.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/prng_seeder.rc",
+      "source_sha256": "6c4763c65ab372e459e5b1558e733fa08a85615198d2555a4112276b47cb71d4",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/profcollectd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/profcollectd.rc",
+      "source_sha256": "7bf785141cc20c6ed0e83cf8d91fcac387c26e398ebb4443ceb84606e7c45c71",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/racoon.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/racoon.rc",
+      "source_sha256": "c58b0ffdf22e92b58655464d6a9671c00830f572bd3ca4b8afdbaae6f60f7b91",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/recovery-persist.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/recovery-persist.rc",
+      "source_sha256": "0c5e3bee4329907791a861067722bbea0d56ad6639cd796fba2526c26bc975fa",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/recovery-refresh.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/recovery-refresh.rc",
+      "source_sha256": "0f6e0fb90d9d9d964fcc29b299f60c292b56882b06676136758e015e849839fa",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/rss_hwm_reset.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/rss_hwm_reset.rc",
+      "source_sha256": "22e991061614907864fc59838b0eea34037e6497ac356b4ba3c196af961eb4e5",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/servicemanager.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/servicemanager.rc",
+      "source_sha256": "cf014ba989b73cd08bac683a5fe7ca76f6dd6a3a6f58b85c071f608f444d6435",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/simpleperf.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/simpleperf.rc",
+      "source_sha256": "f82a0d4de6efcb8430e606c8a5da8650c2aebd3cfb75000d8ff3bef83e920c74",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/snapuserd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/snapuserd.rc",
+      "source_sha256": "d983d2376490c9731133419a3dce07a9b2500da9897307f431a11b73530bdc24",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/storaged.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/storaged.rc",
+      "source_sha256": "f8cc5d53578c64987148ffc8651c041700f7e4ff4805c42aafeb240f4b47d6c3",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/surfaceflinger.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/surfaceflinger.rc",
+      "source_sha256": "9e6f53f645e4ab2c6dfb4a5679713757a7ed232dc606d8e501dcb3cae3810116",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/tombstoned.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/tombstoned.rc",
+      "source_sha256": "fc4a4486332af51be3fa98e77ab4cd6cb4e13d738c061e3e6ad47aafdf4490d4",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/traced_perf.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/traced_perf.rc",
+      "source_sha256": "2b4d800381c9a515766fc978a4276fd75530652807fa88ffd7a42f10ce55b277",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/uncrypt.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/uncrypt.rc",
+      "source_sha256": "63b33e2a2271d0c598bca842d0e6b03564004ed1e0e2995e8dd8ed5616455e82",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/usbd.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/usbd.rc",
+      "source_sha256": "772b27f3affb6e67d1a6bc83a2b201cbdc053854789326ac9833ab84277ff995",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/vold.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/vold.rc",
+      "source_sha256": "e4fa55328e8325509e2a5c44300d8a2563895c2f76331a160395f42e8319940a",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/wifi.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/wifi.rc",
+      "source_sha256": "d2c32a50b7ed4c7b5b83e70f56f7ecb04c649f89d04b92ab12b43dc7432701c4",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/system/etc/init/wificond.rc",
+      "source": "frozen-20261010/rc_candidate/system/etc/init/wificond.rc",
+      "source_sha256": "7ec3ef548e88bcd13577b59239ca88b594454622818e4a9190ad274b1aadee38",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.audio.service.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.audio.service.rc.disabled",
+      "source_sha256": "f64c588de8808a8f8af3b6e72f1a563a8a861ed11d421afaeaee157ea3ae0698",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.bluetooth@1.1-service.btlinux.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.bluetooth@1.1-service.btlinux.rc.disabled",
+      "source_sha256": "7c78184bcb67d8b14600a2b6b1b1b2f094948ed608b683dd2ca8aa1955407a3e",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.camera.provider@2.5-external-service.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.camera.provider@2.5-external-service.rc.disabled",
+      "source_sha256": "f41adbd315b20426c549240f7c3da36639288674713cc15ede758452cdb771e4",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.camera.provider@2.5-service_64.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.camera.provider@2.5-service_64.rc.disabled",
+      "source_sha256": "8283b04c4b1c0d833a5eb65484bfb68f657571aa930530914361064f616bb70b",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.camera.provider@2.5-service_64.rpi.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.camera.provider@2.5-service_64.rpi.rc.disabled",
+      "source_sha256": "6d89ca14f3c88a659ae12844dbc066b32bd82e059fc8d7979390cd0585579887",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.cas@1.2-service.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.cas@1.2-service.rc",
+      "source_sha256": "74310e119a0f2970566153d6366dcddf7a16cba7703065a790b6bbb222002fcc",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.drm-service.clearkey.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.drm-service.clearkey.rc",
+      "source_sha256": "5b7b5e1eaf964301570bb0947e50bf5e81af7de629cdfbeafe9915a0bfe4fcee",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.gatekeeper@1.0-service.software.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.gatekeeper@1.0-service.software.rc",
+      "source_sha256": "00622afbc149e6652f29eb76f4cb8592359720f67bf5b08bc496e89f6112d0a9",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.graphics.allocator@4.0-service.minigbm_gbm_mesa.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.graphics.allocator@4.0-service.minigbm_gbm_mesa.rc.disabled",
+      "source_sha256": "63c8f81bbc07ef0a726e2b4cacce5f0e5a8492cec3a068201a777da31c7b53b6",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.graphics.composer@2.4-service.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.graphics.composer@2.4-service.rc.disabled",
+      "source_sha256": "aa09b5563147488e615e85c104d9153a185a3c0a786a4663325ccdb59bc1c6b4",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.health-service.rpi.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.health-service.rpi.rc",
+      "source_sha256": "7564cf903e0a47127098794c7782254578efc039a9966cd78be596d7006c8e5b",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.keymaster@4.1-service.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.keymaster@4.1-service.rc",
+      "source_sha256": "53b52bd9f04e6cf843f7df65f1d8af3e8209f7e33a0a92042aef1688ac10aa1e",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.light-service.rpi.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.light-service.rpi.rc",
+      "source_sha256": "2efd2103e3ed9e8d9767946817cdef8410b267aada87819c4a0565b28a0cba3e",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.media.c2@1.0-service-v4l2-64.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.media.c2@1.0-service-v4l2-64.rc.disabled",
+      "source_sha256": "d6efe32e156508f233fd344be186aad344d91ec8d95e5926872e05ceb118fe13",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.media.c2@1.2-service-ffmpeg.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.media.c2@1.2-service-ffmpeg.rc.disabled",
+      "source_sha256": "71d55299c0cdd6dad5928a34fc8a895ba52661821c4cdcb3444bc9b947730390",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.media.omx@1.0-service.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.media.omx@1.0-service.rc.disabled",
+      "source_sha256": "378be3d007838e778829e4e9bb64db0fb49c0c7e9290e2be26abb6495149f36e",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.thermal@2.0-service.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.thermal@2.0-service.rc",
+      "source_sha256": "cec6b703d520f92ba27d16dd50f7010af27071a248c3d418c083916c205f679c",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.tv.cec@1.0-service.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.tv.cec@1.0-service.rc.disabled",
+      "source_sha256": "6c75b9dbd5d4e824cdd8f648e1af718f997e41f6b4b8c6fa1eb79acb0fc01438",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.usb@1.0-service.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.usb@1.0-service.rc",
+      "source_sha256": "77b3cb1253f3c113cc783d298a1e2dd603f14bc56fbe280f8f7b51aa1de37c9f",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.wifi.supplicant-service.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.wifi.supplicant-service.rc.disabled",
+      "source_sha256": "b6f42378e73cf5a312e915b5f7d3a7002a668a56f011be00f903d77fe9d1f31a",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/android.hardware.wifi@1.0-service.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/android.hardware.wifi@1.0-service.rc.disabled",
+      "source_sha256": "3a9022f2248e5375ad5e9d60c7c04cbb367b5a75ed25cb6129c983ce93349032",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/boringssl_self_test.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/boringssl_self_test.rc",
+      "source_sha256": "459fea4e63e78a19b04b37e6298e4ce22a816f2f5604b17289d04c3a57e1fe1d",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/hostapd.android.rc.disabled",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/hostapd.android.rc.disabled",
+      "source_sha256": "a09021175637f73d790f1015b849e3a6c441dba05477fbcde33fa35ce64fb1b6",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/hw/init.rpi4.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/hw/init.rpi4.rc",
+      "source_sha256": "1c7b7a715f59aaf070792f742eb651803775a3f494ffa062f42fab129f44d2e0",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/hw/init.rpi4.usb.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/hw/init.rpi4.usb.rc",
+      "source_sha256": "381ef7d13c2e5181002c3c44f88dfb20a41c7f77b941084afbee0ff807ad8302",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/power-default.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/power-default.rc",
+      "source_sha256": "12326790b57d19de204ad26bfd9f12381c1b9d6becf0409686cce6dcdb2d8c70",
+      "mode": "0o666"
+    },
+    {
+      "file": "rc_candidate/vendor/etc/init/zz_disable_vendor.rc",
+      "source": "frozen-20261010/rc_candidate/vendor/etc/init/zz_disable_vendor.rc",
+      "source_sha256": "a1d61e0dd9709a1cfbe29568df2f5bdf7a365dbaf3eed8e15243c388f327b7fd",
+      "mode": "0o666"
+    },
+    {
+      "file": "resolution.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\resolution.sh",
+      "source_sha256": "f6cf9014d439dca161bc6c47b1b40c0f0664f4b36803f3ecd349afdd52a65e82",
+      "mode": "0o644"
+    },
+    {
+      "file": "root.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\root.sh",
+      "source_sha256": "b68eed0ecc8fd1afe6b09a049acdb9f0706a775f61f7e8409ed76001ba9d2b2b",
+      "mode": "0o755"
+    },
+    {
+      "file": "root/boot.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\root\\boot.sh",
+      "source_sha256": "362e39621ab914f3428851b5e23dce62751529aa71d9e9f6e8052adc898902f5",
+      "mode": "0o755"
+    },
+    {
+      "file": "root/guest.rc",
+      "source": "experiments\\init_migration\\runtime_v1\\root\\guest.rc",
+      "source_sha256": "df841600f944574a10f30c56fee0bf81a3ad317682a7bcfe191604096fde661c",
+      "mode": "0o644"
+    },
+    {
+      "file": "root/magisk_30_7/LICENSE",
+      "source": "frozen-20261010/root/magisk_30_7/LICENSE",
+      "source_sha256": "589ed823e9a84c56feb95ac58e7cf384626b9cbf4fda2a907bc36e103de1bad2",
+      "mode": "0o644"
+    },
+    {
+      "file": "root/magisk_30_7/Magisk.apk",
+      "source": "frozen-20261010/root/magisk_30_7/Magisk.apk",
+      "source_sha256": "b8f2e4b1d3262026134399dae19f9fc1633967b59bda99bd4c4d5e648c9f6a2d",
+      "mode": "0o644"
+    },
+    {
+      "file": "root/magisk_30_7/SHA256SUMS",
+      "source": "frozen-20261010/root/magisk_30_7/SHA256SUMS",
+      "source_sha256": "7a047e5748f309ece8b8d784f3718d5141fe2892a56fe6e5ac26cadc0c48bfcd",
+      "mode": "0o644"
+    },
+    {
+      "file": "root/magisk_30_7/adaptation.json",
+      "source": "experiments\\init_migration\\runtime_v1\\root\\magisk_30_7\\adaptation.json",
+      "source_sha256": "465f9514b3e6c364e120119e3b9b49c91e1da76b1ca70379ff024332fb52ebb0",
+      "mode": "0o644"
+    },
+    {
+      "file": "root/magisk_30_7/apk_assets.patch",
+      "source": "frozen-20261010/root/magisk_30_7/apk_assets.patch",
+      "source_sha256": "55001f9c48be51b4b3cc39e486378fa723b248f993485a81484b635e05d552aa",
+      "mode": "0o644"
+    },
+    {
+      "file": "root/magisk_30_7/busybox",
+      "source": "frozen-20261010/root/magisk_30_7/busybox",
+      "source_sha256": "4d60ab3f5a59ebb2ca863f2f514e6924401b581e9b64f602665c008177626651",
+      "mode": "0o755"
+    },
+    {
+      "file": "root/magisk_30_7/component.id",
+      "source": "frozen-20261010/root/magisk_30_7/component.id",
+      "source_sha256": "da6f63826874668f4e2e9a9a81117d71af05429afaa10da9d3983efbc58c9f56",
+      "mode": "0o644"
+    },
+    {
+      "file": "root/magisk_30_7/magisk",
+      "source": "frozen-20261010/root/magisk_30_7/magisk",
+      "source_sha256": "3106b25ccd6a35225374b4f0925bff8aa4de59c826e8e9b37e9ad00e807c7e1f",
+      "mode": "0o755"
+    },
+    {
+      "file": "root/magisk_30_7/magisk32",
+      "source": "frozen-20261010/root/magisk_30_7/magisk32",
+      "source_sha256": "46a0da9388b4ee42674e57581bc207def1eefe30ec402fd12f04f826ad80d297",
+      "mode": "0o755"
+    },
+    {
+      "file": "root/magisk_30_7/magiskpolicy",
+      "source": "frozen-20261010/root/magisk_30_7/magiskpolicy",
+      "source_sha256": "f3b64f31b32db302ac59e39d8437120a6029a0bf4364d3cc412a481a8cc1bd82",
+      "mode": "0o755"
+    },
+    {
+      "file": "root/magisk_30_7/stub.apk",
+      "source": "frozen-20261010/root/magisk_30_7/stub.apk",
+      "source_sha256": "8e3958dbf2988c2bba13934f0d8e77981a3f713ac1b640efdc4396c443070578",
+      "mode": "0o644"
+    },
+    {
+      "file": "root/magisk_30_7/util_functions.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\root\\magisk_30_7\\util_functions.sh",
+      "source_sha256": "987b67f12555894fcab3730b82cbba1d4cb18004e48f364527f5da73574d1e28",
+      "mode": "0o755"
+    },
+    {
+      "file": "watchdog.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\watchdog.sh",
+      "source_sha256": "328be6a2eadb8d6181d6bfdaa0ab5a247d71c1f7a590567f227c6b3b723b43c9",
+      "mode": "0o755"
+    },
+    {
+      "file": "wrapper.sh",
+      "source": "experiments\\init_migration\\runtime_v1\\wrapper.sh",
+      "source_sha256": "5ccdf95cf78beb6fdbce136d856656e5778e38840da2870af95850e5b72a5d5b",
+      "mode": "0o666"
+    },
+    {
+      "file": "app/viewer/src/com/iris/viewer/buffer/DirectoryRefresh.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\src\\com\\iris\\viewer\\buffer\\DirectoryRefresh.java",
+      "source_sha256": "7b18ed1456a4631a06f979c26b0e9aef30315cbc017764e64209494f9f98444e"
+    },
+    {
+      "file": "app/viewer/src/com/iris/viewer/buffer/DisplayActivity.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\src\\com\\iris\\viewer\\buffer\\DisplayActivity.java",
+      "source_sha256": "fbcad456ed1afa47f09f7a80fee6b8a90adba3066b954642a9cca1960c1689d9"
+    },
+    {
+      "file": "app/viewer/src/com/iris/viewer/buffer/FileActivity.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\src\\com\\iris\\viewer\\buffer\\FileActivity.java",
+      "source_sha256": "62fbe0b973c983c033ba78cda92d4b4b9f7227f692cf9e9e1c6f30572bcc1d92"
+    },
+    {
+      "file": "app/viewer/src/com/iris/viewer/buffer/HostRootEntry.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\src\\com\\iris\\viewer\\buffer\\HostRootEntry.java",
+      "source_sha256": "b2a896af290187679d5f67192e25ab13844dfeabae65bb0d25319235c25e43ef"
+    },
+    {
+      "file": "app/viewer/src/com/iris/viewer/buffer/InputLink.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\src\\com\\iris\\viewer\\buffer\\InputLink.java",
+      "source_sha256": "2842cee381b90bb52903b182052728fdea615220fd1321cfd0a7b450ce75dc99"
+    },
+    {
+      "file": "app/viewer/src/com/iris/viewer/buffer/InputQueue.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\src\\com\\iris\\viewer\\buffer\\InputQueue.java",
+      "source_sha256": "6fc0093a24143782421703cd17a7fb0decf40b6a5610088ad08ff2c2b6db103e"
+    },
+    {
+      "file": "app/viewer/src/com/iris/viewer/buffer/InstanceNames.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\src\\com\\iris\\viewer\\buffer\\InstanceNames.java",
+      "source_sha256": "a0394a647a7b6795d8f0ce3561d05ddef39930272c8569c9887867b85421c016"
+    },
+    {
+      "file": "app/viewer/src/com/iris/viewer/buffer/ListActivity.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\src\\com\\iris\\viewer\\buffer\\ListActivity.java",
+      "source_sha256": "2e745ad521679123ec8a10bead7ac768d518dbfd6c5da62fe11b7ad893253d6c"
+    },
+    {
+      "file": "app/viewer/src/com/iris/viewer/buffer/PointerGeometry.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\src\\com\\iris\\viewer\\buffer\\PointerGeometry.java",
+      "source_sha256": "8323394b981bda24c8b7db72638c7ddb01e840661633d633f065aa285fbf022e"
+    },
+    {
+      "file": "app/viewer/src/com/iris/viewer/buffer/TransferIO.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\src\\com\\iris\\viewer\\buffer\\TransferIO.java",
+      "source_sha256": "2cd9b1fd08389240a7fba823340ab57deeea9154e4b3b085f00f96901c42cff8"
+    },
+    {
+      "file": "app/viewer/res/values/strings.xml",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\res\\values\\strings.xml",
+      "source_sha256": "5152e352975cbb85fbbcbd2aba1f741d86ac3a8e0bfec828f2577f778762bea6"
+    },
+    {
+      "file": "app/viewer/native/buffer_viewer.cpp",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\viewer\\native\\buffer_viewer.cpp",
+      "source_sha256": "c99053d75065de8712a4ebca5b87fb8b4d9a9d5b773e71825766688bc4d4df60"
+    },
+    {
+      "file": "app/broker/src/com/iris/buffer/viewer/broker/BootAttempt.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\broker\\src\\com\\iris\\buffer\\viewer\\broker\\BootAttempt.java",
+      "source_sha256": "ef4bfd0e2224ff0ac123cafdd2878d76d03a4aafb720d637e4f601c8b15edbdf"
+    },
+    {
+      "file": "app/broker/src/com/iris/buffer/viewer/broker/BootLogStore.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\broker\\src\\com\\iris\\buffer\\viewer\\broker\\BootLogStore.java",
+      "source_sha256": "a73b38c04a1b7481601547dc75a4d2d19267386d9d4a29737923f976f5f3cfb0"
+    },
+    {
+      "file": "app/broker/src/com/iris/buffer/viewer/broker/BufferBroker.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\broker\\src\\com\\iris\\buffer\\viewer\\broker\\BufferBroker.java",
+      "source_sha256": "d045f869d52deb34c505ea454646f35e285890aece8bb35df88ae974ddd85631"
+    },
+    {
+      "file": "app/broker/src/com/iris/buffer/viewer/broker/ExchangeFiles.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\broker\\src\\com\\iris\\buffer\\viewer\\broker\\ExchangeFiles.java",
+      "source_sha256": "c4af484f5c0127d6c4dbde78cdd7e9eaacc383471921c3214d1b982e82243cb0"
+    },
+    {
+      "file": "app/broker/src/com/iris/buffer/viewer/broker/ExchangeProtocol.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\broker\\src\\com\\iris\\buffer\\viewer\\broker\\ExchangeProtocol.java",
+      "source_sha256": "f9daee5de33bd69edef1a816b2476343284203419a2a7312a345b11c5b6a7d97"
+    },
+    {
+      "file": "app/broker/src/com/iris/buffer/viewer/broker/InstanceCatalog.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\broker\\src\\com\\iris\\buffer\\viewer\\broker\\InstanceCatalog.java",
+      "source_sha256": "e74033422f678e63d48fe3ff7c5248790fc326c6482da05f3645cd3c287fc795"
+    },
+    {
+      "file": "app/broker/src/com/iris/buffer/viewer/broker/PreviewFrames.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\broker\\src\\com\\iris\\buffer\\viewer\\broker\\PreviewFrames.java",
+      "source_sha256": "a4c7f7dc3f856ea741dcdcb689414f6c4581d2910db20f2cfef3f8b915e961f2"
+    },
+    {
+      "file": "app/gateway/src/com/iris/buffer/viewer/gateway/BufferGateway.java",
+      "source": "experiments\\init_migration\\runtime_v1\\display\\buffer_viewer\\gateway\\src\\com\\iris\\buffer\\viewer\\gateway\\BufferGateway.java",
+      "source_sha256": "114aa536ae4c1a6644bc57607c95ad0a13cc868ef778448d2442548dd171ad16"
+    }
+  ]
+}

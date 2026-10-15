@@ -1,0 +1,86 @@
+--- a/service-t/src/com/android/server/net/NetworkStatsService.java
++++ b/service-t/src/com/android/server/net/NetworkStatsService.java
+@@ -2401,6 +2401,8 @@
+ 
+     private <K extends StatsMapKey, V extends StatsMapValue> void deleteStatsMapTagData(
+             IBpfMap<K, V> statsMap, int uid) {
++        // Dependencies returns null when this BPF map could not be opened.
++        if (statsMap == null) return;
+         try {
+             statsMap.forEach((key, value) -> {
+                 if (key.uid == uid) {
+@@ -2421,39 +2423,47 @@
+      * @param uid
+      */
+     private void deleteKernelTagData(int uid) {
+-        try {
+-            mCookieTagMap.forEach((key, value) -> {
+-                // If SkDestroyListener deletes the socket tag while this code is running,
+-                // forEach will either restart iteration from the beginning or return null,
+-                // depending on when the deletion happens.
+-                // If it returns null, continue iteration to delete the data and in fact it would
+-                // just iterate from first key because BpfMap#getNextKey would return first key
+-                // if the current key is not exist.
+-                if (value != null && value.uid == uid) {
+-                    try {
+-                        mCookieTagMap.deleteEntry(key);
+-                    } catch (ErrnoException e) {
+-                        logErrorIfNotErrNoent(e, "Failed to delete data(cookie = " + key + ")");
++        if (mCookieTagMap != null) {
++            try {
++                mCookieTagMap.forEach((key, value) -> {
++                    // If SkDestroyListener deletes the socket tag while this code is running,
++                    // forEach will either restart iteration from the beginning or return null,
++                    // depending on when the deletion happens.
++                    // If it returns null, continue iteration to delete the data and in fact it would
++                    // just iterate from first key because BpfMap#getNextKey would return first key
++                    // if the current key is not exist.
++                    if (value != null && value.uid == uid) {
++                        try {
++                            mCookieTagMap.deleteEntry(key);
++                        } catch (ErrnoException e) {
++                            logErrorIfNotErrNoent(e, "Failed to delete data(cookie = " + key + ")");
++                        }
+                     }
+-                }
+-            });
+-        } catch (ErrnoException e) {
+-            Log.e(TAG, "Failed to delete tag data from cookie tag map", e);
++                });
++            } catch (ErrnoException e) {
++                Log.e(TAG, "Failed to delete tag data from cookie tag map", e);
++            }
++        } else {
++            Log.i(TAG, "Skipping kernel cookie-tag cleanup: BPF map unavailable for UID " + uid);
+         }
+ 
+         deleteStatsMapTagData(mStatsMapA, uid);
+         deleteStatsMapTagData(mStatsMapB, uid);
+ 
+-        try {
+-            mUidCounterSetMap.deleteEntry(new U32(uid));
+-        } catch (ErrnoException e) {
+-            logErrorIfNotErrNoent(e, "Failed to delete tag data from uid counter set map");
+-        }
+-
+-        try {
+-            mAppUidStatsMap.deleteEntry(new UidStatsMapKey(uid));
+-        } catch (ErrnoException e) {
+-            logErrorIfNotErrNoent(e, "Failed to delete tag data from app uid stats map");
++        if (mUidCounterSetMap != null) {
++            try {
++                mUidCounterSetMap.deleteEntry(new U32(uid));
++            } catch (ErrnoException e) {
++                logErrorIfNotErrNoent(e, "Failed to delete tag data from uid counter set map");
++            }
++        }
++
++        if (mAppUidStatsMap != null) {
++            try {
++                mAppUidStatsMap.deleteEntry(new UidStatsMapKey(uid));
++            } catch (ErrnoException e) {
++                logErrorIfNotErrNoent(e, "Failed to delete tag data from app uid stats map");
++            }
+         }
+     }
+ 

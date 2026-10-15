@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">虹膜空间</string>
+    <string name="ui_2695de9b78f3" formatted="false">"\n启动日志"</string>
+    <string name="ui_3383d777d4d8" formatted="false">"\n当前 Root "</string>
+    <string name="ui_90f4e75c6910" formatted="false">"\n新建实例将使用它。已有实例保持原 ROM。"</string>
+    <string name="ui_9eef47300b92" formatted="false">"\n此实例中的应用、账号、游戏进度和导入文件都会清除，无法通过 App 撤销。\n请输入实例编号 "</string>
+    <string name="ui_5f6720f567bc" formatted="false">"\n点击打开 Magisk 后，再点击进入查看授权列表。"</string>
+    <string name="ui_7f293b95fed9" formatted="false">"\n现有实例数据保留。可重新选择文件重试。"</string>
+    <string name="ui_9e92c4cb6d22" formatted="false">" · 内存上限"</string>
+    <string name="ui_0392436f28b0" formatted="false">" · 分辨率"</string>
+    <string name="ui_a005d2b0e33d" formatted="false">" · 剩余 "</string>
+    <string name="ui_3b0267254d6b" formatted="false">" · 已等待 "</string>
+    <string name="ui_b9ebebdde63f" formatted="false">" · 应用 Root"</string>
+    <string name="ui_21cf7ddb41e1" formatted="false">" · 文件"</string>
+    <string name="ui_4958d1bb5dd6" formatted="false">" · 最近操作未完成"</string>
+    <string name="ui_637d53cd9da4" formatted="false">" · 正在连接"</string>
+    <string name="ui_fc4b4d491ceb" formatted="false">" · 长按复制"</string>
+    <string name="ui_8f2085358747" formatted="false">" 个实例"</string>
+    <string name="ui_371b8345ec33" formatted="false">" 确认。"</string>
+    <string name="ui_d9ad5055c354" formatted="false">" 秒"</string>
+    <string name="ui_4a22b12d9909" formatted="false">" 秒前更新"</string>
+    <string name="ui_6fe2770f2a49" formatted="false">" 页 · 共 "</string>
+    <string name="ui_1225ee44356f" formatted="false">"1 GiB = 1024 MiB；默认 1.25 GiB。"</string>
+    <string name="ui_719fc1bb80cb" formatted="false">"1 · 授权与检查"</string>
+    <string name="ui_982ab1425740" formatted="false">"1280×720 · 720p，清晰度与开销折中"</string>
+    <string name="ui_22e8a8bf13a8" formatted="false">"1600×900 · 900p，更清晰"</string>
+    <string name="ui_29150070c055" formatted="false">"1920×1080 · 1080p，开销最大"</string>
+    <string name="ui_5f6b5ee42ec1" formatted="false">"2 · 安装内置引擎"</string>
+    <string name="ui_ed63f2ba7598" formatted="false">"3 · 导入 ROM"</string>
+    <string name="ui_697394547d6e" formatted="false">"4 · 管理实例"</string>
+    <string name="ui_a4275512346c" formatted="false">"960×540 · 流畅优先"</string>
+    <string name="ui_88e5fa8dc7d4" formatted="false">"Android 正在启动"</string>
+    <string name="ui_89e719c391f4" formatted="false">"Android 正在启动，等待桌面"</string>
+    <string name="ui_dc3ebc1fd0b4" formatted="false">"App 暂存空间不足，需要 "</string>
+    <string name="ui_93676a2553d5" formatted="false">"IrisBox_实例"</string>
+    <string name="ui_2ab6b84bab8e" formatted="false">"ROM 导入成功："</string>
+    <string name="ui_cf7d4d56122d" formatted="false">"ROM 缺少 "</string>
+    <string name="ui_43e0c6de9e24" formatted="false">"ROM 适配材料不匹配当前引擎："</string>
+    <string name="ui_49ab86367807" formatted="false">"ROM 镜像过小"</string>
+    <string name="ui_84d265278316" formatted="false">"ROM 需要匹配的树莓派4 AOSP13 ARM64 适配包"</string>
+    <string name="ui_624266d31bd4" formatted="false">"ROM与引擎"</string>
+    <string name="ui_a6e0efe3cd4f" formatted="false">"ROM：尚未导入"</string>
+    <string name="ui_acfea807c04b" formatted="false">"Root 授权被拒绝，请在宿主 Magisk 中允许 虹膜空间，再点重新连接。"</string>
+    <string name="ui_4e1c76b3df0a" formatted="false">"Root 操作失败（"</string>
+    <string name="ui_c90dc17c7d0f" formatted="false">"Root 操作超时。请核对 Magisk 授权；导入未完成的 ROM 不会登记。"</string>
+    <string name="ui_0218a26e7532" formatted="false">"Root 设置未完成，请查看最新状态后重试"</string>
+    <string name="ui_aaa44cd7a45d" formatted="false">"虹膜空间 · 实例"</string>
+    <string name="ui_8ae4101b0f19" formatted="false">"虹膜空间 · 树莓派 Android"</string>
+    <string name="ui_d554ebd78752" formatted="false">"虹膜空间 配置"</string>
+    <string name="ui_eac94fb94a6b" formatted="false">"Root：关闭"</string>
+    <string name="ui_cd7761cd9dba" formatted="false">"Root：启动中"</string>
+    <string name="ui_624b011b8eaa" formatted="false">"Root：已开启"</string>
+    <string name="ui_2c37c4f350ec" formatted="false">"Root：救援模式"</string>
+    <string name="ui_38ce86b1ada5" formatted="false">"Root：暂不可用"</string>
+    <string name="ui_edf72b391180" formatted="false">"Root：未就绪"</string>
+    <string name="ui_95471e8317e2" formatted="false">"Root：管理"</string>
+    <string name="ui_b72827b39c61" formatted="false">"Root：读取中"</string>
+    <string name="ui_63265c9e9d1a" formatted="false">"Root：配置异常"</string>
+    <string name="ui_2fbc9da21a8d" formatted="false">"_启动日志.txt"</string>
+    <string name="ui_785dd9ea5202" formatted="false">"。可进入实例，在下载 / IrisExchange 中打开。"</string>
+    <string name="ui_b41561d80765" formatted="false">"上一页"</string>
+    <string name="ui_251c4e30277a" formatted="false">"上一项传输尚未结束，请稍后刷新目录"</string>
+    <string name="ui_20275ef27d3a" formatted="false">"上次"</string>
+    <string name="ui_510aa6e5ed10" formatted="false">"上次启动日志（已停止）"</string>
+    <string name="ui_e46dc134cd0d" formatted="false">"上次操作未完成，请查看日志"</string>
+    <string name="ui_389284dd8300" formatted="false">"上次数据清理未完成，请重试原操作"</string>
+    <string name="ui_984a52c7c7dc" formatted="false">"上次日志"</string>
+    <string name="ui_67a246a344ae" formatted="false">"下一页"</string>
+    <string name="ui_3ea894a932dd" formatted="false">"下次启动内存上限："</string>
+    <string name="ui_e0c5746ef927" formatted="false">"下次启动分辨率："</string>
+    <string name="ui_d96fc7526625" formatted="false">"不能创建工作目录"</string>
+    <string name="ui_97d351c230ee" formatted="false">"不能创建暂存目录"</string>
+    <string name="ui_5e1466abc843" formatted="false">"不能清理暂存文件"</string>
+    <string name="ui_6bac12d05195" formatted="false">"交换目录：下载 / IrisExchange。文件只传给当前实例；APK安装需在实例内确认。"</string>
+    <string name="ui_9a15c8d8f000" formatted="false">"仅显示本实例的交换目录"</string>
+    <string name="ui_c2013c9c102f" formatted="false">"传输已取消"</string>
+    <string name="ui_d423be219c7c" formatted="false">"传输未完成："</string>
+    <string name="ui_ba74fe0a6d30" formatted="false">"传输超过两分钟"</string>
+    <string name="ui_7a920ae53c2a" formatted="false">"传输超过两分钟，已取消"</string>
+    <string name="ui_c941c5958c8c" formatted="false">"低频预览 · "</string>
+    <string name="ui_fadf24dbc5a9" formatted="false">"保存"</string>
+    <string name="ui_30f209548d85" formatted="false">"保存未完成，请检查状态后重试"</string>
+    <string name="ui_6d9bea7b8726" formatted="false">"保存，下次启动生效"</string>
+    <string name="ui_a17f70a8d3d6" formatted="false">"停止"</string>
+    <string name="ui_9e3667cb5ffd" formatted="false">"允许应用请求 Root（Magisk）"</string>
+    <string name="ui_7403656d2fd1" formatted="false">"先授权并检查宿主，然后安装引擎、导入 ROM。"</string>
+    <string name="ui_6c14bd7f6f9e" formatted="false">"关闭"</string>
+    <string name="ui_d014ab77038c" formatted="false">"内存"</string>
+    <string name="ui_01ab180f0a34" formatted="false">"内存上限（GiB）"</string>
+    <string name="ui_ccdfdd38867f" formatted="false">"内存上限：暂不可用"</string>
+    <string name="ui_a059ca83fc97" formatted="false">"内存上限：读取中"</string>
+    <string name="ui_8e15a45a13bf" formatted="false">"内存不足时会拒绝新增启动；不会停止已有实例。"</string>
+    <string name="ui_3204497ae97d" formatted="false">"内存配置异常，请恢复默认"</string>
+    <string name="ui_cde9b52b2395" formatted="false">"分辨率"</string>
+    <string name="ui_e11e911cfd24" formatted="false">"分辨率应用失败，请停止后重新启动；详见本次日志"</string>
+    <string name="ui_edad71729ca7" formatted="false">"分辨率配置损坏，请恢复默认"</string>
+    <string name="ui_e96adf072c24" formatted="false">"分辨率：暂不可用"</string>
+    <string name="ui_88069eee8fdf" formatted="false">"分辨率：读取中"</string>
+    <string name="ui_fcbd0932929e" formatted="false">"创建"</string>
+    <string name="ui_5dd2ec509b6f" formatted="false">"创建结果待确认，请查看列表，勿重复点击"</string>
+    <string name="ui_3755f56f2f83" formatted="false">"删除"</string>
+    <string name="ui_b1b8c89c34e7" formatted="false">"删除后，实例卡片和所有数据都会移除。"</string>
+    <string name="ui_6e73a5ffa5cc" formatted="false">"删除实例"</string>
+    <string name="ui_bd82e40e45a0" formatted="false">"刷新列表"</string>
+    <string name="ui_0e7a97389d3f" formatted="false">"包文件数超出范围"</string>
+    <string name="ui_0377600969cb" formatted="false">"包格式或适配版本不支持"</string>
+    <string name="ui_1b47c364b953" formatted="false">"包清单包含非法文件："</string>
+    <string name="ui_11931beed48f" formatted="false">"包清单过大"</string>
+    <string name="ui_d1bf6a488f11" formatted="false">"包被截断，缺少清单文件"</string>
+    <string name="ui_c80b0e307e63" formatted="false">"包解压后过大"</string>
+    <string name="ui_610dc926d655" formatted="false">"原页面已结束，请重新导出日志"</string>
+    <string name="ui_4d0b4688c787" formatted="false">"取消"</string>
+    <string name="ui_965b34119adf" formatted="false">"取消传输"</string>
+    <string name="ui_a43c7b66fb3a" formatted="false">"另一项传输正在进行，请稍后重试"</string>
+    <string name="ui_ebd26da42171" formatted="false">"启动"</string>
+    <string name="ui_b28f7fc03b17" formatted="false">"启动后从第一行保留本次日志，可滚动查看，长按复制全文。"</string>
+    <string name="ui_abaa5827dc73" formatted="false">"启动后这里会显示本次启动的实际日志。"</string>
+    <string name="ui_17ebdf18caeb" formatted="false">"启动后这里会显示本次日志。"</string>
+    <string name="ui_8ad868abbca6" formatted="false">"启动日志"</string>
+    <string name="ui_8e4f83eef218" formatted="false">"启动日志\n"</string>
+    <string name="ui_ee42ae7c12d7" formatted="false">"安装独立引擎"</string>
+    <string name="ui_ffed807bad4f" formatted="false">"完整启动日志已保存"</string>
+    <string name="ui_1150ec9bec2f" formatted="false">"实例 "</string>
+    <string name="ui_3b229178f89f" formatted="false">"实例共享存储暂未就绪"</string>
+    <string name="ui_e8e681da73a2" formatted="false">"实例尺寸不匹配，输入已暂停"</string>
+    <string name="ui_361960e14c40" formatted="false">"实例已停止"</string>
+    <string name="ui_5fc688314cb0" formatted="false">"实例已停止或重新启动，请返回列表重新选择"</string>
+    <string name="ui_7637fa012880" formatted="false">"实例已变化或存在同名文件"</string>
+    <string name="ui_fc03a16921a8" formatted="false">"实例已变化，请返回列表重新选择"</string>
+    <string name="ui_428cbfb8a4e1" formatted="false">"实例桌面"</string>
+    <string name="ui_e1216a93fd24" formatted="false">"实例正在全屏显示"</string>
+    <string name="ui_91b40ea9119e" formatted="false">"实例编号"</string>
+    <string name="ui_c01087274984" formatted="false">"实例身份已变化，拒绝接收文件"</string>
+    <string name="ui_e4377db610c0" formatted="false">"实例身份无效"</string>
+    <string name="ui_870379d0d76d" formatted="false">"实例返回"</string>
+    <string name="ui_d5a6a98e28f7" formatted="false">"宿主暂时没有可用的保存位置选择器"</string>
+    <string name="ui_4fae6a2dba6f" formatted="false">"宿主暂时没有可用的文件选择器"</string>
+    <string name="ui_f135d8912da5" formatted="false">"宿主未安装可用的 Magisk root；请先完成宿主 root。"</string>
+    <string name="ui_47cf8cc253d6" formatted="false">"宿主检查通过：Magisk root、六种宿主空间、AOSP13 指纹、Permissive、Binder/Overlay、GPU、资源组、Wi-Fi"</string>
+    <string name="ui_60e2bcad85ac" formatted="false">"导入"</string>
+    <string name="ui_233cfdb13ce4" formatted="false">"导入 ROM"</string>
+    <string name="ui_32e568babef7" formatted="false">"导入回执校验失败，请刷新目录确认结果"</string>
+    <string name="ui_2295848aae55" formatted="false">"导入完成："</string>
+    <string name="ui_8fb6f00ec5b5" formatted="false">"导入文件"</string>
+    <string name="ui_188896795f1d" formatted="false">"导出"</string>
+    <string name="ui_f1dc2ddf285a" formatted="false">"导出完成："</string>
+    <string name="ui_8c3afb3b80b3" formatted="false">"尚无实例，点击新增实例"</string>
+    <string name="ui_b0569c4c4048" formatted="false">"尚无预览"</string>
+    <string name="ui_0ea00180a025" formatted="false">"尚未就绪，请查看本次启动日志。停止后可关闭或重试。"</string>
+    <string name="ui_10b0999596e9" formatted="false">"尚未读取配置。点击“授权与检查”继续。"</string>
+    <string name="ui_2ecfd7e9af20" formatted="false">"已关闭。"</string>
+    <string name="ui_0a522ea5c033" formatted="false">"已取消文件选择"</string>
+    <string name="ui_54309b76b734" formatted="false">"已复制本次启动的完整日志"</string>
+    <string name="ui_80099027100f" formatted="false">"已安装 ROM："</string>
+    <string name="ui_780a4c8c9b91" formatted="false">"已接收请求，等待状态更新"</string>
+    <string name="ui_4bd157a9d214" formatted="false">"已提交内存设置，等待保存结果"</string>
+    <string name="ui_87016bfffbd7" formatted="false">"已提交分辨率设置，等待保存结果"</string>
+    <string name="ui_ad3b13c31706" formatted="false">"已离开文件页面，传输已取消"</string>
+    <string name="ui_4a3c8724af26" formatted="false">"开启后，应用向 Magisk 请求 Root，仍需你在实例内点击允许。授权、模块和 Zygisk 设置各实例独立。\n模块 ZIP 在 Magisk 的模块页面安装；Zygisk 在 Magisk 设置里开启。改动后请返回虹膜空间，停止再启动此实例。\n装模块后无法开机：停止实例，勾选救援启动。它会禁用所有模块和 Zygisk，保留应用、账号和模块文件，方便进入 Magisk 修复。修复后取消救援，再按需启用模块和 Zygisk。\n关闭 Root 会保留记录；重置数据会清除记录。刷机升级和全局内核／SELinux 修改不受支持。"</string>
+    <string name="ui_a1174bf6c57c" formatted="false">"开启后，应用向 Magisk 请求 Root，仍需你在实例内点击允许。授权、模块和 Zygisk 设置各实例独立。\n模块 ZIP 在 Magisk 的模块页面安装；Zygisk 在 Magisk 设置里开启。改动后请返回虹膜空间，停止再启动此实例。\n装模块后无法开机：停止实例，勾选救援启动。它会禁用所有模块和 Zygisk，保留应用、账号和模块文件，方便进入 Magisk 修复。修复后取消救援，再按需启用模块和 Zygisk。\n关闭 Root 会保留记录；重置数据会清除记录。刷机升级和全局内核／SELinux 修改不受支持。\n"</string>
+    <string name="ui_7ae34f47b8bb" formatted="false">"开启应用 Root（Magisk，应用需单独授权）"</string>
+    <string name="ui_e49153879bdd" formatted="false">"引擎安装与 ROM 导入"</string>
+    <string name="ui_005bf385d786" formatted="false">"引擎安装成功。请选择并导入 ROM 包。"</string>
+    <string name="ui_a28d875aa888" formatted="false">"引擎已安装，可导入 ROM"</string>
+    <string name="ui_7974c4e8615f" formatted="false">"引擎版本不匹配"</string>
+    <string name="ui_dd0fb9f395bc" formatted="false">"引擎："</string>
+    <string name="ui_f82f850f42fc" formatted="false">"引擎：未安装"</string>
+    <string name="ui_ba5758a6244b" formatted="false">"归档有重复、越界或未声明文件："</string>
+    <string name="ui_f7b17b599ecd" formatted="false">"当前旋转或裁剪尚不支持输入"</string>
+    <string name="ui_e6b83064ea2c" formatted="false">"当前暂无可读取的启动日志，正在等待实例。"</string>
+    <string name="ui_a191935bc678" formatted="false">"恢复默认"</string>
+    <string name="ui_7744147917be" formatted="false">"打开 Magisk"</string>
+    <string name="ui_02ce5b187ab6" formatted="false">"拒绝清理链接目录"</string>
+    <string name="ui_735e5a8789a6" formatted="false">"授予宿主 root → 安装引擎 → 导入 ROM → 创建并启动实例"</string>
+    <string name="ui_9eeeaf573a19" formatted="false">"操作未完成，请查看最新状态后重试"</string>
+    <string name="ui_b96f65eefc0b" formatted="false">"操作未完成，请等待状态更新后重试"</string>
+    <string name="ui_4a5b3e65561d" formatted="false">"操作较多，请稍后重试"</string>
+    <string name="ui_2ee3bbeeb565" formatted="false">"支持配置：树莓派4 / ARM64 / rpi4-a13-v1"</string>
+    <string name="ui_0d8fd3900016" formatted="false">"收起日志"</string>
+    <string name="ui_f7a937916bc3" formatted="false">"救援启动：禁用所有模块和 Zygisk，保留数据"</string>
+    <string name="ui_49deaf7da20d" formatted="false">"文件"</string>
+    <string name="ui_a4de6c507772" formatted="false">"文件不是有效的 虹膜空间 包；首项必须是 "</string>
+    <string name="ui_fbc96d57a5de" formatted="false">"文件内容校验失败"</string>
+    <string name="ui_6a061766d816" formatted="false">"文件列表超过上限"</string>
+    <string name="ui_826bfe2082bf" formatted="false">"文件名不受支持，请使用不含路径符号的普通文件名（最多128字节）"</string>
+    <string name="ui_fa1703117195" formatted="false">"文件大小与声明不符"</string>
+    <string name="ui_e93aa5b43616" formatted="false">"文件大小超过允许范围"</string>
+    <string name="ui_2450efc254e9" formatted="false">"文件已变化，请刷新后重新导出"</string>
+    <string name="ui_0d1f7519216b" formatted="false">"文件提供者没有返回内容"</string>
+    <string name="ui_0b5c6942aaa2" formatted="false">"文件提前结束"</string>
+    <string name="ui_15130545f4d3" formatted="false">"文件摘要不匹配："</string>
+    <string name="ui_c99f4f63f0d4" formatted="false">"文件访问或连接失败"</string>
+    <string name="ui_2a5e7a625b48" formatted="false">"文件超过128 MiB上限"</string>
+    <string name="ui_9ee8dd7a5773" formatted="false">"文件超过清单大小："</string>
+    <string name="ui_7d5bec2673bb" formatted="false">"文件选择已失效，请刷新目录"</string>
+    <string name="ui_4b95f6df9752" formatted="false">"新增实例"</string>
+    <string name="ui_c567011ba629" formatted="false">"新增实例未完成，请查看管理日志"</string>
+    <string name="ui_96d7a34ea8df" formatted="false">"新实例 ROM："</string>
+    <string name="ui_83ff48e09334" formatted="false">"新实例有独立的应用、账号和文件。\n默认 960×540、内存上限 1.25 GiB、OpenGL 游戏兼容环境。\n可以创建多个实例；4 GB 树莓派同时运行的数量取决于实际内存和应用负载。"</string>
+    <string name="ui_8c9d5291cf02" formatted="false">"无法写入选择的位置"</string>
+    <string name="ui_63bda37a9075" formatted="false">"无法打开所选文件"</string>
+    <string name="ui_a6112556325f" formatted="false">"无法申请宿主 root，请检查 Magisk 后重新连接。"</string>
+    <string name="ui_42edfd06d964" formatted="false">"无法确认目标实例"</string>
+    <string name="ui_f636fbcd54c5" formatted="false">"无法读取目录："</string>
+    <string name="ui_a2f2e13bab88" formatted="false">"日志保存失败，请重试"</string>
+    <string name="ui_b89eacc953d5" formatted="false">"日志超出剪贴板容量，请保存完整日志文件"</string>
+    <string name="ui_64a55b299843" formatted="false">"旧版兼容：1080p 画面缩小到 540p 显示"</string>
+    <string name="ui_cb6d970c41b1" formatted="false">"时钟"</string>
+    <string name="ui_4bd5dfa2f736" formatted="false">"显示切换中，预览暂停"</string>
+    <string name="ui_ce176ecb85fd" formatted="false">"暂存目录必须为空"</string>
+    <string name="ui_bdefa3f1511a" formatted="false">"暂无预览"</string>
+    <string name="ui_96c0ba63a840" formatted="false">"暂时无法确认实例状态，请稍后刷新"</string>
+    <string name="ui_ec0d69e062e3" formatted="false">"最近操作未完成："</string>
+    <string name="ui_f225019fde8f" formatted="false">"未启动。\n"</string>
+    <string name="ui_9807d3930434" formatted="false">"未启动。\n\n"</string>
+    <string name="ui_f5064e36fb9d" formatted="false">"未完成："</string>
+    <string name="ui_b81c17cb6353" formatted="false">"未找到 MagiskSU。请先在宿主安装 Magisk，并允许 虹膜空间 获取 root。"</string>
+    <string name="ui_831cdf82e2aa" formatted="false">"未知配置操作"</string>
+    <string name="ui_b2ba9634d9cf" formatted="false">"未运行"</string>
+    <string name="ui_f2f3e9803ccb" formatted="false">"未连接"</string>
+    <string name="ui_7fd47e102e12" formatted="false">"本次"</string>
+    <string name="ui_442f1f0429ab" formatted="false">"本次启动日志"</string>
+    <string name="ui_c89faf618244" formatted="false">"校验 APK 内置引擎"</string>
+    <string name="ui_33742d3f06d1" formatted="false">"校验完成，复制到 root 管理的 ROM 库（请等待）"</string>
+    <string name="ui_dd920408cf5b" formatted="false">"桌面就绪后显示预览"</string>
+    <string name="ui_3fa4a5d1287b" formatted="false">"桌面已就绪"</string>
+    <string name="ui_79eff70947fd" formatted="false">"检查宿主"</string>
+    <string name="ui_79b3bc1a9795" formatted="false">"检查宿主和 Magisk 授权"</string>
+    <string name="ui_2df5017f4099" formatted="false">"正在保存内存上限"</string>
+    <string name="ui_2715af053797" formatted="false">"正在保存内存上限…"</string>
+    <string name="ui_6cde44994952" formatted="false">"正在保存分辨率"</string>
+    <string name="ui_49cb08761631" formatted="false">"正在保存分辨率…"</string>
+    <string name="ui_7cf8fe398e9f" formatted="false">"正在保存应用 Root"</string>
+    <string name="ui_0e6529e156a5" formatted="false">"正在保存应用 Root…"</string>
+    <string name="ui_a028ba2adbf0" formatted="false">"正在停止实例"</string>
+    <string name="ui_b1d5c9a2bcc4" formatted="false">"正在准备"</string>
+    <string name="ui_91783c475b4b" formatted="false">"正在准备导出…"</string>
+    <string name="ui_300d18c126af" formatted="false">"正在准备显示和鼠标连接…"</string>
+    <string name="ui_e29e654d3987" formatted="false">"正在准备首张预览"</string>
+    <string name="ui_4a6fc3dd7805" formatted="false">"正在创建实例…"</string>
+    <string name="ui_87533ec64f72" formatted="false">"正在创建独立实例…"</string>
+    <string name="ui_729dc7d8433a" formatted="false">"正在删除实例"</string>
+    <string name="ui_a3f772ee79f4" formatted="false">"正在删除实例…"</string>
+    <string name="ui_6017dccf86b2" formatted="false">"正在启动"</string>
+    <string name="ui_75557073ffee" formatted="false">"正在导入："</string>
+    <string name="ui_cb04ad9ba1b5" formatted="false">"正在导出："</string>
+    <string name="ui_7bd6558138e4" formatted="false">"正在打开应用"</string>
+    <string name="ui_a693a667f993" formatted="false">"正在打开画面"</string>
+    <string name="ui_7fb4ae902ad7" formatted="false">"正在执行启动命令"</string>
+    <string name="ui_c508f63c1389" formatted="false">"正在申请宿主 root；首次请允许 Magisk 的 虹膜空间 授权…"</string>
+    <string name="ui_84cb10f62524" formatted="false">"正在确认实例和交换目录"</string>
+    <string name="ui_73685fac59f8" formatted="false">"正在等待上一项传输收尾，暂时保留当前目录…"</string>
+    <string name="ui_bd6948a6f441" formatted="false">"正在读取完整历史，请稍后再复制"</string>
+    <string name="ui_5a510839d8b1" formatted="false">"正在读取实例列表"</string>
+    <string name="ui_98bcb8fa5647" formatted="false">"正在读取实例列表…"</string>
+    <string name="ui_9f4a28e615cf" formatted="false">"正在读取实例状态"</string>
+    <string name="ui_cc8c3ff296c3" formatted="false">"正在读取所选文件…"</string>
+    <string name="ui_1f0d991f5ec0" formatted="false">"正在进入"</string>
+    <string name="ui_6e6fbca5c994" formatted="false">"正在连接管理服务"</string>
+    <string name="ui_df9e3f1b3ad9" formatted="false">"正在通过宿主 Magisk 连接管理服务…"</string>
+    <string name="ui_5e0e1dd4e1a9" formatted="false">"正在重新连接管理服务…"</string>
+    <string name="ui_24af1956d124" formatted="false">"正在重置实例数据…"</string>
+    <string name="ui_d92e0903ab35" formatted="false">"正在重置数据"</string>
+    <string name="ui_d32e536f4db2" formatted="false">"此来源未提供文件大小，请先另存到宿主下载目录后重选"</string>
+    <string name="ui_b6d520e0511f" formatted="false">"每个文件最多128 MiB；同名文件不会被覆盖。"</string>
+    <string name="ui_a655ea55c447" formatted="false">"添加 Google Play 组件（需单独登录）"</string>
+    <string name="ui_5f46da0526f1" formatted="false">"点击“上次日志”查看它上次启动的记录。"</string>
+    <string name="ui_e8b0602f9b64" formatted="false">"点击右上角“新增实例”，创建一个全新的 Android。"</string>
+    <string name="ui_56f4916f8177" formatted="false">"点击画面进入；新增数量受存储空间限制，同时运行数量受内存和性能限制。"</string>
+    <string name="ui_c490e74b8ded" formatted="false">"状态暂不可用"</string>
+    <string name="ui_910383278517" formatted="false">"用户已取消传输"</string>
+    <string name="ui_33819f63ed13" formatted="false">"画面位置无效"</string>
+    <string name="ui_b9e4148e0282" formatted="false">"目录中还没有文件，点击“导入文件”开始。"</string>
+    <string name="ui_16ff9253f805" formatted="false">"目录刷新已取消"</string>
+    <string name="ui_3c06abe11651" formatted="false">"确认删除"</string>
+    <string name="ui_30a6079ce340" formatted="false">"确认重置"</string>
+    <string name="ui_f495347d6acf" formatted="false">"第 "</string>
+    <string name="ui_81d95e0dc5fe" formatted="false">"等待 Magisk 授权并检查宿主…"</string>
+    <string name="ui_d9dce1b78d9e" formatted="false">"等待实例启动"</string>
+    <string name="ui_1316079be06d" formatted="false">"等待实例桌面"</string>
+    <string name="ui_1226729a0d9e" formatted="false">"等待本次启动的首张预览"</string>
+    <string name="ui_f1665ef75544" formatted="false">"等待画面完成"</string>
+    <string name="ui_652033f9b4dc" formatted="false">"等待目录收尾已超过五秒"</string>
+    <string name="ui_11be8eec3f7c" formatted="false">"等待目录收尾已超过五秒，请稍后刷新"</string>
+    <string name="ui_e14790af8958" formatted="false">"等待窗口尺寸同步"</string>
+    <string name="ui_f04e11a0ff14" formatted="false">"管理后台未启动，请检查宿主 Magisk 授权及运行文件，再点重新连接。"</string>
+    <string name="ui_a3415b5adf19" formatted="false">"管理响应过长"</string>
+    <string name="ui_8551a052e534" formatted="false">"管理回执的实例身份不一致"</string>
+    <string name="ui_34cbe1449ed7" formatted="false">"管理连接已失效，请返回列表重新进入"</string>
+    <string name="ui_b22e5edeb5a7" formatted="false">"缺少有效的文件校验信息，拒绝导出"</string>
+    <string name="ui_249d1f176718" formatted="false">"解压并校验 "</string>
+    <string name="ui_7debf9cb0372" formatted="false">"设置"</string>
+    <string name="ui_28c63e19176b" formatted="false">"请从实例列表进入"</string>
+    <string name="ui_ab08390623d4" formatted="false">"请允许宿主 Magisk 的 虹膜空间 授权，正在连接…"</string>
+    <string name="ui_e9813c6d4b9f" formatted="false">"请先安装引擎并导入适配 ROM。\n"</string>
+    <string name="ui_f82e3b292bba" formatted="false">"请求已发出，正在处理…"</string>
+    <string name="ui_4216aa6e21bd" formatted="false">"请求未完成（"</string>
+    <string name="ui_75f8cff9ecbb" formatted="false">"请输入 "</string>
+    <string name="ui_62553256518f" formatted="false">"请输入 0.5～2.5，最多三位小数"</string>
+    <string name="ui_5b489b8fb50c" formatted="false">"请选择可信来源、已适配树莓派 AOSP13 的 虹膜空间 ROM 包。校验完成后将用于新建实例。"</string>
+    <string name="ui_fca4b0aaeb83" formatted="false">"请通过系统文件选择器选择 ROM"</string>
+    <string name="ui_09cb521a07d3" formatted="false">"读取状态中"</string>
+    <string name="ui_5fce454fd37b" formatted="false">"路径越界"</string>
+    <string name="ui_976a4799e83f" formatted="false">"输入 0.5～2.5 GiB，例如 1.25 或 2.5。\n这是内存使用上限，不会预先占满，也不会增加 CPU 或显卡性能。\n2.5 GiB 适合单实例测试。宿主和其他实例也需要内存；宿主内存不足时仍会自动停止实例。\n停止后保存，下次启动生效。"</string>
+    <string name="ui_7570be66f8ac" formatted="false">"输入连接中"</string>
+    <string name="ui_b69bd19456b6" formatted="false">"输入：触屏"</string>
+    <string name="ui_eaa5b90e3aa4" formatted="false">"输入：鼠标"</string>
+    <string name="ui_594249700590" formatted="false">"运行中"</string>
+    <string name="ui_37a78c8dc0a6" formatted="false">"运行内存上限："</string>
+    <string name="ui_da31dfc47974" formatted="false">"运行分辨率："</string>
+    <string name="ui_53505b1fcd1a" formatted="false">"返回列表"</string>
+    <string name="ui_5abb2c0afb2b" formatted="false">"返回预览"</string>
+    <string name="ui_9e3a5417b05e" formatted="false">"这是实例实际绘制的画面大小。分辨率越高，画面越清晰，图形和内存开销也越大。\n排查卡顿建议选 960×540；旧版兼容仍绘制 1080p，只把显示画面缩小。\n停止后保存，下次启动生效。"</string>
+    <string name="ui_0e25578e8fa1" formatted="false">"进入"</string>
+    <string name="ui_7d536627a3c1" formatted="false">"连接已取消，请点重新连接。"</string>
+    <string name="ui_2c23c90e1f3a" formatted="false">"连接已结束，请重新进入实例"</string>
+    <string name="ui_b8f44104e192" formatted="false">"连接超时。请确认 Magisk 授权，再点重新连接。"</string>
+    <string name="ui_bd76d510bf82" formatted="false">"配置异常，请先点“恢复默认”"</string>
+    <string name="ui_bac95e1e52fe" formatted="false">"重新连接"</string>
+    <string name="ui_3d81345303ab" formatted="false">"重置"</string>
+    <string name="ui_13357ab34dca" formatted="false">"重置后，保留实例卡片、分辨率、内存上限、Root 选项和 Google 组件配置，恢复全新 Android 数据。"</string>
+    <string name="ui_b1dd040286c1" formatted="false">"重置数据"</string>
+    <string name="ui_67f5da279d03" formatted="false">"需要原始 ext4 镜像，不支持 sparse/boot/super："</string>
+    <string name="ui_dca586ba4d8b" formatted="false">"页面已关闭"</string>
+    <string name="ui_6c0c3a871ed5" formatted="false">"页面已关闭，传输已取消"</string>
+    <string name="ui_aa135ad31231" formatted="false">"预览已过期，等待新画面"</string>
+    <string name="ui_2b1557f6ad3d" formatted="false">"预览暂不可用，稍后重试"</string>
+    <string name="ui_c7d02585d66f" formatted="false">"预览约 1 秒更新，不代表全屏帧率。返回列表后实例继续运行，点击“停止”结束实例。"</string>
+    <string name="ui_8dec65600663" formatted="false">"首版适配：树莓派4 · 指定 AOSP13 · ARM64 · Magisk · Permissive"</string>
+    <string name="ui_8bf7092bfac6" formatted="false">"鼠标和键盘可用"</string>
+    <string name="ui_3d4cf10d60ad" formatted="false">"鼠标模拟触屏 · 键盘可用"</string>
+    <string name="ui_43d8ec69b3ed" formatted="false">"（到期后可重新进入）"</string>
+    <string name="ui_5d8e922bf35b" formatted="false">"，正在结束传输…"</string>
+    <string name="ui_7e893fad9c38" formatted="false">"；导入结果未确认，请刷新目录。"</string>
+    <string name="ui_0aaab18dfb19" formatted="false">"；请检查所选位置，可能保留未完成文件。"</string>
+</resources>

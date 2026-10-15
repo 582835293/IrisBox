@@ -1,0 +1,58 @@
+--- a/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
++++ b/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
+@@ -14,6 +14,8 @@
+  * limitations under the License.
+  */
+ 
++#include <errno.h>
++#include <stdlib.h>
+ #include <inttypes.h>
+ #include <net/if.h>
+ #include <string.h>
+@@ -39,6 +41,14 @@
+ namespace bpf {
+ 
+ using base::Result;
++
++// Iris Guest has no private BPF accounting maps. Opening a missing pinned map
++// aborts in the BpfMap constructor, before its caller can check isValid().
++// Keep the ordinary Host path intact; report unsupported, never Host counters.
++static bool irisGuestWithoutBpf() {
++    const char* value = getenv("IRIS_GUEST_NO_BPF");
++    return value != nullptr && strcmp(value, "1") == 0;
++}
+ 
+ // The target map for stats reading should be the inactive map, which is opposite
+ // from the config value.
+@@ -58,6 +68,7 @@
+ }
+ 
+ int bpfGetUidStats(uid_t uid, Stats* stats) {
++    if (irisGuestWithoutBpf()) return -EOPNOTSUPP;
+     BpfMapRO<uint32_t, StatsValue> appUidStatsMap(APP_UID_STATS_MAP_PATH);
+ 
+     if (!appUidStatsMap.isValid()) {
+@@ -100,6 +111,7 @@
+ }
+ 
+ int bpfGetIfaceStats(const char* iface, Stats* stats) {
++    if (irisGuestWithoutBpf()) return -EOPNOTSUPP;
+     BpfMapRO<uint32_t, StatsValue> ifaceStatsMap(IFACE_STATS_MAP_PATH);
+     int ret;
+     if (!ifaceStatsMap.isValid()) {
+@@ -186,6 +198,7 @@
+ int parseBpfNetworkStatsDetail(std::vector<stats_line>* lines,
+                                const std::vector<std::string>& limitIfaces, int limitTag,
+                                int limitUid) {
++    if (irisGuestWithoutBpf()) return -EOPNOTSUPP;
+     BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
+     if (!ifaceIndexNameMap.isValid()) {
+         int ret = -errno;
+@@ -262,6 +275,7 @@
+ }
+ 
+ int parseBpfNetworkStatsDev(std::vector<stats_line>* lines) {
++    if (irisGuestWithoutBpf()) return -EOPNOTSUPP;
+     int ret = 0;
+     BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
+     if (!ifaceIndexNameMap.isValid()) {
