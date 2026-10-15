@@ -26,18 +26,18 @@
       "downloadUrl": null
     },
     {
-      "file": "IrisBox-host-aosp13-rpi4-20260916-clean-preview.img.xz",
-      "bytes": 537835072,
-      "sha256": "72639c8f997b65377fa119df2f41e3231502619c2f6519dc460f48ae12a47e4a",
+      "file": "IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.img.xz",
+      "bytes": 539066944,
+      "sha256": "e13998996c47136373a0696f9d6424c7129888a91ee7804165f2681508a0fac2",
       "distribution": "awaiting-owner-mirror",
       "downloadUrl": null
     },
     {
-      "file": "IrisBox-host-aosp13-rpi4-20260916-clean-preview.json",
-      "bytes": 1455,
-      "sha256": "eafb242a5af19c4ac03d080ecd0dca7740a72ee1f2865a7bc5ed4fb452c40e75",
+      "file": "IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.json",
+      "bytes": 1684,
+      "sha256": "7e6d474d4e9b44c83f0f76109f8589e46db5ffc2ad1b6b5860affd13ae848717",
       "distribution": "github-release",
-      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.2-preview/IrisBox-host-aosp13-rpi4-20260916-clean-preview.json"
+      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.2-preview/IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.json"
     },
     {
       "file": "IrisBox-guest-root-sources.zip",

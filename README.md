@@ -39,8 +39,10 @@ The public ROM contains AOSP and compatibility files, **without Google apps or a
 
 ## Preview boundaries
 
-The clean flash image has new, empty userdata and unmodified factory boot/system/vendor partitions. Static checks are recorded; **a fresh-card flash and first boot have not been tested**. Existing-host validation does not establish a complete installation on a host that never ran the previous project. Other kernels/devices, Enforcing SELinux, camera/microphone, protected video, Play Integrity and arbitrary third-party Root modules are not covered.
+The clean flash image has new, empty userdata and unmodified factory boot/system/vendor partitions. Static checks are recorded; **a fresh USB-disk flash and first boot have not been tested**. Existing-host validation does not establish a complete installation on a host that never ran the previous project. Other kernels/devices, Enforcing SELinux, camera/microphone, protected video, Play Integrity and arbitrary third-party Root modules are not covered.
 
 This is an independent project. VMOS is mentioned only as a user-experience comparison; there is no affiliation. Internal names such as `com.rootvmos.viewer`, `/data/rootvmos` and `.irisrom` are retained to preserve upgrades and protocol compatibility.
 
 See [third-party notices](THIRD_PARTY_NOTICES.md) and [source provenance](reference/NOTICE.md). Publishing this repository does not relicense third-party components; project-specific code currently has no blanket license grant. Signing keys, user data, accounts, raw device logs and screenshots are excluded.
+
+The clean host preview is **USB/sda only**, with 12 GiB empty userdata for a 16 GB or larger USB disk. It is not an SD/mmc image.

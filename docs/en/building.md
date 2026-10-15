@@ -38,3 +38,5 @@ Set `IRISBOX_SERIAL` to your own ADB serial before using `tools/device.py` or th
 The reviewed public snapshot was independently fully built with the documented toolchain: all 44 engine payload hashes matched the tested local engine. The APK signature differs when a new development key is generated.
 
 For the optional remote producer rebuild, pass `-RebuildProducer -ProducerHost builder@YOUR_HOST -ProducerKey C:/path/to/key -AospDir /path/to/aosp-rpi4`, or set `IRISBOX_BUILD_HOST`, `IRISBOX_BUILD_KEY` and `IRISBOX_AOSP_DIR`. These are your own build-machine parameters; no developer machine address or key is bundled.
+
+Exact factory USB boot inputs are retained in `reference/host-boot/`: cmdline.txt, config.txt and fstab.rpi4. Compare/apply these only in your own isolated device-tree checkout before building; do not overwrite an active project. The factory fstab uses USB sda2/3/4, while an upstream tree may target SD/mmc. The clean-image utility preserves the static partitions and changes only the blank userdata partition size and its MBR length.

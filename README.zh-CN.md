@@ -30,8 +30,10 @@
 - [国际化、发布及干净镜像](docs/08_国际化与发布.md)
 - [English documentation](docs/en/installation.md)
 
-干净宿主刷机镜像使用原始 boot/system/vendor 和全新空白 userdata 制作，已完成静态校验，**尚未用备用卡刷入并验证首次启动**。现有宿主实测不能替代从未安装旧项目的空白宿主验收。其他设备/内核、Enforcing、摄像头/麦克风、DRM、Play Integrity 和第三方模块不作通过承诺。
+干净宿主刷机镜像使用原始 boot/system/vendor 和全新空白 userdata 制作，已完成静态校验，**尚未用备用USB盘刷入并验证首次启动**。现有宿主实测不能替代从未安装旧项目的空白宿主验收。其他设备/内核、Enforcing、摄像头/麦克风、DRM、Play Integrity 和第三方模块不作通过承诺。
 
 本项目独立维护，与 VMOS 无隶属关系。为兼容升级与协议，内部包名 `com.rootvmos.viewer`、设备目录 `/data/rootvmos` 及 `.irisrom` 扩展名保留。旧工程数据和源码不随本仓库发布。
 
 第三方材料保留各自许可证，见[组件说明](THIRD_PARTY_NOTICES.md)与[来源记录](reference/NOTICE.md)。项目自有代码暂未授予统一开源许可证；公开仓库不等于更改上游许可。密钥、账号、实例数据、设备原始截图和日志不公开。
+
+干净宿主预览镜像固定USB/sda启动，带12GiB空白userdata，适用于16GB以上USB盘；不能当作SD卡/mmc镜像使用。

@@ -56,5 +56,12 @@
     "signingKeysPrivate": true,
     "publicRomExcludesGoogle": true,
     "largeFilesAwaitOwnerMirrorUrls": true
+  },
+  "hostImageStorage": {
+    "boot": "USB /dev/block/sda2,sda3,sda4",
+    "sdMmcSupported": false,
+    "freshUserdataGiB": 12,
+    "minimumMediumBytes": 15436087296,
+    "physicalFlashTested": false
   }
 }

@@ -22,10 +22,10 @@ def main():
         source=ROOT/'out'/name;dest=release/name
         if not dest.exists() or digest(source)!=digest(dest):shutil.copyfile(source,dest)
     names=['IrisBox-0.1.2.apk','IrisBox-rpi4-a13-aosp.irisrom',
-           'IrisBox-host-aosp13-rpi4-20260916-clean-preview.img.xz',
-           'IrisBox-host-aosp13-rpi4-20260916-clean-preview.json','IrisBox-guest-root-sources.zip','IrisBox-upstream-sources.zip']
+           'IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.img.xz',
+           'IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.json','IrisBox-guest-root-sources.zip','IrisBox-upstream-sources.zip']
     artifacts=[{'file':name,'bytes':(release/name).stat().st_size,'sha256':digest(release/name)} for name in names if (release/name).exists()]
-    direct={'IrisBox-0.1.2.apk','IrisBox-guest-root-sources.zip','IrisBox-host-aosp13-rpi4-20260916-clean-preview.json'}
+    direct={'IrisBox-0.1.2.apk','IrisBox-guest-root-sources.zip','IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.json'}
     for row in artifacts:
         row['distribution']='github-release' if row['file'] in direct else 'awaiting-owner-mirror'
         row['downloadUrl']=REPO+'/releases/download/'+TAG+'/'+row['file'] if row['file'] in direct else None
@@ -43,7 +43,7 @@ def main():
     for zh in (False,True):
         lines=['# '+('下载 · 虹膜空间 / IrisBox' if zh else 'Downloads · IrisBox'),'',
                '[English](DOWNLOADS.md) · [简体中文](DOWNLOADS.zh-CN.md)','',
-               ('预览版：宿主镜像尚未用备用卡刷入验证。宿主 Magisk 自行安装；公开 ROM 不含 Google。' if zh else 'Preview: fresh-card flashing is untested. Install host Magisk yourself. The public ROM excludes Google apps.'),'',
+               ('预览版：宿主镜像仅支持USB/sda和16GB以上USB盘，非SD卡，首次物理启动尚未验证。宿主 Magisk 自行安装；公开 ROM 不含 Google。' if zh else 'Preview: USB/sda boot only, 16 GB or larger USB disk; not SD/mmc. Physical first boot is untested. Install host Magisk yourself. The public ROM excludes Google apps.'),'',
                '| '+('文件 | 大小 | SHA-256' if zh else 'File | Size | SHA-256')+' |','|---|---:|---|']
         for row in artifacts:
             label='['+row['file']+']('+row['downloadUrl']+')' if row['downloadUrl'] else '`'+row['file']+'` — '+('待网盘链接' if zh else 'mirror link pending')
@@ -51,7 +51,7 @@ def main():
         lines += ['', '[SHA256SUMS]('+REPO+'/releases/download/'+TAG+'/SHA256SUMS) · [release-manifest.json]('+REPO+'/releases/download/'+TAG+'/release-manifest.json)', '',
                   '## '+('网盘镜像' if zh else 'Drive mirrors'),'',
                   ('Google Drive（国外）和夸克网盘（国内）：待维护者上传并提供分享链接。GitHub目前提供APK、实例Root/BusyBox源码及校验文件；大ROM、宿主镜像和完整内核源码留作网盘分发。所有镜像必须与SHA256SUMS一致。' if zh else 'Google Drive (international) and Quark Drive (China): awaiting owner uploads and share links. GitHub currently hosts the APK, guest Root/BusyBox sources and checksums. Large ROM, host image and complete kernel sources await owner mirrors. Mirror files must match SHA256SUMS.'),'',
-                  ('`.irisrom` 在 App 内导入；`.img.xz` 是给备用卡/盘刷入的整盘宿主镜像。两者不可互换。' if zh else 'Import `.irisrom` inside the App. The `.img.xz` is a whole-disk host flash image for a spare card/disk. These formats are not interchangeable.'),'',
+                  ('`.irisrom` 在 App 内导入；`.img.xz` 是给16GB以上备用USB盘刷入的整盘宿主镜像。两者不可互换。' if zh else 'Import `.irisrom` inside the App. The `.img.xz` is a whole-disk host image for a spare USB disk of 16 GB or larger. These formats are not interchangeable.'),'',
                   ('[安装与刷机边界](docs/08_国际化与发布.md)' if zh else '[Installation and flash boundaries](docs/en/installation.md)')]
         (ROOT/('DOWNLOADS.zh-CN.md' if zh else 'DOWNLOADS.md')).write_text('\n'.join(lines)+'\n',encoding='utf8')
     print(json.dumps({'engine':data['engineVersion'],'artifacts':len(artifacts),'totalBytes':sum(r['bytes'] for r in artifacts)}))

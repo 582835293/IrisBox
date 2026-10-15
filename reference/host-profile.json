@@ -40,5 +40,12 @@
   "fullFactoryBuildReproducedFromScratch": false,
   "kernelImageSha256": "5deb1b0b4777f268ca268b35b9ff50767fe86775eef19f75e984b488febd8de5",
   "kernelConfig": "host-kernel.config",
-  "factoryBootKernelMatchesPinnedPrebuilt": true
+  "factoryBootKernelMatchesPinnedPrebuilt": true,
+  "hostImageStorage": {
+    "boot": "USB /dev/block/sda2,sda3,sda4",
+    "sdMmcSupported": false,
+    "freshUserdataGiB": 12,
+    "minimumMediumBytes": 15436087296,
+    "physicalFlashTested": false
+  }
 }

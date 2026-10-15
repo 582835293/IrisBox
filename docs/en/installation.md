@@ -26,8 +26,14 @@ Closing the App preserves guests. Reopening restores the manager. After a host r
 
 The `.img.xz` is a whole-disk host image, distinct from an importable `.irisrom`. It was assembled from the original factory MBR/boot/system/vendor and **new empty ext4 userdata**. It was not exported from the active Pi SSD. All partition hashes, filesystem checks and the XZ hash are recorded in the release metadata.
 
-Verify SHA-256, extract XZ and select the image in Raspberry Pi Imager's custom-image workflow or an equivalent disk writer. Use a spare card/disk, preferably 16 GB or larger. Writing replaces the selected medium; verify its identity and capacity first. Keep the current disk containing previous projects and accounts untouched.
+Verify SHA-256, extract XZ and select the image in Raspberry Pi Imager's custom-image workflow or an equivalent disk writer. Use a spare USB disk, preferably 16 GB or larger. Writing replaces the selected medium; verify its identity and capacity first. Keep the current disk containing previous projects and accounts untouched.
 
-**A spare-card flash and first boot have not been tested.** Partition expansion, installing host Magisk on this fresh image, and first installation of the INET dispatcher also remain unverified. Existing-host tests do not substitute for that acceptance test.
+**A fresh USB-disk flash and first boot have not been tested.** Partition expansion, installing host Magisk on this fresh image, and first installation of the INET dispatcher also remain unverified. Existing-host tests do not substitute for that acceptance test.
 
 Host Magisk is installed by the user. Follow the [official instructions](https://topjohnwu.github.io/Magisk/install.html) and the Pi-specific boot layout: the factory `boot.img` is a FAT partition containing `Image` and `ramdisk.img`, rather than a phone-style Android boot image. Do not apply phone partition-writing commands to this disk or to a guest ROM. The release does not claim a newly tested host-root installation procedure.
+
+The factory fstab is explicitly pinned to `/dev/block/sda2`, `sda3` and `sda4`. This is a **USB-boot image, not an SD/mmc image**. The Pi must already support USB mass-storage boot; see the [official Pi boot documentation](https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#usb-mass-storage-boot). IrisBox does not change EEPROM/boot order.
+
+The original factory userdata was only about 4.6 GiB, too small for compressed ROM plus staging and installation. The release image therefore keeps the original boot/system/vendor partitions but enlarges the newly formatted empty userdata to **12 GiB**, preserving filesystem feature flags. Total raw image size is **15,436,087,296 bytes**; its initial import no longer depends on partition expansion. Physical first boot remains untested.
+
+For this preview, connect only the intended USB boot disk and ensure it enumerates as sda. Multiple disks or mixed SD/USB boot require a separate adapted fstab and validation.
