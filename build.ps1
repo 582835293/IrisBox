@@ -4,7 +4,10 @@ param(
     [string]$NdkVersion='28.2.13676358',
     [string]$Python='python',
     [switch]$AppOnly,
-    [switch]$RebuildProducer
+    [switch]$RebuildProducer,
+    [string]$ProducerHost=$env:IRISBOX_BUILD_HOST,
+    [string]$ProducerKey=$env:IRISBOX_BUILD_KEY,
+    [string]$AospDir=$env:IRISBOX_AOSP_DIR
 )
 $ErrorActionPreference='Stop'
 $taskRoot=$PSScriptRoot
@@ -16,7 +19,10 @@ New-Item -ItemType Directory -Force -Path "$taskRoot\app\viewer\assets\host-tool
 Copy-Item -LiteralPath "$taskRoot\engine\runtime\root\magisk_30_7\busybox" -Destination "$taskRoot\app\viewer\assets\host-tools\busybox"
 if (-not $AppOnly) {
 if($RebuildProducer){
-    & $Python "$taskRoot\tools\build_producer.py"
+    if(-not $ProducerHost -or -not $AospDir){throw 'RebuildProducer requires ProducerHost and AospDir (or IRISBOX_BUILD_HOST / IRISBOX_AOSP_DIR).'}
+    $taskProducerArgs=@('--host',$ProducerHost,'--aosp',$AospDir)
+    if($ProducerKey){$taskProducerArgs+=@('--key',$ProducerKey)}
+    & $Python "$taskRoot\tools\build_producer.py" @taskProducerArgs
     if($LASTEXITCODE -ne 0){throw 'Producer build failed'}
 }
 & "$taskRoot\tests\audio\build.ps1" -SdkDir $SdkDir -JdkDir $JdkDir | Out-File "$taskRoot\out\audio-build.log"

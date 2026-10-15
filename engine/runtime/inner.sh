@@ -129,6 +129,11 @@ $BB mount -t tmpfs -o mode=0755,nodev,nosuid,size=64k rootvmos_traceur "$TRACEUR
 /system/bin/chcon u:object_r:system_file:s0 "$TRACEUR"
 
 copy_payload "$BASE/audio/audio.jar" "$ROOT/system/framework/rootvmos-audio.jar"
+# AOSP-only ROMs do not inherit the optional Google product directories.
+for D in "$ROOT/system/product" "$ROOT/system/product/etc" "$ROOT/system/product/etc/init"; do
+    [ ! -L "$D" ] || exit 3
+    $BB mkdir -p "$D"
+done
 copy_payload "$BASE/audio/media.rc" "$ROOT/system/product/etc/init/zzz_rootvmos_media.rc"
 $BB chmod 0644 "$ROOT/system/product/etc/init/zzz_rootvmos_media.rc"
 /system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/product/etc/init/zzz_rootvmos_media.rc"

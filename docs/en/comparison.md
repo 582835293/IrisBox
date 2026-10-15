@@ -31,3 +31,9 @@ The previous engine established that Android userspace could boot under a shared
 Additional regression work introduced playback audio supervision, mediaextractor restoration, a private Traceur mask and preview-process exit handling. Kill only an identity-verified audio helper: its replacement and host player should recover while the guest's main session stays unchanged. Encode/play an MP4 from an ordinary UID and inspect actual playback progress, rather than package presence.
 
 For every experiment record the input, identity checks, execution namespace, resources changed, evidence of completion and cleanup behavior. Historical results from the previous project are useful provenance; they do not automatically validate a new ROM import or fresh host.
+
+## Two productization exercises
+
+Trace BusyBox across the boundary: the host uses `/data/rootvmos/host/bin/busybox`; after pivot_root only the verified guest copy `/system/bin/busybox` exists. Audit both the post-pivot script and commands passed by host callers through `ctl exec`. A path on the development host is not proof that it exists on a new host or inside a guest.
+
+Boot a ROM which actually omits optional components, with new userdata. Persistent overlays and Google layers can hide missing core directories. The public AOSP test exposed a missing `product/etc/init`; e13 now creates it in the verified private overlay. Test both retained data and a genuinely new instance.

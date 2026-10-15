@@ -22,7 +22,7 @@ Host construction uses the [Android13 Raspberry Vanilla manifest](https://github
 There is no automatic cross-version engine upgrade UI yet. Stop every IrisBox guest normally and retain the APK corresponding to the installed engine. The development maintenance tool verifies that baseline, backs up fixed engine files, updates them transactionally and preserves config/ROM/instance data:
 
 ```powershell
-python tools/upgrade_engine.py --from-apk out/qa/IrisBox-0.1.2-e11.apk --apply
+python tools/upgrade_engine.py --from-apk out/qa/IrisBox-0.1.2-e12.apk --apply
 ```
 
 An incomplete upgrade leaves `engine-upgrade.pending`; the App refuses startup. The tool attempts rollback, or `--recover` uses the retained transaction recovery script. This backup is not a userdata backup. Sudden power loss was not simulated.
@@ -36,3 +36,5 @@ Keep Android scripts LF. The packager rejects CR bytes. Do not rerun the initial
 Set `IRISBOX_SERIAL` to your own ADB serial before using `tools/device.py` or the regression tools. The public source snapshot removes private build-machine and device defaults. Pass your own `--host`, `--key` and `--aosp` for remote producer builds. Initial migration/export scripts are historical recipes, not normal deployment steps.
 
 The reviewed public snapshot was independently fully built with the documented toolchain: all 44 engine payload hashes matched the tested local engine. The APK signature differs when a new development key is generated.
+
+For the optional remote producer rebuild, pass `-RebuildProducer -ProducerHost builder@YOUR_HOST -ProducerKey C:/path/to/key -AospDir /path/to/aosp-rpi4`, or set `IRISBOX_BUILD_HOST`, `IRISBOX_BUILD_KEY` and `IRISBOX_AOSP_DIR`. These are your own build-machine parameters; no developer machine address or key is bundled.

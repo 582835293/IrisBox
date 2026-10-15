@@ -19,7 +19,7 @@ def main():
             files[p.relative_to(engine).as_posix()]={'size':len(data),'sha256':hashlib.sha256(data).hexdigest()}
     for required in ('rootvmos_ns','iris_inet_policy','display/buffer_bridge/iris_buffer_producer','display/buffer_viewer/broker.jar','display/buffer_viewer/gateway.jar'):
         assert required in files, 'Engine executable missing: '+required
-    manifest={'formatVersion':1,'compatibility':'rpi4-a13-v1','version':'0.1.2-e12','files':files}
+    manifest={'formatVersion':1,'compatibility':'rpi4-a13-v1','version':'0.1.2-e13','files':files}
     out=ROOT/'app/viewer/assets/engine.zip';out.parent.mkdir(parents=True,exist_ok=True)
     with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
         z.writestr('engine.json',json.dumps(manifest,separators=(',',':')))

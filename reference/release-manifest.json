@@ -6,7 +6,7 @@
   "package": "com.rootvmos.viewer",
   "versionName": "0.1.2",
   "versionCode": 109,
-  "engineVersion": "0.1.2-e12",
+  "engineVersion": "0.1.2-e13",
   "publicRomGoogleIncluded": false,
   "hostMagiskIncluded": false,
   "freshCardFlashTested": false,
@@ -14,22 +14,44 @@
     {
       "file": "IrisBox-0.1.2.apk",
       "bytes": 15749873,
-      "sha256": "bd395839b09dded3e5227b6f87a5b70ae6918e8991c981469702c06039124675"
+      "sha256": "4ae04fecb7d4d607bdd604b3f9d677506093159f9d9ca907aba7d607ee5d007b",
+      "distribution": "github-release",
+      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.2-preview/IrisBox-0.1.2.apk"
     },
     {
       "file": "IrisBox-rpi4-a13-aosp.irisrom",
       "bytes": 700475643,
-      "sha256": "04d586a15459dec7fca963b37450b6b5cc722d3fe9477f58eaa3b5a5411ef629"
+      "sha256": "04d586a15459dec7fca963b37450b6b5cc722d3fe9477f58eaa3b5a5411ef629",
+      "distribution": "awaiting-owner-mirror",
+      "downloadUrl": null
     },
     {
       "file": "IrisBox-host-aosp13-rpi4-20260916-clean-preview.img.xz",
       "bytes": 537835072,
-      "sha256": "72639c8f997b65377fa119df2f41e3231502619c2f6519dc460f48ae12a47e4a"
+      "sha256": "72639c8f997b65377fa119df2f41e3231502619c2f6519dc460f48ae12a47e4a",
+      "distribution": "awaiting-owner-mirror",
+      "downloadUrl": null
     },
     {
       "file": "IrisBox-host-aosp13-rpi4-20260916-clean-preview.json",
       "bytes": 1455,
-      "sha256": "eafb242a5af19c4ac03d080ecd0dca7740a72ee1f2865a7bc5ed4fb452c40e75"
+      "sha256": "eafb242a5af19c4ac03d080ecd0dca7740a72ee1f2865a7bc5ed4fb452c40e75",
+      "distribution": "github-release",
+      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.2-preview/IrisBox-host-aosp13-rpi4-20260916-clean-preview.json"
+    },
+    {
+      "file": "IrisBox-guest-root-sources.zip",
+      "bytes": 13619310,
+      "sha256": "d3125503a65f67b839c371d7b534f68a96747e0c930fe3333a6ca04f4e96e272",
+      "distribution": "github-release",
+      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.2-preview/IrisBox-guest-root-sources.zip"
+    },
+    {
+      "file": "IrisBox-upstream-sources.zip",
+      "bytes": 215947520,
+      "sha256": "9da344cad78f0a747ac7dcd14d0db94c541dff933c1ccc33de9f68af3449e682",
+      "distribution": "awaiting-owner-mirror",
+      "downloadUrl": null
     }
   ]
 }
