@@ -18,3 +18,5 @@
 rom/compat/** -text
 engine/runtime/display/buffer_bridge/iris_buffer_producer -text
 engine/runtime/root/magisk_30_7/** -text
+reference/host-boot/** -text
+reference/host-kernel.config -text
