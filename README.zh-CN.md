@@ -10,11 +10,19 @@
 
 1. 阅读[安装说明](docs/01_安装与使用.md)和[宿主镜像说明](docs/08_国际化与发布.md)，确认指纹、内核、GPU、资源组、Wi-Fi 和已配置的 Permissive 环境。
 2. **宿主 Magisk 由使用者自行安装**。App 不安装宿主 Magisk，不修改宿主 SELinux 或物理分区。
-3. 安装 `IrisBox-0.1.2.apk`，打开后依次点“授权与检查”“安装内置引擎”。
+3. 安装 `IrisBox-0.1.3.apk`，打开后依次点“授权与检查”“安装内置引擎”。
 4. 点“导入 ROM”，选择 `IrisBox-rpi4-a13-aosp.irisrom`；再进入管理页，新增并启动实例。
 5. “EN / 中文”可以选择跟随系统、English 或简体中文。只改变本 App 的语言，不修改实例的 Android 语言、账号和数据。
 
 [下载与 SHA-256](DOWNLOADS.zh-CN.md) · [GitHub Releases](https://github.com/582835293/IrisBox/releases)
+
+![虹膜空间使用流程示意](docs/images/usage.zh-CN.svg)
+
+上图为操作示意，不包含设备截图、账号或私密数据。
+
+## Root 身份隔离
+
+0.1.3要求每个实例使用独立User namespace；实例root映射到专有宿主普通UID范围，没有Host UID0回退。现有e13安装需要停机备份及迁移，只更新APK还不够，见[隔离与迁移说明](docs/09_User_namespace隔离与迁移.md)。
 
 ## 能力与资料
 
@@ -22,6 +30,9 @@
 
 公开 ROM 不包含 Google 程序及任何账号；可选 Google 层需要使用者自行提供有权使用、与适配清单匹配的材料。现有私人 Google 实例保持原 ROM、数据和登录，不改为公开 AOSP ROM。
 
+0.1.3实测保留Google账号及设备标识，但商店当前显示Play Protect认证提示，目录/下载尚未通过，见[本轮验收](docs/06_验收记录.md)。每个实例需要使用自己的标识进行适用的自定义ROM登记，旧项目或宿主的登记不能代替。
+
+- [User namespace隔离、迁移与回退](docs/09_User_namespace隔离与迁移.md)
 - [技术架构与资源边界](docs/02_技术架构.md)
 - [ROM 包规范](docs/03_ROM规范.md)
 - [构建、升级与恢复](docs/04_构建与维护.md)

@@ -111,6 +111,7 @@ alive() {
 # ------------------------------------------------------------------------------
 host_only() {
     [ "$(id -u)" = 0 ] || return 3
+    [ "$( $BB awk '{print $1,$2,$3}' /proc/self/uid_map)" = "0 0 4294967295" ] || return 3
     for N in pid mnt net ipc uts cgroup; do
         [ "$($BB readlink /proc/$$/ns/$N)" = "$($BB readlink /proc/1/ns/$N)" ] || return 3
     done
@@ -128,6 +129,7 @@ host_only() {
 # ------------------------------------------------------------------------------
 verify_init() {
     alive "$1" "$2" || return 1
+    "$BASE/rootvmos_userns" verify "$ID" "$1" "$2" || return 1
     $BB grep -aq '/system/bin/iris_init' "/proc/$1/cmdline" || return 1
     [ "$($BB awk '/^NSpid:/ {print $NF}' "/proc/$1/status")" = 1 ] || return 1
     $BB grep -F "upperdir=$RUN/upper," "/proc/$1/mountinfo" >/dev/null || return 1

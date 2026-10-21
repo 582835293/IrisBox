@@ -8,7 +8,7 @@ import java.util.UUID;
 import java.nio.charset.StandardCharsets;
 
 final class EngineInstaller {
-    static final String VERSION = "0.1.2-e13";
+    static final String VERSION = "0.1.3-e17";
     static String preflight(Context c) throws Exception {
         HostTools.ensure(c);
         String script;
@@ -40,7 +40,7 @@ final class EngineInstaller {
                 "[ \"$(cat /data/rootvmos/runtime/engine.version)\" = " + RootShell.quote(VERSION) + " ] && [ \"$(cat /data/rootvmos/runtime/engine.sha256)\" = " + RootShell.quote(fingerprint) + " ] || { echo '已安装不同版本；请按升级文档处理，当前版本不会覆盖实例'; exit 4; }\n(cd /data/rootvmos/runtime && /data/rootvmos/host/bin/busybox sha256sum -c files.sha256 >/dev/null)\n/system/bin/sh /data/rootvmos/runtime/instances.sh init\nexit 0\nfi\n"+
                 "[ ! -e /data/rootvmos/runtime ] || { echo '发现未完成安装，请查看恢复文档'; exit 4; }\n" + copyScript(work,stage) +
                 "find . -type d -exec chmod 0755 {} \\;\nfind . -type f -exec chmod 0644 {} \\;\n" +
-                "chmod 0755 rootvmos_ns iris_inet_policy display/buffer_bridge/iris_buffer_producer root/magisk_30_7/busybox root/magisk_30_7/magisk root/magisk_30_7/magisk32 root/magisk_30_7/magiskpolicy\n" +
+                "chmod 0755 rootvmos_ns rootvmos_userns iris_inet_policy display/buffer_bridge/iris_buffer_producer root/magisk_30_7/busybox root/magisk_30_7/magisk root/magisk_30_7/magisk32 root/magisk_30_7/magiskpolicy\n" +
                 "echo " + RootShell.quote(fingerprint) + " > engine.sha256\necho " + RootShell.quote(VERSION) + " > engine.version\n"+
                 "mkdir -p config roms instances\nchmod 0700 config instances\nsync\ncd /\nmv " + RootShell.quote(stage) + " /data/rootvmos/runtime\n"+
                 "/system/bin/sh /data/rootvmos/runtime/instances.sh init\n";

@@ -33,7 +33,7 @@
 static int root_fd, host_fd, outer_fd, program_fd, original_fd;
 static struct bpf_map_info host_info;
 
-static void fail(const char *what) { perror(what); exit(3); }
+static __attribute__((noreturn)) void fail(const char *what) { perror(what); exit(3); }
 static int bpf(int command, union bpf_attr *attr) {
     return (int)syscall(__NR_bpf, command, attr, sizeof(*attr));
 }
@@ -262,7 +262,23 @@ static void register_guest(unsigned id, unsigned pid, uint64_t tick) {
     // Journal ownership before inserting: failed setup can remove only this map.
     printf("%llu %u %s\n", (unsigned long long)c, map_id(fd), path);
     fflush(stdout);
-    if (chown(path, 1000, 1000) || chmod(path, 0660)) fail("Guest UID table access");
+    /* Ownership follows the verified kernel UID/GID maps, not a UID supplied
+     * by Guest IPC. Unmapped and previous-project ranges are rejected.
+     */
+    unsigned owners[2];
+    for (unsigned i = 0; i < 2; ++i) {
+        char mapping[128], extra; unsigned long long inside, outside, span;
+        snprintf(mapping, sizeof(mapping), "/proc/%u/%s_map", pid, i ? "gid" : "uid");
+        FILE *f = fopen(mapping, "re");
+        if (!f || fscanf(f, "%llu %llu %llu", &inside, &outside, &span) != 3 ||
+            fscanf(f, " %c", &extra) == 1 || inside ||
+            !(outside >= 2000000000ULL && outside < 2012800000ULL && outside % 100000 == 0 && span == 100000)) {
+            errno = EINVAL; fail("Guest UID/GID map format");
+        }
+        fclose(f); owners[i] = (unsigned)outside + 1000;
+    }
+    if (owners[0] != owners[1] || ticks(pid) != tick) { errno = ESTALE; fail("Guest mapping changed"); }
+    if (chown(path, owners[0], owners[1]) || chmod(path, 0660)) fail("Guest UID table access");
     uint32_t value = (uint32_t)fd;
     union bpf_attr a = {.map_fd = (uint32_t)outer_fd, .key = (uint64_t)(uintptr_t)&c,
         .value = (uint64_t)(uintptr_t)&value, .flags = BPF_NOEXIST};

@@ -1,8 +1,9 @@
 """保留用户实例的回归辅助工具；不重置、不删除，不输出账号或凭据。"""
-import argparse, hashlib, hmac, json, re, secrets, shlex, time
+import argparse, hashlib, hmac, json, os, re, secrets, shlex, time
 from device import API, BASE, ROOT, shell
 
-PRIVATE = ROOT / 'validation/private/logged-in-regression'
+PRIVATE = ROOT / 'validation/private' / os.environ.get('IRISBOX_VALIDATION_RUN','logged-in-regression')
+assert PRIVATE.resolve().is_relative_to((ROOT/'validation/private').resolve())
 PRIVATE.mkdir(parents=True, exist_ok=True)
 
 

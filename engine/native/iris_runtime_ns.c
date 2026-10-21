@@ -7,11 +7,13 @@
 #define _GNU_SOURCE
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -77,13 +79,28 @@ int main(int argc, char **argv) {
     long pid = strtol(argv[2], NULL, 10);
     unsigned long long tick = strtoull(argv[3], NULL, 10);
     if (!verify(pid, tick)) { fprintf(stderr, "Guest identity rejected\n"); return 3; }
-    /* 先开namespace/根目录FD，再复验PID代次；FD绑定具体内核对象。
-     * 最后setns(mnt)避免过早失去Host路径；没有user namespace/UID映射。
+    /* Open all target handles as Host root, recheck the session, then enter
+     * User FIRST. Its capabilities govern the target's other namespaces.
+     * No Host control/directory descriptor survives the Guest exec.
      */
     const char *names[] = {"cgroup", "ipc", "uts", "net", "pid", "mnt"};
     int flags[] = {CLONE_NEWCGROUP, CLONE_NEWIPC, CLONE_NEWUTS, CLONE_NEWNET, CLONE_NEWPID, CLONE_NEWNS};
     int fds[6];
     char path[128];
+    snprintf(path, sizeof(path), "/proc/%ld/ns/user", pid);
+    int user = open(path, O_RDONLY | O_CLOEXEC); struct stat us, self;
+    if (user < 0 || fstat(user, &us) || stat("/proc/self/ns/user", &self)) die("Guest User namespace");
+    int mapped = us.st_ino != self.st_ino;
+    if (!mapped) die("unmapped Guest entry refused");
+    if (mapped) {
+        char text[256], extra; unsigned a, base, span, ga, gb, gn;
+        if (read_proc(pid, "uid_map", text, sizeof(text)) < 0 ||
+            sscanf(text, "%u %u %u %c", &a, &base, &span, &extra) != 3 || a || span != 100000 ||
+            base < 2000000000U || base >= 2012800000U || base % 100000) die("Guest UID map");
+        if (read_proc(pid, "gid_map", text, sizeof(text)) < 0 ||
+            sscanf(text, "%u %u %u %c", &ga, &gb, &gn, &extra) != 3 || ga || gb != base || gn != span)
+            die("Guest GID map");
+    }
     for (int i = 0; i < 6; ++i) {
         snprintf(path, sizeof(path), "/proc/%ld/ns/%s", pid, names[i]);
         fds[i] = open(path, O_RDONLY | O_CLOEXEC);
@@ -93,6 +110,9 @@ int main(int argc, char **argv) {
     int root = open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
     if (root < 0) die("Guest root");
     if (!verify(pid, tick)) return 3;
+    if (mapped && (setns(user, CLONE_NEWUSER) || setgroups(0, NULL) ||
+                   setresgid(0, 0, 0) || setresuid(0, 0, 0))) die("enter mapped Root");
+    close(user);
     for (int i = 0; i < 6; ++i) {
         if (setns(fds[i], flags[i])) die(names[i]);
         close(fds[i]);
@@ -104,6 +124,8 @@ int main(int argc, char **argv) {
     if (!child) {
         if (fchdir(root) || chroot(".") || chdir("/")) die("Guest chroot");
         close(root);
+        if (syscall(__NR_close_range, 3U, ~0U, 0)) die("close Host descriptors");
+        umask(022);
         setenv("PATH", "/system/bin:/system/xbin:/vendor/bin:/product/bin:/apex/com.android.art/bin", 1);
         setenv("ANDROID_ROOT", "/system", 1);
         setenv("ANDROID_DATA", "/data", 1);

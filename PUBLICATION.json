@@ -4,5 +4,5 @@
   "snapshot": "Reviewed source snapshot; local development Git history excluded",
   "machineDefaults": "Device serial and private build-machine defaults replaced; use your own parameters",
   "releaseData": "No instance data, accounts, private signing keys or raw evidence",
-  "files": 299
+  "files": 319
 }

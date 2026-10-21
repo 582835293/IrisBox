@@ -1,0 +1,5 @@
+# User-namespace-specific stock service settings. Host properties stay intact.
+on early-init
+    # Global PSI registration needs initial-userns privilege. The stock v1
+    # vmpressure fallback uses this Guest's delegated memory controller.
+    setprop ro.lmk.use_psi false

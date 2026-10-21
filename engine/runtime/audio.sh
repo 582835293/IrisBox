@@ -31,7 +31,7 @@ trap 'exit 0' HUP INT TERM
 while verify_init "$PID" "$TICK" && [ "$(cat "$RUN/init.identity")" = "$PID $TICK" ]; do
     if [ -S "$G/pcm.sock" ] && [ ! -L "$G/token" ] && [ -f "$G/token" ]; then
         CLASSPATH="$BASE/audio/audio.jar" /system/bin/app_process /system/bin com.rootvmos.audio.AudioBridge \
-            host "$G/pcm.sock" "$G/token" "$D/host.status" 0 "$EXPECTED" > "$D/player.log" 2>&1 < /dev/null &
+            host-mapped "$ID" - "$D/host.status" 0 "$EXPECTED" > "$D/player.log" 2>&1 < /dev/null &
         CHILD=$!
         CHILD_TICK=$(ticks "$CHILD")
         printf '%s %s\n' "$CHILD" "$CHILD_TICK" > "$D/player.identity"

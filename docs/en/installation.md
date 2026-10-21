@@ -10,13 +10,17 @@ Raspberry Pi 4, ARM64, roughly 4 GiB RAM, with this exact matched AOSP 13 finger
 Raspberry/aosp_rpi4/rpi4:13/TQ3A.230901.001/eng.lijiaq.20260916.141216:userdebug/test-keys
 ```
 
-The kernel needs namespaces, BinderFS, OverlayFS/ext4, hybrid Android cgroups, BPF socket permission support and the matched GPU stack. Connect host Wi-Fi. The preview requires an already configured Permissive environment and host MagiskSU. The App checks capabilities; it does not change SELinux policy or flash partitions. Its verified BusyBox is installed under `/data/rootvmos/host/bin`, so a globally installed BusyBox is unnecessary.
+The kernel needs User/Mount/PID/Network/IPC/UTS/Cgroup namespaces, BinderFS, OverlayFS/ext4, hybrid Android cgroups, BPF socket permission support and the matched GPU stack. User namespace creation is mandatory in 0.1.3, with no Host-UID0 fallback. Connect host Wi-Fi. The preview requires an already configured Permissive environment and host MagiskSU. The App checks capabilities; it does not change SELinux policy or flash partitions. Its verified BusyBox is installed under `/data/rootvmos/host/bin`, so a globally installed BusyBox is unnecessary.
 
 ## App workflow
 
 Install the APK, open IrisBox, approve its normal host Magisk request, select **Authorize and check**, then **Install engine**. Use **Import ROM** and Android's file picker to select the AOSP `.irisrom` file. Allow at least 8 GiB free space for staging, the ROM library and initial data. Installation/import progress uses a foreground notification; avoid force stopping the App or disconnecting power during copying.
 
 Open **Manage instances**, create an instance, start it and wait for **Desktop ready** before entering. Optional guest Root has its own switch and authorization records. It does not install host Magisk. The public AOSP ROM has no Google files; Google-enabled imports require separately supplied matching components which you have permission to use.
+
+Existing 0.1.2/e13 data requires a maintenance migration before starting with 0.1.3; follow the [stopped-state backup and migration guide](userns.md). Installing the APK alone does not migrate data. On this host, the retained 768 MiB ordinary instance needed about 175 seconds for its first mapped boot, while the 1536 MiB Google instance needed about 78 seconds; allow the first boot to finish.
+
+Google account retention does not establish device certification. Each guest has its own GSF ID; registering the host or an older project's instance does not register a new IrisBox guest. Google's [custom ROM registration page](https://www.google.com/android/uncertified/) describes the official procedure. Keep the ID private and complete login/CAPTCHA yourself. Registration is not manufacturer certification or a Play Integrity guarantee; the current validation record lists any remaining store restriction.
 
 Ordinary instances default to 1280 MiB; Google instances default to 1536 MiB. Memory settings apply while stopped. On the tested 4 GiB host, start the 1536 MiB Google instance before the smaller ordinary instance. Admission control preserves running instances when available memory is insufficient. Configurable limits are not universal workload recommendations.
 

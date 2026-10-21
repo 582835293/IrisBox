@@ -11,8 +11,9 @@ def main():
  results={}
  for number in a.numbers:
   r=target(number);assert r['ready']
-  shell('cp /data/local/tmp/rootvmos-probe.apk '+BASE+'/instances/'+str(r['id'])+'/data/local/tmp/rootvmos-probe.apk; chmod 0644 '+BASE+'/instances/'+str(r['id'])+'/data/local/tmp/rootvmos-probe.apk')
-  assert 'Success' in guest(r,'pm install -r /data/local/tmp/rootvmos-probe.apk',90)
+  # Feed only the trusted APK through stdin; never write Guest paths as Host root.
+  size=(ROOT/'out/RootVMOS-Probe.apk').stat().st_size
+  assert 'Success' in shell('export IRIS_EXPECT_SESSION='+r['session']+'\nsh '+BASE+'/ctl.sh exec '+str(r['id'])+' pm install -r -S '+str(size)+' < /data/local/tmp/rootvmos-probe.apk',90)
   guest(r,'am force-stop com.rootvmos.probe; am start -W -n com.rootvmos.probe/.ProbeActivity --es instance '+str(r['id'])+' --ez audio true --ez root '+('true' if number==2 else 'false'),40)
   proof=None
   for attempt in range(25):

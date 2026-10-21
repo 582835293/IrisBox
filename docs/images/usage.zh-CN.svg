@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" role="img" aria-labelledby="title desc">
+<title id="title">虹膜空间 · 从安装到启动</title><desc id="desc">安装并授权 → 安装引擎 → 导入 ROM → 创建实例 → 启动实例 → 进入与多开</desc>
+<defs><linearGradient id="brand"><stop stop-color="#7366ec"/><stop offset="1" stop-color="#449bc4"/></linearGradient></defs>
+<rect width="1400" height="760" rx="24" fill="#101826"/>
+<g font-family="Segoe UI, Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+<circle cx="70" cy="65" r="25" fill="none" stroke="#a39afa" stroke-width="4"/><circle cx="70" cy="65" r="10" fill="#76d9d1"/>
+<text x="120" y="76" font-size="32" font-weight="700" fill="#f2f5ff">虹膜空间 · 从安装到启动</text>
+<text x="48" y="120" font-size="19" fill="#a8b6cd">树莓派 4 · 匹配的 AOSP 13 · ARM64</text>
+<rect x="48" y="154" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="83" cy="191" r="18" fill="url(#brand)"/>
+<text x="83" y="197" font-size="18" text-anchor="middle" fill="white" font-weight="700">1</text>
+<text x="114" y="199" font-size="23" font-weight="600" fill="#f2f5ff">安装并授权</text>
+<text x="72" y="244" font-size="18" fill="#c0ccdf">安装 IrisBox APK</text>
+<rect x="72" y="266" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="256" y="302" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">1 · 授权与检查</text>
+<text x="72" y="362" font-size="16" fill="#9fb3ca">宿主 Magisk 由你自行安装</text>
+<rect x="492" y="154" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="527" cy="191" r="18" fill="url(#brand)"/>
+<text x="527" y="197" font-size="18" text-anchor="middle" fill="white" font-weight="700">2</text>
+<text x="558" y="199" font-size="23" font-weight="600" fill="#f2f5ff">安装引擎</text>
+<text x="516" y="244" font-size="18" fill="#c0ccdf">检查宿主兼容性后</text>
+<rect x="516" y="266" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="700" y="302" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">2 · 安装内置引擎</text>
+<text x="516" y="362" font-size="16" fill="#9fb3ca">等待安装完成</text>
+<rect x="936" y="154" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="971" cy="191" r="18" fill="url(#brand)"/>
+<text x="971" y="197" font-size="18" text-anchor="middle" fill="white" font-weight="700">3</text>
+<text x="1002" y="199" font-size="23" font-weight="600" fill="#f2f5ff">导入 ROM</text>
+<text x="960" y="244" font-size="18" fill="#c0ccdf">选择兼容的 .irisrom 文件</text>
+<rect x="960" y="266" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="1144" y="302" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">3 · 导入 ROM</text>
+<text x="960" y="362" font-size="16" fill="#9fb3ca">公开 AOSP ROM 不带 Google</text>
+<rect x="48" y="419" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="83" cy="456" r="18" fill="url(#brand)"/>
+<text x="83" y="462" font-size="18" text-anchor="middle" fill="white" font-weight="700">4</text>
+<text x="114" y="464" font-size="23" font-weight="600" fill="#f2f5ff">创建实例</text>
+<text x="72" y="509" font-size="18" fill="#c0ccdf">进入管理页，新增实例</text>
+<rect x="72" y="531" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="256" y="567" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">新增实例</text>
+<text x="72" y="627" font-size="16" fill="#9fb3ca">可设置内存、分辨率与实例 Root</text>
+<rect x="492" y="419" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="527" cy="456" r="18" fill="url(#brand)"/>
+<text x="527" y="462" font-size="18" text-anchor="middle" fill="white" font-weight="700">5</text>
+<text x="558" y="464" font-size="23" font-weight="600" fill="#f2f5ff">启动实例</text>
+<text x="516" y="509" font-size="18" fill="#c0ccdf">点击实例卡片上的启动</text>
+<rect x="516" y="531" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="700" y="567" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">启动</text>
+<text x="516" y="627" font-size="16" fill="#9fb3ca">首次启动需要等待桌面就绪</text>
+<rect x="936" y="419" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="971" cy="456" r="18" fill="url(#brand)"/>
+<text x="971" y="462" font-size="18" text-anchor="middle" fill="white" font-weight="700">6</text>
+<text x="1002" y="464" font-size="23" font-weight="600" fill="#f2f5ff">进入与多开</text>
+<text x="960" y="509" font-size="18" fill="#c0ccdf">就绪后打开实例桌面</text>
+<rect x="960" y="531" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="1144" y="567" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">进入</text>
+<text x="960" y="627" font-size="16" fill="#9fb3ca">返回列表可管理其他实例</text>
+<text x="48" y="720" font-size="18" fill="#91a5c0">操作示意图 · 不含设备截图、账号或私密数据 · 详细步骤见安装文档</text>
+</g></svg>

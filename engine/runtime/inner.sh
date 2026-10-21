@@ -1,13 +1,11 @@
 #!/system/bin/sh
 # ==============================================================================
-# Iris 嵌套安卓虚拟机运行时 - 容器内部点火内室（PID 1 Shell）
+# IrisBox trusted Host preparer; never executes Guest programs as Host root.
 #
-# 【阅读入口说明】
-# 当前进程已经由 wrapper.sh 通过 unshare 进入了 Guest 专属的六个 Linux Namespace
-# （mnt, pid, net, ipc, uts, cgroup）。
-# 此时当前 Shell 是该命名空间视图下的【PID 1】。虽然处于新的挂载空间，但继承了父级
-# 的挂载拓扑，因此在此刻【仍能看到宿主机（Host）的旧根文件系统】。
-# 
+# The native mapped launcher pauses Guest PID1 until preparation completes.
+# This process keeps Host credentials in private mount/net/IPC/UTS/cgroup views.
+# Only the released child pivots and executes the adapted Android init.
+#
 # 【执行序列与阅读顺序】
 # 1. Namespace 隔离性深度核验与挂载树私有化；
 # 2. ROM 镜像与 OverlayFS 读写层挂载（含可选 Google 服务框架层）；
@@ -34,6 +32,8 @@ set -eu
 
 # Guest 容器切根目标挂载点
 ROOT=$RUN/rootfs
+[ -n "${IRIS_USERNS_PREPARE_PID:-}" ] || exit 3
+"$BASE/rootvmos_userns" verify-preinit "$ID" "$IRIS_USERNS_PREPARE_PID" "$(ticks "$IRIS_USERNS_PREPARE_PID")"
 
 # 【启动阶段打点函数】
 # 利用内核单调时间 /proc/uptime 精准记录每个准备环节的耗时，区分环境准备耗时与 Android 自身启动耗时
@@ -50,7 +50,7 @@ copy_payload(){ "$BB" cmp -s "$1" "$2" || "$BB" cp "$1" "$2"; }
 # 1. 命名空间六维物理隔离校验与基础网络准备
 # ------------------------------------------------------------------------------
 # 严格比对当前进程与 Host PID 1 的六大 Namespace ID；若任何一个空间未实现隔离，拒绝点火
-for N in pid mnt net ipc uts cgroup; do
+for N in mnt net ipc uts cgroup; do
     [ "$($BB readlink /proc/self/ns/$N)" != "$($BB readlink /proc/1/ns/$N)" ] || exit 3
 done
 
@@ -87,10 +87,10 @@ if [ -e "$RUN/google.core.enabled" ] || [ -L "$RUN/google.core.enabled" ]; then
 fi
 
 # 挂载 system 分区的 OverlayFS 根视图
-$BB mount -t overlay overlay -o "lowerdir=$SYSTEM_LOWER,upperdir=$RUN/upper,workdir=$RUN/work" "$ROOT"
+$BB mount -t overlay overlay -o "lowerdir=$SYSTEM_LOWER,upperdir=$RUN/upper,workdir=$RUN/work,metacopy=on,index=off" "$ROOT"
 
 # 挂载 vendor 分区的 OverlayFS 驱动视图
-$BB mount -t overlay overlay -o "lowerdir=$ROM/vendor.lower,upperdir=$RUN/vendor.upper,workdir=$RUN/vendor.work" "$ROOT/vendor"
+$BB mount -t overlay overlay -o "lowerdir=$ROM/vendor.lower,upperdir=$RUN/vendor.upper,workdir=$RUN/vendor.work,metacopy=on,index=off" "$ROOT/vendor"
 
 # ------------------------------------------------------------------------------
 # 3. 核心专用载荷注入（图形、Init 与系统工具）
@@ -381,10 +381,7 @@ $BB mount -o bind "$RUN/metadata" "$ROOT/metadata"
 # 【从本 Shell 的 NSpid 提取宿主机真实 PID】：
 # 当前进程是 Guest 的 PID 1，其在宿主机视图下的 PID 记录在 /proc/self/status 的 NSpid 行中；
 # 获取 Host PID 与启动单调时刻 ticks，组装不可伪造的会话凭证
-HOST_PID=
-while IFS= read -r LINE; do
-    case "$LINE" in NSpid:*) set -- ${LINE#NSpid:}; HOST_PID=$1; [ "$2" = 1 ]; break ;; esac
-done < /proc/self/status
+HOST_PID=$IRIS_USERNS_PREPARE_PID
 START=$(ticks "$HOST_PID")
 NETWORK_SESSION=$HOST_PID:$START
 NETWORK_NET=$($BB readlink /proc/$HOST_PID/ns/net)
@@ -440,42 +437,51 @@ $BB mount -o bind "$INET_MAP_PATH" "$INET_TARGET"
 # 【bpffs 内核标签说明】：
 # bpffs 中的固化 inode 使用内核原生标签，对 chcon 会返回 EOPNOTSUPP；
 # 当前容器运行时依赖宿主机 SELinux 保持宽容模式（Permissive），请勿擅自修改
-echo "$HOST_PID $START" > "$RUN/init.identity"
-echo "$HOST_PID $START" > "$IRIS_RUNTIME_LOG/init.identity"
-
-# ------------------------------------------------------------------------------
-# 11. 切根（pivot_root）并终极跃迁进入 Android 原厂 init 第二阶段
-# ------------------------------------------------------------------------------
-# 【换根、卸载并物理销毁旧根】：
-# 1. 进入新的根文件系统目录；
-# 2. 调用 pivot_root 将当前目录设为根，旧宿主机根置于 old_root；
-# 3. 懒卸载（umount -l）并删除 old_root，彻底将宿主机根文件系统从容器中剥离；
-# 4. 挂载专属于该 PID Namespace 的纯净 /proc，并将 /proc/sys 重新设为只读
-cd "$ROOT"
-$BB pivot_root . old_root
-# Host paths are no longer reachable; use the verified Guest copy.
-BB=/system/bin/busybox
-$BB umount -l /old_root
-$BB rmdir /old_root
-cd /
-$BB mount -t proc proc /proc
-$BB mount -o bind /proc/sys /proc/sys
-$BB mount -o remount,bind,ro /proc/sys
-
-# 调用 Guest 内部网络脚本，配置网卡 IP 地址与默认网关路由
-$BB sh /system/bin/iris_network.sh guest "$ID" "$NETWORK_SESSION" "$NETWORK_NET"
-
-# 导出 Guest 运行时标志位与 no_bpf 网络栈环境变量
-export IRIS_GUEST_INIT=1
-unset IRIS_GUEST_INIT_PROBE
-export IRIS_NETD_NO_BPF=1 IRIS_GUEST_NO_BPF=1
-
-# 【无依赖 SELinux 标签跃迁与最终引导】：
-# 由于此时系统 APEX 尚未激活，外部的 runcon 二进制不可用；
-# 利用 mksh 内建的 print -rn -- u:r:init:s0 > /proc/self/attr/exec 直接通过 procfs 接口
-# 预设下一个执行进程的 SELinux 上下文为 u:r:init:s0；
-# 随后通过 exec 彻底替换当前 Shell 进程，正式进入原厂 Android 的 init 第二阶段！
-boot_step "进入原厂init第二阶段"
-print -rn -- u:r:init:s0 > /proc/self/attr/exec
-exec /system/bin/iris_init second_stage
-
+copy_payload "$BASE/security/userns/guest_entry.sh" "$ROOT/system/bin/rootvmos_userns_entry.sh"
+$BB chmod 0755 "$ROOT/system/bin/rootvmos_userns_entry.sh"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/bin/rootvmos_userns_entry.sh"
+copy_payload "$BASE/security/userns/guest.rc" "$ROOT/system/etc/init/zz_rootvmos_userns.rc"
+copy_payload "$BASE/security/userns/libalarm_jni.so" "$ROOT/system/lib64/libalarm_jni.so"
+$BB chmod 0644 "$ROOT/system/lib64/libalarm_jni.so"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/lib64/libalarm_jni.so"
+# Physical Bluetooth belongs to the Host (including its keyboard). Guest
+# input is injected by the existing viewer; no Bluetooth device is passed.
+# Avoid starting a second hardware stack against a nonexistent adapter.
+for BT_FEATURE in android.hardware.bluetooth.xml android.hardware.bluetooth_le.xml; do
+    [ ! -L "$ROOT/vendor/etc/permissions/$BT_FEATURE" ] || exit 3
+    $BB rm -f "$ROOT/vendor/etc/permissions/$BT_FEATURE"
+done
+# tablet_core_hardware.xml repeats FEATURE_BLUETOOTH on this ROM.
+$BB grep -r -l 'name="android.hardware.bluetooth' "$ROOT/vendor/etc/permissions" |
+while IFS= read -r FEATURE_XML; do
+    [ -f "$FEATURE_XML" ] && [ ! -L "$FEATURE_XML" ] || exit 3
+    # The APK's Magisk BusyBox does not enable GNU BRE \? extensions.
+    $BB sed -i '/^[[:space:]]*<feature name="android\.hardware\.bluetooth"[[:space:]]*\/>[[:space:]]*$/d; /^[[:space:]]*<feature name="android\.hardware\.bluetooth_le"[[:space:]]*\/>[[:space:]]*$/d' "$FEATURE_XML"
+    /system/bin/chcon u:object_r:vendor_configs_file:s0 "$FEATURE_XML"
+done
+$BB chmod 0644 "$ROOT/system/etc/init/zz_rootvmos_userns.rc"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/etc/init/zz_rootvmos_userns.rc"
+# Android13 lmkd's vmpressure fallback asks for CgroupEventControl, while
+# this ROM defines MemCgroupEventControl. Add an alias, retain the original.
+TASK_JSON=$ROOT/system/etc/task_profiles.json
+if ! $BB grep -q '"Name" *: *"CgroupEventControl"' "$TASK_JSON"; then
+    [ "$($BB grep -c '^  "Attributes": \[' "$TASK_JSON")" = 1 ] || exit 3
+    $BB sed -i '/^  "Attributes": \[/a\    {"Name":"CgroupEventControl","Controller":"memory","File":"cgroup.event_control"},' "$TASK_JSON"
+fi
+/system/bin/chcon u:object_r:system_file:s0 "$TASK_JSON"
+# These services still run; only realtime scheduling is unavailable in
+# the mapped container. Keep RTPRIO hard=0, ordinary CFS nice is inherited.
+for RC_KIND in system vendor; do
+    $BB grep -r -l '^[[:space:]]*rlimit rtprio ' "$ROOT/$RC_KIND/etc/init" |
+    while IFS= read -r RC_FILE; do
+        [ -f "$RC_FILE" ] && [ ! -L "$RC_FILE" ] || exit 3
+        $BB sed -i 's/^\([[:space:]]*rlimit rtprio\) [0-9][0-9]* [0-9][0-9]*$/\1 0 0/' "$RC_FILE"
+        if [ "$RC_KIND" = vendor ]; then
+            /system/bin/chcon u:object_r:vendor_configs_file:s0 "$RC_FILE"
+        else
+            /system/bin/chcon u:object_r:system_file:s0 "$RC_FILE"
+        fi
+    done
+done
+echo USERNS_HOST_PREPARATION_COMPLETE
+exit 0

@@ -2,7 +2,7 @@
 [ "$(id -u)" = 0 ] || { echo 'ROOT_FAIL：请允许 Magisk 授权'; exit 4; }
 BB=/data/rootvmos/host/bin/busybox
 [ -x "$BB" ] || { echo 'BUSYBOX_MISSING：此宿主缺少运行时所需 BusyBox'; exit 4; }
-for NS in pid mnt net ipc uts cgroup; do
+for NS in user pid mnt net ipc uts cgroup; do
     [ "$(readlink /proc/$$/ns/$NS)" = "$(readlink /proc/1/ns/$NS)" ] || { echo "NAMESPACE_FAIL：$NS 必须为宿主空间"; exit 4; }
 done
 [ "$(getprop ro.product.device)" = rpi4 ] || { echo 'DEVICE_UNSUPPORTED：仅支持树莓派4'; exit 4; }
@@ -20,7 +20,8 @@ for F in index metacopy xino_auto redirect_dir nfs_export; do
     [ "$(cat /sys/module/overlay/parameters/$F)" = N ] || { echo "OVERLAY_UNSUPPORTED：$F"; exit 4; }
 done
 "$BB" unshare -m -p -n -u -i -f --propagation private /system/bin/true || { echo 'NAMESPACE_CREATE_FAIL'; exit 4; }
+"$BB" unshare -U /system/bin/true || { echo 'USER_NAMESPACE_CREATE_FAIL'; exit 4; }
 /system/bin/ip route show table wlan0 | "$BB" grep -q '^default ' || { echo 'NETWORK_MISSING：请连接宿主 Wi-Fi'; exit 4; }
-echo '宿主检查通过：Magisk root、六种宿主空间、AOSP13 指纹、Permissive、Binder/Overlay、GPU、资源组、Wi-Fi'
+echo '宿主检查通过：Magisk root、User namespace、AOSP13 指纹、Permissive、Binder/Overlay、GPU、资源组、Wi-Fi'
 echo '支持配置：树莓派4 / ARM64 / rpi4-a13-v1'
 echo '内存不足时会拒绝新增启动；不会停止已有实例。'

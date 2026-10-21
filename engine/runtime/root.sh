@@ -62,7 +62,7 @@ set)
 apply)
     # inner.sh calls this after RC copying, before pivot_root and stock init.
     [ "$(id -u)" = 0 ] || exit 3
-    for N in pid mnt net ipc uts cgroup; do
+    for N in mnt net ipc uts cgroup; do
         [ "$($BB readlink /proc/self/ns/$N)" != "$($BB readlink /proc/1/ns/$N)" ] || exit 3
     done
     ROOT=$RUN/rootfs
@@ -89,12 +89,21 @@ apply)
     [ ! -L "$ROOT/sbin" ] || exit 3
     # The upstream denylist unmount API identifies its own tmpfs by source
     # "magisk"; preserve that convention so hiding detaches only this mount.
-    "$BB" mount -t tmpfs -o mode=0755,nosuid magisk "$ROOT/sbin"
-    "$BB" mkdir -p "$ROOT/sbin/.magisk/device" "$ROOT/sbin/.magisk/busybox"
-    "$BB" cp "$COMPONENT/magisk" "$ROOT/sbin/magisk"
-    "$BB" cp "$COMPONENT/magisk32" "$ROOT/sbin/magisk32"
-    "$BB" cp "$COMPONENT/magiskpolicy" "$ROOT/sbin/magiskpolicy"
-    "$BB" cp "$COMPONENT/stub.apk" "$ROOT/sbin/stub.apk"
+    SBIN=$ROOT/sbin
+    if [ -n "${IRIS_USERNS_PREPARE_PID:-}" ]; then
+        # A Host-created inherited mount is locked in the child User namespace.
+        # Stage immutable binaries here; the mapped entry creates /sbin itself,
+        # so stock Magisk/denylist can later detach only its own tmpfs mount.
+        SBIN=$ROOT/system/etc/iris-root/sbin
+        "$BB" mkdir -p "$SBIN"
+    else
+        "$BB" mount -t tmpfs -o mode=0755,nosuid magisk "$SBIN"
+    fi
+    "$BB" mkdir -p "$SBIN/.magisk/device" "$SBIN/.magisk/busybox"
+    "$BB" cp "$COMPONENT/magisk" "$SBIN/magisk"
+    "$BB" cp "$COMPONENT/magisk32" "$SBIN/magisk32"
+    "$BB" cp "$COMPONENT/magiskpolicy" "$SBIN/magiskpolicy"
+    "$BB" cp "$COMPONENT/stub.apk" "$SBIN/stub.apk"
     "$BB" cp "$COMPONENT/busybox" "$ROOT/system/etc/iris-root/busybox"
     "$BB" cp "$COMPONENT/component.id" "$ROOT/system/etc/iris-root/component.id"
     "$BB" cp "$COMPONENT/util_functions.sh" "$ROOT/system/etc/iris-root/util_functions.sh"
@@ -108,13 +117,13 @@ apply)
     [ -f "$ZRC" ] && [ ! -L "$ZRC" ] || exit 3
     [ "$($BB grep -c '^service zygote' "$ZRC")" = 2 ] || exit 3
     "$BB" sed -i '/^service zygote/a\    onrestart exec u:r:su:s0 0 0 -- /sbin/magisk --zygote-restart' "$ZRC"
-    "$BB" ln -s magisk "$ROOT/sbin/su"
+    "$BB" ln -s magisk "$SBIN/su"
     "$BB" ln -s /sbin/su "$ROOT/system/bin/su"
     "$BB" ln -s /sbin/magisk "$ROOT/system/bin/magisk"
-    "$BB" chmod 0755 "$ROOT/sbin/magisk" "$ROOT/sbin/magisk32" "$ROOT/sbin/magiskpolicy" "$ROOT/system/etc/iris-root/boot.sh" "$ROOT/system/etc/iris-root/busybox"
+    "$BB" chmod 0755 "$SBIN/magisk" "$SBIN/magisk32" "$SBIN/magiskpolicy" "$ROOT/system/etc/iris-root/boot.sh" "$ROOT/system/etc/iris-root/busybox"
     "$BB" chmod 0644 "$ROOT/system/etc/iris-root/profile" "$ROOT/system/etc/iris-root/util_functions.sh"
-    "$BB" chmod 0644 "$ROOT/sbin/stub.apk" "$ROOT/system/etc/iris-root/component.id" "$ROOT/system/etc/iris-root/Magisk.apk" "$ROOT/system/etc/init/zz_iris_magisk.rc"
-    /system/bin/chcon -R u:object_r:system_file:s0 "$ROOT/sbin" "$ROOT/system/etc/iris-root" "$ROOT/system/app/IrisMagisk" "$ROOT/system/etc/init/zz_iris_magisk.rc"
+    "$BB" chmod 0644 "$SBIN/stub.apk" "$ROOT/system/etc/iris-root/component.id" "$ROOT/system/etc/iris-root/Magisk.apk" "$ROOT/system/etc/init/zz_iris_magisk.rc"
+    /system/bin/chcon -R u:object_r:system_file:s0 "$SBIN" "$ROOT/system/etc/iris-root" "$ROOT/system/app/IrisMagisk" "$ROOT/system/etc/init/zz_iris_magisk.rc"
     echo "APPLICATION_ROOT_APPLIED id=$ID profile=$PROFILE"
     ;;
 *) echo 'Use get/set/verify/apply ID; application root is disabled by default' >&2;exit 2 ;;

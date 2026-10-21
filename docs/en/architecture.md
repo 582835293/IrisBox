@@ -18,7 +18,7 @@ flowchart TD
 
 The regular host APK requests root only through Magisk. A root `app_process` Broker listens on localhost port 19762 with a random bearer token. HTTP 202 means accepted, not completed; state polling verifies the actual guest session and desktop.
 
-Instances share a Linux kernel. Each has mount/PID/network/IPC/UTS/cgroup namespaces, private BinderFS, system/vendor overlay upper/work directories, userdata and metadata. There is no CPU emulation, separate guest kernel or user namespace. The root mount becomes private before pivoting; guest init manages services normally. Guest Root and Permissive do not constitute a security boundary against hostile workloads.
+Instances share a Linux kernel. Each has User/mount/PID/network/IPC/UTS/cgroup namespaces, private BinderFS, system/vendor overlay upper/work directories, userdata and metadata. Since 0.1.3, Guest UID0 maps to a dedicated unprivileged Host range. There is no Host-UID0 fallback, CPU emulation or separate guest kernel. See [identity isolation and migration](userns.md). The root mount becomes private before pivoting; guest init manages services normally. Guest Root and Permissive do not constitute a security boundary against hostile workloads.
 
 `revision` identifies a data generation; `session=PID:start_tick` identifies a running generation. Lifecycle locks, process identity checks, cgroup membership and mount ownership prevent operations on recycled IDs or stale sessions. Destructive requests also require the current revision and instance confirmation number.
 

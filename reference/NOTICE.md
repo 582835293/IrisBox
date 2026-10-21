@@ -11,3 +11,5 @@ Magisk组件内保留原LICENSE、adaptation.json、apk_assets.patch和摘要。
 当前公开发行使用不含 Google 的 AOSP ROM 和重新创建空白 userdata 的宿主镜像。第三方许可、对应源码索引、镜像验证边界见仓库 THIRD_PARTY_NOTICES.md 与 docs/08_国际化与发布.md。原私人 Google 包和所有用户数据不公开。
 
 本轮将当前producer C++源码及直接编译脚本提取至`engine/native/buffer`，修复后在用户已有AOSP13环境的独立临时目录重编；摘要见`producer-build.json`。新增Java音频桥和Host监督脚本为本项目实现，不从旧实例提取运行数据。
+
+0.1.3另参考旧项目2026-10-20的User namespace实现，输入摘要见`userns-provenance.json`。本项目改为独立UID范围，适配0700产品目录、私有BusyBox、独有音频桥和既有维护事务。闹钟JNI复用已核验的固定产物，并附AOSP源码位置与补丁；没有修改旧工程或宿主系统库，也没有声称重编整个AOSP。

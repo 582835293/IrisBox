@@ -1,0 +1,25 @@
+--- a/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp
++++ b/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp
+@@ -278,5 +278,22 @@
+     for (size_t i = 0; i < fds.size(); i++) {
+         fds[i] = timerfd_create(android_alarm_to_clockid[i], TFD_NONBLOCK);
++        // A mapped Guest cannot wake or suspend the physical Host. Keep the
++        // native epoll delivery path (including OnAlarmListener) using the
++        // equivalent non-waking clock, rather than the incomplete Java fallback.
++        if (fds[i] < 0 && errno == EPERM &&
++            (android_alarm_to_clockid[i] == CLOCK_REALTIME_ALARM ||
++             android_alarm_to_clockid[i] == CLOCK_BOOTTIME_ALARM)) {
++            std::string map;
++            unsigned inside, outside, count;
++            if (android::base::ReadFileToString("/proc/self/uid_map", &map) &&
++                sscanf(map.c_str(), "%u %u %u", &inside, &outside, &count) == 3 &&
++                inside == 0 && outside >= 1100000000U && count == 100000U) {
++                const clockid_t clock = android_alarm_to_clockid[i] == CLOCK_REALTIME_ALARM
++                        ? CLOCK_REALTIME : CLOCK_BOOTTIME;
++                fds[i] = timerfd_create(clock, TFD_NONBLOCK);
++                if (fds[i] >= 0) ALOGI("Iris mapped Guest: non-waking alarm clock %d", clock);
++            }
++        }
+         if (fds[i] < 0) {
+             log_timerfd_create_error(android_alarm_to_clockid[i]);
+             close(epollfd);

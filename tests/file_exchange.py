@@ -3,6 +3,7 @@ import sys,json,uuid,hashlib,urllib.request,urllib.parse,urllib.error,time,argpa
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 from device import API,ROOT
+from regression import PRIVATE
 name='RootVMOS_check_'+uuid.uuid4().hex[:8]+'.txt'
 parser=argparse.ArgumentParser();parser.add_argument('--ids',type=int,nargs=2);args=parser.parse_args()
 results=[]
@@ -30,5 +31,5 @@ with API() as api:
         request=urllib.request.Request(f'http://127.0.0.1:{api.port}/files/export?'+query,headers={'Authorization':'Bearer '+api.token})
         with request_ready(request) as response:assert response.read()==body
         results.append({'id':id,'name':name,'bytes':len(body),'sha256':digest,'roundtrip':'PASS'})
-(ROOT/'validation/private/file-exchange.json').write_text(json.dumps(results,indent=2),encoding='utf-8')
+(PRIVATE/'file-exchange.json').write_text(json.dumps(results,indent=2),encoding='utf-8')
 print(json.dumps(results))

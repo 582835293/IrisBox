@@ -137,6 +137,7 @@
     <string name="ui_d5a6a98e28f7" formatted="false">"宿主暂时没有可用的保存位置选择器"</string>
     <string name="ui_4fae6a2dba6f" formatted="false">"宿主暂时没有可用的文件选择器"</string>
     <string name="ui_f135d8912da5" formatted="false">"宿主未安装可用的 Magisk root；请先完成宿主 root。"</string>
+    <string name="ui_a61143fbb1e4" formatted="false">"宿主检查通过：Magisk root、User namespace、AOSP13 指纹、Permissive、Binder/Overlay、GPU、资源组、Wi-Fi"</string>
     <string name="ui_47cf8cc253d6" formatted="false">"宿主检查通过：Magisk root、六种宿主空间、AOSP13 指纹、Permissive、Binder/Overlay、GPU、资源组、Wi-Fi"</string>
     <string name="ui_60e2bcad85ac" formatted="false">"导入"</string>
     <string name="ui_233cfdb13ce4" formatted="false">"导入 ROM"</string>

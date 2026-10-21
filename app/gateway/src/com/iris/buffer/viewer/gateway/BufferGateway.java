@@ -58,6 +58,37 @@ public final class BufferGateway {
         if(Files.isSymbolicLink(path)||Os.stat(path.toString()).st_uid!=0||(Os.stat(path.toString()).st_mode&077)!=0)
             throw new IOException("Private root file required");
     }
+    private static FileDescriptor[] connectMapped(int id,String expected,int width,int height,
+                                                  ScheduledExecutorService timer)throws Exception {
+        String[] identity=expected.split(":");
+        String name="rootvmos_userns_bridge_"+java.util.UUID.randomUUID().toString().replace("-","");
+        LocalServerSocket control=new LocalServerSocket(name);
+        Process helper=null;
+        ScheduledFuture<?> expiry=timer.schedule(()->{try{control.close();}catch(IOException ignored){}},6,TimeUnit.SECONDS);
+        FileDescriptor[] pair=null;
+        try {
+            helper=new ProcessBuilder(BASE.resolve("rootvmos_userns").toString(),"bridge",Integer.toString(id),
+                    identity[0],identity[1],name,Integer.toString(width),Integer.toString(height))
+                    .redirectOutput(ProcessBuilder.Redirect.INHERIT).redirectError(ProcessBuilder.Redirect.INHERIT).start();
+            try(LocalSocket connection=control.accept()) {
+                connection.setSoTimeout(3000);
+                // Credentials are captured at connect, before the native helper drops Host root.
+                if(connection.getPeerCredentials().getUid()!=0)throw new IOException("Untrusted connector");
+                int marker=connection.getInputStream().read();
+                pair=connection.getAncillaryFileDescriptors();
+                if(marker!='F'||pair==null||pair.length!=2)throw new IOException("Expected graphics and input FDs");
+                if(!helper.waitFor(3,TimeUnit.SECONDS)||helper.exitValue()!=0)throw new IOException("Mapped connector failed");
+                FileDescriptor[] result=pair;pair=null;return result;
+            }
+        } finally {
+            expiry.cancel(false);control.close();
+            if(helper!=null&&helper.isAlive())helper.destroyForcibly();
+            closePair(pair);
+        }
+    }
+    private static void closePair(FileDescriptor[] pair) {
+        if(pair!=null)for(FileDescriptor fd:pair)try{Os.close(fd);}catch(Exception ignored){}
+    }
     public static void main(String[] args)throws Exception {
         // ID SESSION ABSTRACT_NAME RUN_TOKEN_FILE APK_UID SECONDS INPUT_WIDTH INPUT_HEIGHT
         if(args.length!=8)throw new IllegalArgumentException("Expected eight gateway arguments");
@@ -80,9 +111,6 @@ public final class BufferGateway {
         Path data=BASE.resolve("instances/"+id+"/data");
         Path graphicsPath=data.resolve("iris_buffer/"+expected.replace(':','_')+"/output.sock");
         Path inputDir=data.resolve("iris_stream/"+expected.replace(':','_'));
-        rootPrivate(graphicsPath);rootPrivate(inputDir.resolve("input.sock"));rootPrivate(inputDir.resolve("input.token"));
-        String inputToken=read(inputDir.resolve("input.token"),128);
-        if(!inputToken.matches("[0-9a-f]{64}"))throw new IOException("Invalid input token");
         final LocalServerSocket server=new LocalServerSocket(name);
         final ScheduledExecutorService deadline=Executors.newSingleThreadScheduledExecutor();
         if(seconds>0)deadline.schedule(()->{System.err.println("GATEWAY_DEADLINE");Runtime.getRuntime().halt(3);},seconds,TimeUnit.SECONDS);
@@ -101,26 +129,21 @@ public final class BufferGateway {
             String[] hello=line(app.getInputStream(),160).split(" ");
             if(hello.length!=5||!hello[0].equals("HELLO")||!hello[1].equals("2")||!hello[2].equals(args[0])||!hello[3].equals(expected)||!hello[4].equals(token))throw new IOException("Handshake rejected");
             if(!expected.equals(session(id)))throw new IOException("Guest changed before handoff");
-            try(LocalSocket graphics=new LocalSocket(LocalSocket.SOCKET_SEQPACKET);LocalSocket input=new LocalSocket()) {
-                graphics.connect(new LocalSocketAddress(graphicsPath.toString(),LocalSocketAddress.Namespace.FILESYSTEM));
-                input.connect(new LocalSocketAddress(inputDir.resolve("input.sock").toString(),LocalSocketAddress.Namespace.FILESYSTEM));
-                if(graphics.getPeerCredentials().getUid()!=0||input.getPeerCredentials().getUid()!=0)throw new IOException("Wrong Guest producer/input UID");
-                input.setSoTimeout(1500);
-                input.getOutputStream().write(("HELLO 1 "+expected+" "+inputToken+"\n").getBytes(StandardCharsets.US_ASCII));
-                if(!line(input.getInputStream(),128).equals("READY 1 "+expected+" "+width+" "+height+" mouse"))throw new IOException("Input handshake mismatch");
+            FileDescriptor[] pair=connectMapped(id,expected,width,height,deadline);
+            try {
                 if(!expected.equals(session(id))||!peerTick.equals(tick(peerPid)))throw new IOException("Session changed during connect");
                 Path identity=tokenPath.getParent().resolve("display.identity");
                 Files.write(identity,(peerPid+" "+peerTick+"\n").getBytes(StandardCharsets.US_ASCII));Os.chmod(identity.toString(),0600);
                 /** FD传送得到的是同一socket的另一引用；App复制并回TAKEN后，本进程退出即可。
                  */
-                app.setFileDescriptorsForSend(new FileDescriptor[]{graphics.getFileDescriptor(),input.getFileDescriptor()});
+                app.setFileDescriptorsForSend(pair);
                 app.getOutputStream().write(("OK 2 "+id+" "+expected+"\n").getBytes(StandardCharsets.US_ASCII));
                 app.setFileDescriptorsForSend(null);
                 if(!line(app.getInputStream(),16).equals("TAKEN"))throw new IOException("APK did not take both FDs");
                 // Close references only. shutdown would break APK-owned duplicate sockets.
                 // No P command here: the newly authenticated input sequence starts at 1.
                 System.out.println("GATEWAY_HANDED_OFF id="+id+" session="+expected+" display="+peerPid+":"+peerTick+" elapsedMs="+(SystemClock.elapsedRealtime()-began));
-            }
+            } finally {closePair(pair);}
         } finally {server.close();deadline.shutdownNow();}
     }
 }

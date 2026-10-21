@@ -16,3 +16,5 @@ __pycache__/
 *.log
 validation/private/
 app/viewer/assets/host-tools/
+
+engine/runtime/rootvmos_userns

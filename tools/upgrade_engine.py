@@ -21,8 +21,8 @@ def main():
         stage=shell('cat /data/rootvmos/engine-upgrade.pending').strip()
         assert re.fullmatch(r'/data/rootvmos/\.upgrade-[a-f0-9]{32}',stage)
         print(shell('test ! -L '+stage+'\nsh '+stage+'/recover.sh',timeout=180));return
-    old,_=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.1.2.apk')
-    assert old['version'] in ('0.1.0-e2','0.1.1-e3','0.1.1-e4','0.1.1-e5','0.1.1-e6','0.1.1-e7','0.1.1-e8','0.1.1-e9','0.1.2-e10','0.1.2-e11','0.1.2-e12') and new['version']=='0.1.2-e13'
+    old,_=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.1.3.apk')
+    assert old['version'] in ('0.1.2-e13','0.1.3-e14','0.1.3-e15','0.1.3-e16') and new['version']=='0.1.3-e17'
     current=json.loads(shell('cat '+BASE+'/engine.json'))
     assert current==old,'Installed engine is not the supplied known baseline'
     with API() as api:
@@ -70,7 +70,7 @@ def main():
     for name in sorted(new['files']):
         parent=str(Path(name).parent).replace('\\','/')
         script += [f'mkdir -p "$B/{parent}"',f'[ ! -L "$B/{name}" ]',f'cp "$S/payload/{name}" "$B/{name}.upgrade"',f'chmod 0644 "$B/{name}.upgrade"',f'mv -f "$B/{name}.upgrade" "$B/{name}"']
-    executable=('rootvmos_ns','iris_inet_policy','display/buffer_bridge/iris_buffer_producer','root/magisk_30_7/busybox','root/magisk_30_7/magisk','root/magisk_30_7/magisk32','root/magisk_30_7/magiskpolicy')
+    executable=('rootvmos_ns','rootvmos_userns','iris_inet_policy','display/buffer_bridge/iris_buffer_producer','root/magisk_30_7/busybox','root/magisk_30_7/magisk','root/magisk_30_7/magisk32','root/magisk_30_7/magiskpolicy')
     script += ['chmod 0755 '+' '.join('"$B/'+n+'"' for n in executable),
                'cp "$S/payload/engine.json" "$B/engine.json"','cp "$S/files.sha256" "$B/files.sha256"',
                '(cd "$B" && "$BB" sha256sum -c files.sha256 >/dev/null)',

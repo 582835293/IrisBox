@@ -5,7 +5,8 @@ from pathlib import Path
 import shutil
 import xml.etree.ElementTree as ET
 ROOT=Path(__file__).resolve().parents[1]
-TAG='v0.1.2-preview'
+VERSION=ET.parse(ROOT/'app/viewer/AndroidManifest.xml').getroot().get('{http://schemas.android.com/apk/res/android}versionName')
+TAG='v'+VERSION+'-preview'
 REPO='https://github.com/582835293/IrisBox'
 
 
@@ -18,17 +19,20 @@ def digest(path):
 
 def main():
     release=ROOT/'out/release';release.mkdir(parents=True,exist_ok=True)
-    for name in ('IrisBox-0.1.2.apk','IrisBox-rpi4-a13-aosp.irisrom'):
+    apk='IrisBox-'+VERSION+'.apk'
+    for name in (apk,'IrisBox-rpi4-a13-aosp.irisrom'):
         source=ROOT/'out'/name;dest=release/name
         if not dest.exists() or digest(source)!=digest(dest):shutil.copyfile(source,dest)
-    names=['IrisBox-0.1.2.apk','IrisBox-rpi4-a13-aosp.irisrom',
+    names=[apk,'IrisBox-rpi4-a13-aosp.irisrom',
            'IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.img.xz',
            'IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.json','IrisBox-guest-root-sources.zip','IrisBox-upstream-sources.zip']
     artifacts=[{'file':name,'bytes':(release/name).stat().st_size,'sha256':digest(release/name)} for name in names if (release/name).exists()]
-    direct={'IrisBox-0.1.2.apk','IrisBox-guest-root-sources.zip','IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.json'}
+    direct={apk,'IrisBox-guest-root-sources.zip','IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.json'}
     for row in artifacts:
         row['distribution']='github-release' if row['file'] in direct else 'awaiting-owner-mirror'
-        row['downloadUrl']=REPO+'/releases/download/'+TAG+'/'+row['file'] if row['file'] in direct else None
+        # Unchanged source and host metadata assets already exist in v0.1.2.
+        asset_tag=TAG if row['file']==apk else 'v0.1.2-preview'
+        row['downloadUrl']=REPO+'/releases/download/'+asset_tag+'/'+row['file'] if row['file'] in direct else None
     assert all(row['bytes']<2*1024**3 for row in artifacts)
     for row in artifacts:
         assert 'google' not in row['file'].lower()
@@ -36,9 +40,16 @@ def main():
     data={'product':'IrisBox','chineseName':'虹膜空间','release':TAG,'repository':REPO,
           'package':app.get('package'),'versionName':app.get(ns+'versionName'),'versionCode':int(app.get(ns+'versionCode')),
           'engineVersion':json.loads((ROOT/'out/engine-manifest.json').read_text())['version'],
-          'publicRomGoogleIncluded':False,'hostMagiskIncluded':False,'freshCardFlashTested':False,'artifacts':artifacts}
+          'publicRomGoogleIncluded':False,'hostMagiskIncluded':False,'freshCardFlashTested':False,
+          'userNamespaceIsolation':True,'legacyDataMigrationRequired':True,'artifacts':artifacts}
     (release/'release-manifest.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
     (release/'SHA256SUMS').write_text(''.join(row['sha256']+'  '+row['file']+'\n' for row in artifacts),encoding='ascii')
+    (release/'上传说明.txt').write_text(
+        '虹膜空间 / IrisBox '+VERSION+'\n\n'
+        '请上传下列当前发行文件及 SHA256SUMS、release-manifest.json 到 Google Drive（国外）和/或夸克网盘（国内），然后提供真实分享链接与提取码。旧版APK可留存，但不属于本版清单。\n\n'
+        +'\n'.join(row['file'] for row in artifacts)+'\n\n'
+        '宿主镜像仅支持 USB/sda、16GB以上USB盘及12GiB全新空白userdata，不是SD/mmc镜像；首次物理刷盘/启动未验证。宿主Magisk自行安装。\n'
+        '0.1.2/e13现有实例需停机备份并迁移User namespace。不要上传私人Google ROM、密钥、账号或validation/private；网盘文件必须与本版SHA256SUMS一致。\n',encoding='utf-8')
     (ROOT/'reference/release-manifest.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
     for zh in (False,True):
         lines=['# '+('下载 · 虹膜空间 / IrisBox' if zh else 'Downloads · IrisBox'),'',

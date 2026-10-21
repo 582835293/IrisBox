@@ -7,6 +7,7 @@ import android.system.Os;
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.concurrent.*;
 import java.nio.charset.StandardCharsets;
 
 public final class AudioBridge {
@@ -49,11 +50,11 @@ public final class AudioBridge {
     static void run(String[] args)throws Exception{
         System.err.println("ROOTVMOS_AUDIO_START "+(args.length>0?args[0]:"invalid"));
         if(args.length!=6)throw new IllegalArgumentException("guest|host socket tokenFile stats seconds session");
-        String mode=args[0],socket=args[1],token=readToken(args[2]),status=args[3];int seconds=Integer.parseInt(args[4]);expected=args[5];
+        String mode=args[0],socket=args[1],status=args[3];int seconds=Integer.parseInt(args[4]);expected=args[5];
         if(seconds<0||seconds>86400||!expected.matches("[1-9][0-9]*:[1-9][0-9]*"))throw new IllegalArgumentException();
         Context ctx=context();
         System.err.println("ROOTVMOS_AUDIO_CONTEXT_READY");
-        try{if(mode.equals("guest"))capture(ctx,socket,token,status,seconds);else if(mode.equals("host"))play(socket,token,status,seconds);else throw new IllegalArgumentException();}catch(IOException disconnected){System.err.println("ROOTVMOS_AUDIO_DISCONNECTED "+disconnected.getClass().getSimpleName());}
+        try{if(mode.equals("guest"))capture(ctx,socket,readToken(args[2]),status,seconds);else if(mode.equals("host-mapped"))play(Integer.parseInt(socket),status,seconds);else throw new IllegalArgumentException();}catch(IOException disconnected){System.err.println("ROOTVMOS_AUDIO_DISCONNECTED "+disconnected.getClass().getSimpleName());}
     }
     static void capture(Context ctx,String path,String token,String status,int seconds)throws Exception{
         Class<?> ruleClass=Class.forName("android.media.audiopolicy.AudioMixingRule");
@@ -114,11 +115,31 @@ public final class AudioBridge {
             bind.close();if(bound)new File(path).delete();
         }
     }
-    static void play(String path,String token,String status,int seconds)throws Exception{
-        try(LocalSocket socket=new LocalSocket()){
-            socket.connect(new LocalSocketAddress(path,LocalSocketAddress.Namespace.FILESYSTEM));socket.setSoTimeout(3000);
-            DataOutputStream out=new DataOutputStream(socket.getOutputStream());out.writeUTF(token);out.flush();
-            DataInputStream in=new DataInputStream(socket.getInputStream());
+    static InputStream mappedAudio(int id)throws Exception{
+        if(id<1007||id>1134||Os.getuid()!=0)throw new SecurityException("Host audio identity");
+        String name="rootvmos_audio_bridge_"+UUID.randomUUID().toString().replace("-","");
+        String[] identity=expected.split(":");
+        LocalServerSocket server=new LocalServerSocket(name);
+        ScheduledExecutorService timer=Executors.newSingleThreadScheduledExecutor();
+        java.lang.Process helper=null;FileDescriptor received=null;
+        timer.schedule(()->{try{server.close();}catch(IOException ignored){}},6,TimeUnit.SECONDS);
+        try{
+            helper=new ProcessBuilder("/data/rootvmos/runtime/rootvmos_userns","audio-bridge",Integer.toString(id),identity[0],identity[1],name)
+                .redirectOutput(ProcessBuilder.Redirect.INHERIT).redirectError(ProcessBuilder.Redirect.INHERIT).start();
+            try(LocalSocket connection=server.accept()){
+                connection.setSoTimeout(3000);
+                if(connection.getPeerCredentials().getUid()!=0)throw new SecurityException("Audio connector");
+                int marker=connection.getInputStream().read();FileDescriptor[] fds=connection.getAncillaryFileDescriptors();
+                if(marker!='A'||fds==null||fds.length!=1){if(fds!=null)for(FileDescriptor fd:fds)Os.close(fd);throw new IOException("Audio FD");}
+                received=fds[0];
+                if(!helper.waitFor(3,TimeUnit.SECONDS)||helper.exitValue()!=0)throw new IOException("Audio connector failed");
+                Os.setsockoptTimeval(received,android.system.OsConstants.SOL_SOCKET,android.system.OsConstants.SO_RCVTIMEO,android.system.StructTimeval.fromMillis(3000));
+                InputStream input=new FileInputStream(received);received=null;return input;
+            }
+        }finally{if(received!=null)Os.close(received);if(helper!=null&&helper.isAlive())helper.destroyForcibly();server.close();timer.shutdownNow();}
+    }
+    static void play(int id,String status,int seconds)throws Exception{
+        try(DataInputStream in=new DataInputStream(mappedAudio(id))){
             if(in.readInt()!=0x52564131||in.readInt()!=48000||in.readInt()!=2)throw new IOException("format");
             int min=AudioTrack.getMinBufferSize(48000,AudioFormat.CHANNEL_OUT_STEREO,AudioFormat.ENCODING_PCM_16BIT);
             AudioTrack track=new AudioTrack.Builder().setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build()).setAudioFormat(format()).setBufferSizeInBytes(Math.max(min,15360)).setTransferMode(AudioTrack.MODE_STREAM).build();

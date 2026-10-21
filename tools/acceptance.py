@@ -40,7 +40,7 @@ def main():
                 time.sleep(1)
             raise RuntimeError('Data operation did not complete')
         if a.action=='ready':
-            r=wait(api,a.id,lambda x:x['ready'],150)
+            r=wait(api,a.id,lambda x:x['ready'],300)
             (ROOT/f'validation/private/ready-{a.id}.json').write_text(json.dumps(r,ensure_ascii=False,indent=2),encoding='utf-8');print(json.dumps(compact(r)));return
         if a.action=='memory':
             if not 512<=a.mib<=2560:raise SystemExit('Invalid memory budget')
@@ -53,10 +53,9 @@ def main():
         if a.action=='install-probe':
             if not r['ready']:raise RuntimeError('Guest is not ready')
             subprocess.run(ADB+['push',str(ROOT/'out/RootVMOS-Probe.apk'),'/data/local/tmp/rootvmos-probe.apk'],check=True,timeout=30)
-            script=f'''cp /data/local/tmp/rootvmos-probe.apk {BASE}/instances/{a.id}/data/local/tmp/rootvmos-probe.apk
-chmod 0644 {BASE}/instances/{a.id}/data/local/tmp/rootvmos-probe.apk
-export IRIS_EXPECT_SESSION={r['session']}
-sh {BASE}/ctl.sh exec {a.id} pm install -r /data/local/tmp/rootvmos-probe.apk
+            size=(ROOT/'out/RootVMOS-Probe.apk').stat().st_size
+            script=f'''export IRIS_EXPECT_SESSION={r['session']}
+sh {BASE}/ctl.sh exec {a.id} pm install -r -S {size} < /data/local/tmp/rootvmos-probe.apk
 sh {BASE}/ctl.sh exec {a.id} am start -W -n com.rootvmos.probe/.ProbeActivity --es instance {a.id}
 '''
             print(shell(script,timeout=90))

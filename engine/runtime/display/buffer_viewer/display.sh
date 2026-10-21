@@ -85,7 +85,7 @@ stop_display() {
         INPUT_REL=/data/iris_stream/${GI}_${GT}
         INPUT_HOST=$RUN/data/iris_stream/${GI}_${GT}
         if [ -f "$R/input.identity" ]; then
-            [ "$(cat "$R/input.identity")" = "$(cat "$INPUT_HOST/input.identity")" ] || return 3
+            [ "$(cat "$R/input.identity")" = "$(sh "$BASE/ctl.sh" exec "$ID" cat "$INPUT_REL/input.identity")" ] || return 3
         fi
         IRIS_EXPECT_SESSION="$GI:$GT" "$BB" timeout 15 sh "$BASE/ctl.sh" exec "$ID" /system/bin/busybox timeout 12 \
             sh "$INPUT_REL/stop_input.sh" "$GI:$GT" >> "$R/input-stop.log" 2>&1 || return 7
@@ -148,24 +148,13 @@ start)
     # G是Guest路径，GD是Host看到的同一私有data；每轮路径/token绑定会话。
     G=/data/iris_buffer/${PID}_${TICK}
     GD=$RUN/data/iris_buffer/${PID}_${TICK}
-    mkdir -p "$GD"
-    chmod 0700 "$RUN/data/iris_buffer" "$GD"
-    "$BB" flock -n "$GD/producer.lock" "$BB" true || { echo 'Producer directory in use' >&2; exit 4; }
-    cp "$BASE/display/buffer_bridge/iris_buffer_producer" "$GD/iris_buffer_producer"
-    chmod 0755 "$GD/iris_buffer_producer"
     INPUT_REL=/data/iris_stream/${PID}_${TICK}
     INPUT_HOST=$RUN/data/iris_stream/${PID}_${TICK}
-    mkdir -p "$INPUT_HOST"
-    chmod 0700 "$RUN/data/iris_stream" "$INPUT_HOST"
-    cp "$BASE/display/stream/stop_input.sh" "$INPUT_HOST/stop_input.sh"
-    if [ -f "$INPUT_HOST/input.identity" ]; then
-        IRIS_EXPECT_SESSION="$SESSION" "$BB" timeout 15 sh "$BASE/ctl.sh" exec "$ID" /system/bin/busybox timeout 12 \
-            sh "$INPUT_REL/stop_input.sh" "$SESSION" > "$R/input-previous-stop.log" 2>&1
+    if sh "$BASE/ctl.sh" exec "$ID" test -f "$INPUT_REL/stop_input.sh"; then
+        IRIS_EXPECT_SESSION="$SESSION" "$BB" timeout 15 sh "$BASE/ctl.sh" exec "$ID" \
+            /system/bin/busybox timeout 12 sh "$INPUT_REL/stop_input.sh" "$SESSION" > "$R/input-previous-stop.log" 2>&1
     fi
-    cp "$BASE/display/stream/input.jar" "$INPUT_HOST/input.jar"
-    cp "$BASE/display/stream/start_input.sh" "$INPUT_HOST/start_input.sh"
-    "$BB" od -An -N32 -tx1 /dev/urandom | "$BB" tr -d ' \n' > "$INPUT_HOST/input.token"
-    chmod 0600 "$INPUT_HOST/input.token"
+    "$BASE/rootvmos_userns" stage-display "$ID" "$PID" "$TICK"
     echo 1 > "$R/input.started"
     "$BB" nohup "$BB" env -u CLASSPATH IRIS_EXPECT_SESSION="$SESSION" sh "$BASE/ctl.sh" exec "$ID" \
         sh "$INPUT_REL/start_input.sh" "$SESSION" "$LW" "$LH" "$PROBE_DURATION" > "$R/input.log" 2>&1 < /dev/null &
@@ -177,7 +166,7 @@ start)
         "$BB" sleep 1
     done
     [ -S "$INPUT_HOST/input.sock" ] && [ -f "$INPUT_HOST/input.identity" ] || { echo 'Input did not start' >&2; exit 7; }
-    cp "$INPUT_HOST/input.identity" "$R/input.identity"
+    sh "$BASE/ctl.sh" exec "$ID" cat "$INPUT_REL/input.identity" > "$R/input.identity"
     PRODUCER_START_UP=$("$BB" awk '{print int($1)}' /proc/uptime)
     "$BB" nohup "$BB" env -u CLASSPATH IRIS_EXPECT_SESSION="$SESSION" \
         sh "$BASE/ctl.sh" exec "$ID" "$G/iris_buffer_producer" "$ID" "$SESSION" "$G/output.sock" \

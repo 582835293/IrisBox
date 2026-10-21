@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760" role="img" aria-labelledby="title desc">
+<title id="title">IrisBox · From installation to Android</title><desc id="desc">Install and authorize → Install the engine → Import a ROM → Create an instance → Start the instance → Enter and multitask</desc>
+<defs><linearGradient id="brand"><stop stop-color="#7366ec"/><stop offset="1" stop-color="#449bc4"/></linearGradient></defs>
+<rect width="1400" height="760" rx="24" fill="#101826"/>
+<g font-family="Segoe UI, Microsoft YaHei, Noto Sans CJK SC, sans-serif">
+<circle cx="70" cy="65" r="25" fill="none" stroke="#a39afa" stroke-width="4"/><circle cx="70" cy="65" r="10" fill="#76d9d1"/>
+<text x="120" y="76" font-size="32" font-weight="700" fill="#f2f5ff">IrisBox · From installation to Android</text>
+<text x="48" y="120" font-size="19" fill="#a8b6cd">Raspberry Pi 4 · Matched AOSP 13 host · ARM64</text>
+<rect x="48" y="154" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="83" cy="191" r="18" fill="url(#brand)"/>
+<text x="83" y="197" font-size="18" text-anchor="middle" fill="white" font-weight="700">1</text>
+<text x="114" y="199" font-size="23" font-weight="600" fill="#f2f5ff">Install and authorize</text>
+<text x="72" y="244" font-size="18" fill="#c0ccdf">Install the IrisBox APK</text>
+<rect x="72" y="266" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="256" y="302" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">1 · Authorize and check</text>
+<text x="72" y="362" font-size="16" fill="#9fb3ca">Install host Magisk yourself first</text>
+<rect x="492" y="154" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="527" cy="191" r="18" fill="url(#brand)"/>
+<text x="527" y="197" font-size="18" text-anchor="middle" fill="white" font-weight="700">2</text>
+<text x="558" y="199" font-size="23" font-weight="600" fill="#f2f5ff">Install the engine</text>
+<text x="516" y="244" font-size="18" fill="#c0ccdf">After the host check succeeds</text>
+<rect x="516" y="266" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="700" y="302" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">2 · Install engine</text>
+<text x="516" y="362" font-size="16" fill="#9fb3ca">Wait for installation to finish</text>
+<rect x="936" y="154" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="971" cy="191" r="18" fill="url(#brand)"/>
+<text x="971" y="197" font-size="18" text-anchor="middle" fill="white" font-weight="700">3</text>
+<text x="1002" y="199" font-size="23" font-weight="600" fill="#f2f5ff">Import a ROM</text>
+<text x="960" y="244" font-size="18" fill="#c0ccdf">Select a compatible .irisrom file</text>
+<rect x="960" y="266" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="1144" y="302" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">3 · Import ROM</text>
+<text x="960" y="362" font-size="16" fill="#9fb3ca">Public AOSP ROM excludes Google</text>
+<rect x="48" y="419" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="83" cy="456" r="18" fill="url(#brand)"/>
+<text x="83" y="462" font-size="18" text-anchor="middle" fill="white" font-weight="700">4</text>
+<text x="114" y="464" font-size="23" font-weight="600" fill="#f2f5ff">Create an instance</text>
+<text x="72" y="509" font-size="18" fill="#c0ccdf">Open the manager and add one</text>
+<rect x="72" y="531" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="256" y="567" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">New instance</text>
+<text x="72" y="627" font-size="16" fill="#9fb3ca">Choose memory, display and Root</text>
+<rect x="492" y="419" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="527" cy="456" r="18" fill="url(#brand)"/>
+<text x="527" y="462" font-size="18" text-anchor="middle" fill="white" font-weight="700">5</text>
+<text x="558" y="464" font-size="23" font-weight="600" fill="#f2f5ff">Start the instance</text>
+<text x="516" y="509" font-size="18" fill="#c0ccdf">Use Start on the instance card</text>
+<rect x="516" y="531" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="700" y="567" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">Start</text>
+<text x="516" y="627" font-size="16" fill="#9fb3ca">Wait until the Android desktop is ready</text>
+<rect x="936" y="419" width="416" height="235" rx="18" fill="#1b293d" stroke="#334660"/>
+<circle cx="971" cy="456" r="18" fill="url(#brand)"/>
+<text x="971" y="462" font-size="18" text-anchor="middle" fill="white" font-weight="700">6</text>
+<text x="1002" y="464" font-size="23" font-weight="600" fill="#f2f5ff">Enter and multitask</text>
+<text x="960" y="509" font-size="18" fill="#c0ccdf">Open the ready instance desktop</text>
+<rect x="960" y="531" width="368" height="58" rx="11" fill="#34456b"/>
+<text x="1144" y="567" text-anchor="middle" font-size="20" font-weight="600" fill="#dedaff">Enter</text>
+<text x="960" y="627" font-size="16" fill="#9fb3ca">Return to manage the other instances</text>
+<text x="48" y="720" font-size="18" fill="#91a5c0">Illustrated workflow · No device screenshots or account data · See the installation guide</text>
+</g></svg>

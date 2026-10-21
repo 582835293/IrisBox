@@ -40,8 +40,8 @@ if [ "$ACTION" = guest ]; then
     for FAMILY in ipv4 ipv6; do
         CONF=/proc/sys/net/$FAMILY/conf/eth0
         [ -d "$CONF" ] || exit 3
-        $BB mount -o bind "$CONF" "$CONF"
-        $BB mount -o remount,bind,rw "$CONF"
+        # The trusted Host preparer exposed only this private-netns exception.
+        [ "$($BB awk '{print $2}' /proc/self/uid_map)" -ge 2000000000 ] || exit 3
     done
     echo "Guest $ID private eth0 configuration ready"
     exit 0
@@ -104,7 +104,8 @@ preinit_is_ours() {
     alive "$PID" "$TICK" || return 3
     [ ! -L "$LOG/network.request" ] &&
         [ "$($BB cat "$LOG/network.request")" = "$SESSION" ] || return 3
-    $BB tr '\000' '\n' < "/proc/$PID/cmdline" | $BB grep -qx "$BASE/inner.sh" || return 3
+    "$BASE/rootvmos_userns" verify-preinit "$ID" "$PID" "$TICK" || return 3
+    $BB tr '\000' '\n' < "/proc/$PID/cmdline" | $BB grep -qx "$BASE/rootvmos_userns" || return 3
     [ "$($BB awk '/^NSpid:/ {print $NF}' "/proc/$PID/status")" = 1 ] || return 3
     $BB grep -F "upperdir=$RUN/upper," "/proc/$PID/mountinfo" >/dev/null || return 3
     for NS in pid mnt net ipc uts cgroup; do

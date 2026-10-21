@@ -1,0 +1,62 @@
+{
+  "origin": "Previous Project Iris V3.0; User namespace integration 2026-10-20",
+  "readOnlyReference": true,
+  "inputs": [
+    {
+      "file": "security/userns/iris_userns.c",
+      "sha256": "6b5086f4b887dc848fe18cea90d4e0c33a680925a5038ccb94beec75ab2289a7"
+    },
+    {
+      "file": "security/userns/userns_fs.h",
+      "sha256": "c874249588481c6ba9520b630400c8d6870b304e5316892e226269cf6b829755"
+    },
+    {
+      "file": "security/userns/userns_display.h",
+      "sha256": "77b421b83f6b5a0884a8b36cf9ad7ce13e4b326d7dc8a73b630bc52fdc500d6b"
+    },
+    {
+      "file": "security/userns/guest_entry.sh",
+      "sha256": "67fdd1ac13994f0b0b3146fe7feca85f5be3ccdea9ac050857e54a1cbd269aff"
+    },
+    {
+      "file": "security/userns/guest.rc",
+      "sha256": "8347f7bf7fdb0775e744cc1a69821c9be14ce16c73e99bfa9de9a7ce05ace39c"
+    },
+    {
+      "file": "security/userns/backup.sh",
+      "sha256": "6ea6983b2074d68b10b2fa51ca3085a5099f9a41cebb879a3145d6f4dd0737e4"
+    },
+    {
+      "file": "security/userns/alarm.patch",
+      "sha256": "a8543e7a42cb25fc13a49eef044394b00b0bb12cf9742401fa4c56d8ad87c25f"
+    },
+    {
+      "file": "security/userns/build/libalarm_jni_userns.so",
+      "sha256": "e4a50b33128b0d92380e5f24bd46890be388e2b9a001a8908cab7c24e9e9a7ae"
+    },
+    {
+      "file": "iris_runtime_ns.c",
+      "sha256": "66359b58a2fe8574dc8c6b8353ea341d06b15b12491d42b380fc5a512fe368c4"
+    },
+    {
+      "file": "inner.sh",
+      "sha256": "043ed98ccb3a9b5f1e6072635abab78077e48b4d885b15bdb4bde7d71d9e281d"
+    },
+    {
+      "file": "display/buffer_viewer/gateway/src/com/iris/buffer/viewer/gateway/BufferGateway.java",
+      "sha256": "1718bc7af398e150971a959ef10cab4566825b11622a3de0b5f76781b7913f7f"
+    }
+  ],
+  "runtimeLibrary": "engine/runtime/security/userns/libalarm_jni.so",
+  "librarySha256": "e4a50b33128b0d92380e5f24bd46890be388e2b9a001a8908cab7c24e9e9a7ae",
+  "aospBaseline": "android-13.0.0_r75",
+  "librarySource": "frameworks/base/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp",
+  "localFullAospRebuild": false,
+  "kernelRebuildRequired": false,
+  "range": {
+    "first": 2000000000,
+    "countPerInstance": 100000,
+    "slots": 128,
+    "endExclusive": 2012800000
+  }
+}

@@ -137,6 +137,7 @@
     <string name="ui_d5a6a98e28f7" formatted="false">"No save-location picker is available on the host"</string>
     <string name="ui_4fae6a2dba6f" formatted="false">"No file picker is available on the host"</string>
     <string name="ui_f135d8912da5" formatted="false">"Install and configure Magisk root on the host first."</string>
+    <string name="ui_a61143fbb1e4" formatted="false">"Host checks passed: Magisk root, User namespaces, matched AOSP 13, Permissive, Binder/Overlay, GPU, cgroups and Wi-Fi"</string>
     <string name="ui_47cf8cc253d6" formatted="false">"Host checks passed: Magisk root, six host namespaces, matched AOSP 13, Permissive, Binder/Overlay, GPU, cgroups and Wi-Fi"</string>
     <string name="ui_60e2bcad85ac" formatted="false">"Import"</string>
     <string name="ui_233cfdb13ce4" formatted="false">"Import ROM"</string>

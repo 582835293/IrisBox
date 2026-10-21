@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-15",
+  "app": "0.1.2",
+  "versionCode": 109,
+  "engine": "0.1.2-e13",
+  "name": {
+    "en": "IrisBox",
+    "zh": "虹膜空间"
+  },
+  "localeResources": 334,
+  "archiveSafetyCasesPassed": 11,
+  "engineFilesAudited": 44,
+  "rootComponentFilesAudited": 11,
+  "romCompatFilesAudited": 116,
+  "publicSnapshotFullBuildMatches": true,
+  "publicAosp": {
+    "importedThroughApp": true,
+    "newInstanceBootMs": 64128,
+    "memoryMiB": 1024,
+    "rootReady": true,
+    "googlePackagesAbsent": true,
+    "ordinaryUidNetworkGpuAudioVideoPassed": true,
+    "ownedTemporaryInstanceDeleted": true
+  },
+  "retainedInstances": {
+    "bothReady": true,
+    "originalRomBindingsRetained": true,
+    "dataRevisionsRetained": true,
+    "googleAccountIdentityRetained": true,
+    "playStoreSignedInCatalogVisuallyReviewed": true,
+    "normalAppMagiskRootPassed": true,
+    "noInternetPermissionDenied": true,
+    "dualMediaFilePreviewPassed": true,
+    "audioHelperRecoverySeconds": 11.36,
+    "reopenAndBrokerRestoreSessionsRetained": true,
+    "guestCrashBuffersClear": true,
+    "cgroupOomKills": [
+      0,
+      0
+    ]
+  },
+  "oldProject": {
+    "localInputsUnchanged": 52,
+    "deviceConfigRegistryScriptsUnchanged": true,
+    "guestsRemainStopped": true,
+    "hostGlobalBusyboxUnchanged": true
+  },
+  "hostImage": {
+    "factoryStaticPartitionsVerified": true,
+    "freshEmptyUserdata": true,
+    "kernelMatchesPinnedPrebuilt": true,
+    "flashOrFreshBootTested": false
+  },
+  "distribution": {
+    "rawEvidencePrivate": true,
+    "signingKeysPrivate": true,
+    "publicRomExcludesGoogle": true,
+    "largeFilesAwaitOwnerMirrorUrls": true
+  },
+  "hostImageStorage": {
+    "boot": "USB /dev/block/sda2,sda3,sda4",
+    "sdMmcSupported": false,
+    "freshUserdataGiB": 12,
+    "minimumMediumBytes": 15436087296,
+    "physicalFlashTested": false
+  }
+}

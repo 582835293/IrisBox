@@ -139,6 +139,7 @@ final class LegacyText {
         IDS.put("宿主暂时没有可用的保存位置选择器", R.string.ui_d5a6a98e28f7);
         IDS.put("宿主暂时没有可用的文件选择器", R.string.ui_4fae6a2dba6f);
         IDS.put("宿主未安装可用的 Magisk root；请先完成宿主 root。", R.string.ui_f135d8912da5);
+        IDS.put("宿主检查通过：Magisk root、User namespace、AOSP13 指纹、Permissive、Binder/Overlay、GPU、资源组、Wi-Fi", R.string.ui_a61143fbb1e4);
         IDS.put("宿主检查通过：Magisk root、六种宿主空间、AOSP13 指纹、Permissive、Binder/Overlay、GPU、资源组、Wi-Fi", R.string.ui_47cf8cc253d6);
         IDS.put("导入", R.string.ui_60e2bcad85ac);
         IDS.put("导入 ROM", R.string.ui_233cfdb13ce4);

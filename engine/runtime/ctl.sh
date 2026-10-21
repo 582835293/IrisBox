@@ -195,6 +195,9 @@ case "$ACTION" in
         registered_instance || exit 3
         [ ! -e "$RUN/cleanup.pending" ] && [ ! -L "$RUN/cleanup.pending" ] || { echo 'Finish the pending reset or delete first' >&2; exit 4; }
 
+        [ ! -e "$RUN/userns.pending" ] && [ ! -L "$RUN/userns.pending" ] || exit 4
+        "$BASE/rootvmos_userns" profile "$ID" >/dev/null
+
         # 获取运行超时期限（0 代表永不自动超时，或 180/300/600/1800 秒）
         DEADLINE=${1:-0}
         case "$DEADLINE" in 0|180|300|600|1800) ;; *) echo 'Deadline must be 0 (no expiry), 180, 300, 600 or 1800 seconds' >&2; exit 2 ;; esac

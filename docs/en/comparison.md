@@ -37,3 +37,7 @@ For every experiment record the input, identity checks, execution namespace, res
 Trace BusyBox across the boundary: the host uses `/data/rootvmos/host/bin/busybox`; after pivot_root only the verified guest copy `/system/bin/busybox` exists. Audit both the post-pivot script and commands passed by host callers through `ctl exec`. A path on the development host is not proof that it exists on a new host or inside a guest.
 
 Boot a ROM which actually omits optional components, with new userdata. Persistent overlays and Google layers can hide missing core directories. The public AOSP test exposed a missing `product/etc/init`; e13 now creates it in the verified private overlay. Test both retained data and a genuinely new instance.
+
+## 0.1.3: follow the upstream identity isolation work
+
+The previous local Iris project integrated User namespaces on 2026-10-20, after the e13 extraction checkpoint. This port follows its complete ownership/ACL/capability, metacopy, cgroup, network, display, Magisk and alarm adaptations. IrisBox additionally needs a private pre-pivot alias for its 0700 Host data root and a mapped PCM connector. Its persistent UID range is disjoint. See [the migration guide](userns.md).

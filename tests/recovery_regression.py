@@ -1,5 +1,5 @@
 """退出App/恢复后台不停止Guest；最终保护与安装一致性核验。"""
-import hashlib,json,sys,time
+import hashlib,json,sys,time,xml.etree.ElementTree as ET
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 from device import API,adb,shell,BASE,ROOT
@@ -38,7 +38,8 @@ def main():
   assert 'FATAL EXCEPTION' not in crash and 'Fatal signal' not in crash,crash[-2000:]
  shell('test -f /system/app/Traceur/Traceur.apk; ! grep -q rootvmos_traceur /proc/self/mountinfo; '+BASE+'/iris_inet_policy verify')
  actual=shell('P=$(pm path com.rootvmos.viewer); P=${P#package:}; /system/bin/busybox sha256sum "$P"').split()[0]
- expected=hashlib.sha256((ROOT/'out/IrisBox-0.1.2.apk').read_bytes()).hexdigest();assert actual==expected
- result.update({'guestBootCrashes':0,'traceurMaskPrivate':True,'apkSha256':actual,'oldProjectCheck':'run tools/device.py compare --old-stopped --host-rebooted separately'})
+ version=ET.parse(ROOT/'app/viewer/AndroidManifest.xml').getroot().get('{http://schemas.android.com/apk/res/android}versionName')
+ expected=hashlib.sha256((ROOT/('out/IrisBox-'+version+'.apk')).read_bytes()).hexdigest();assert actual==expected
+ result.update({'guestBootCrashes':0,'traceurMaskPrivate':True,'apkSha256':actual,'oldProjectCheck':'compare the current-run read-only snapshot separately; no Host reboot is implied'})
  (PRIVATE/'recovery-result.json').write_text(json.dumps(result,indent=2),encoding='utf-8');print(json.dumps(result))
 if __name__=='__main__':main()

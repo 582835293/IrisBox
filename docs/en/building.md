@@ -9,7 +9,7 @@ $env:JAVA_TOOL_OPTIONS='-Xmx256m -Xms16m -XX:+UseSerialGC'
 ./build.ps1 -SdkDir "$env:LOCALAPPDATA/Android/Sdk" -JdkDir 'C:/path/to/jdk-17'
 ```
 
-The full build generates EN/ZH resources, packages the fixed host BusyBox, compiles native helpers, AudioBridge, Broker and Gateway, normalizes JAR times, generates engine/profile hashes, compiles Viewer JNI/Java, links resources with generated R.java, aligns and signs the APK. Output: `out/IrisBox-0.1.2.apk`. `-AppOnly` is appropriate only when the engine is unchanged and already packaged. Engine changes require a new engine version and full build.
+The full build generates EN/ZH resources, packages the fixed host BusyBox, compiles native helpers, AudioBridge, Broker and Gateway, normalizes JAR times, generates engine/profile hashes, compiles Viewer JNI/Java, links resources with generated R.java, aligns and signs the APK. Output: `out/IrisBox-0.1.3.apk`. `-AppOnly` is appropriate only when the engine is unchanged and already packaged. Engine changes require a new engine version and full build.
 
 The local signing key is generated under the ignored App build directory. Preserve the private key for updates; it is not published. A clone creates a different development key and cannot overwrite a release-signed installation. This preview keeps its original development signing identity; there is no automated release-signing service.
 
@@ -22,10 +22,16 @@ Host construction uses the [Android13 Raspberry Vanilla manifest](https://github
 There is no automatic cross-version engine upgrade UI yet. Stop every IrisBox guest normally and retain the APK corresponding to the installed engine. The development maintenance tool verifies that baseline, backs up fixed engine files, updates them transactionally and preserves config/ROM/instance data:
 
 ```powershell
-python tools/upgrade_engine.py --from-apk out/qa/IrisBox-0.1.2-e12.apk --apply
+python tools/upgrade_engine.py --from-apk out/IrisBox-0.1.2.apk --apply
+python tools/device.py install
+# Open the App with all legacy instances stopped, then:
+python tools/migrate_userns.py
+python tools/migrate_userns.py --apply
 ```
 
 An incomplete upgrade leaves `engine-upgrade.pending`; the App refuses startup. The tool attempts rollback, or `--recover` uses the retained transaction recovery script. This backup is not a userdata backup. Sudden power loss was not simulated.
+
+The e13 → e17 upgrade additionally requires the independent, stopped-state userdata backup and ownership migration described in [User namespace migration](userns.md). After the first mapped boot, restoring an older engine alone is unsafe. The original full data snapshot must remain available. Fresh instances receive mappings automatically.
 
 Uninstalling the APK preserves `/data/rootvmos`. Complete removal requires stopping/deleting only this project's instances, verifying no owned mounts/cgroups remain and stopping its manager before targeted cleanup. Never remove `/data/guest`, flush shared BPF or firewall tables, or reset user data to resolve host compatibility errors.
 
@@ -35,7 +41,7 @@ Keep Android scripts LF. The packager rejects CR bytes. Do not rerun the initial
 
 Set `IRISBOX_SERIAL` to your own ADB serial before using `tools/device.py` or the regression tools. The public source snapshot removes private build-machine and device defaults. Pass your own `--host`, `--key` and `--aosp` for remote producer builds. Initial migration/export scripts are historical recipes, not normal deployment steps.
 
-The reviewed public snapshot was independently fully built with the documented toolchain: all 44 engine payload hashes matched the tested local engine. The APK signature differs when a new development key is generated.
+The 0.1.3 public snapshot was independently fully built with the documented toolchain: all 49 engine payload hashes matched the tested local engine. The APK signature differs when a new development key is generated. The fixed alarm JNI library is a verified prebuilt from the previous project's User namespace integration; its source patch and hash are recorded in `reference/userns-provenance.json`. This does not claim a full AOSP rebuild.
 
 For the optional remote producer rebuild, pass `-RebuildProducer -ProducerHost builder@YOUR_HOST -ProducerKey C:/path/to/key -AospDir /path/to/aosp-rpi4`, or set `IRISBOX_BUILD_HOST`, `IRISBOX_BUILD_KEY` and `IRISBOX_AOSP_DIR`. These are your own build-machine parameters; no developer machine address or key is bundled.
 

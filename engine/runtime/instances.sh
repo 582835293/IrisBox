@@ -116,6 +116,7 @@ create)
     printf '%s\n' "$((NEXT+1))" > "$C/next_id.tmp.$$"
     "$BB" mv "$C/next_id.tmp.$$" "$C/next_id"
     "$BB" mkdir -m 0755 "$BASE/instances/$NEXT"
+    : > "$BASE/instances/$NEXT/userns.pending"
     printf '960x540\n' > "$BASE/config/resolution_v1/$NEXT.profile"
     DEFAULT_MEMORY=1280
     [ "$GOOGLE" != 1 ] || DEFAULT_MEMORY=1536
@@ -125,6 +126,8 @@ create)
     if [ "$GOOGLE" = 1 ]; then cp "$COMPAT/google/component.id" "$BASE/instances/$NEXT/google.core.enabled"; fi
     printf '%s\n' "$ROM_ID" > "$BASE/config/rom_v1/$NEXT.id"
     write_record "$NEXT"
+    "$BASE/rootvmos_userns" enable "$NEXT" >/dev/null
+    "$BB" rm -f "$BASE/instances/$NEXT/userns.pending"
     echo INSTANCE_CREATED=$NEXT
     ;;
 reset|delete)
@@ -171,7 +174,10 @@ reset|delete)
     done
     erase_tree "$ERASE"
     if [ "$ACTION" = reset ]; then
+        : > "$RUN/userns.pending"
         write_record "$ID"
+        "$BASE/rootvmos_userns" enable "$ID" >/dev/null
+        "$BB" rm -f "$RUN/userns.pending"
         "$BB" rm -f "$PENDING"
         echo INSTANCE_RESET=$ID
     else
