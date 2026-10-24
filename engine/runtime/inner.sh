@@ -92,6 +92,22 @@ $BB mount -t overlay overlay -o "lowerdir=$SYSTEM_LOWER,upperdir=$RUN/upper,work
 # 挂载 vendor 分区的 OverlayFS 驱动视图
 $BB mount -t overlay overlay -o "lowerdir=$ROM/vendor.lower,upperdir=$RUN/vendor.upper,workdir=$RUN/vendor.work,metacopy=on,index=off" "$ROOT/vendor"
 
+# The factory Browser2 is a WebView test shell without a DownloadListener.
+# Stage our verified engine APK as an ordinary Guest system app. Target APKs
+# are downloaded by this Guest's DownloadManager and installed through its UI.
+[ -f "$BASE/browser/IrisBoxBrowser.apk" ] && [ ! -L "$BASE/browser/IrisBoxBrowser.apk" ] || exit 3
+$BB mkdir -p "$ROOT/system/product/app/IrisBoxBrowser"
+copy_payload "$BASE/browser/IrisBoxBrowser.apk" "$ROOT/system/product/app/IrisBoxBrowser/IrisBoxBrowser.apk"
+# Android caches a directory package using the directory's mtime. Replacing
+# only its APK leaves stale manifest metadata on upgrades. Also repair an
+# earlier e19 copy whose APK is newer than its parent, without clearing data.
+if [ "$ROOT/system/product/app/IrisBoxBrowser/IrisBoxBrowser.apk" -nt "$ROOT/system/product/app/IrisBoxBrowser" ]; then
+    $BB touch "$ROOT/system/product/app/IrisBoxBrowser"
+fi
+$BB chmod 0755 "$ROOT/system/product/app/IrisBoxBrowser"
+$BB chmod 0644 "$ROOT/system/product/app/IrisBoxBrowser/IrisBoxBrowser.apk"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/product/app/IrisBoxBrowser" "$ROOT/system/product/app/IrisBoxBrowser/IrisBoxBrowser.apk"
+
 # ------------------------------------------------------------------------------
 # 3. 核心专用载荷注入（图形、Init 与系统工具）
 # ------------------------------------------------------------------------------

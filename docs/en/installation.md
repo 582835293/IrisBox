@@ -26,6 +26,8 @@ Ordinary instances default to 1280 MiB; Google instances default to 1536 MiB. Me
 
 Closing the App preserves guests. Reopening restores the manager. After a host reboot, open the App and start guests manually. Importing another ROM changes the default for new instances; existing instances keep their recorded ROM. Reset/delete clear the selected instance data, with confirmation; neither is a host troubleshooting step.
 
+The local 0.1.4/e21 candidate adds live orientation selection. Inside a running instance, choose **Orientation → Follow app / Landscape / Portrait** from the top toolbar. Each instance saves its selection and reapplies it on its next boot, without restarting for a live change. The Host window stays landscape and centers portrait content. Apps with fixed layouts can still have unused space; forcing a direction does not add arbitrary aspect-ratio support to an app. See the download page for the published version.
+
 ## Clean flash preview
 
 The `.img.xz` is a whole-disk host image, distinct from an importable `.irisrom`. It was assembled from the original factory MBR/boot/system/vendor and **new empty ext4 userdata**. It was not exported from the active Pi SSD. All partition hashes, filesystem checks and the XZ hash are recorded in the release metadata.

@@ -124,6 +124,7 @@
     <string name="ui_1150ec9bec2f" formatted="false">"Instance "</string>
     <string name="ui_3b229178f89f" formatted="false">"Instance shared storage is not ready"</string>
     <string name="ui_e8e681da73a2" formatted="false">"Guest geometry mismatch; input paused"</string>
+    <string name="ui_af113b719faf" formatted="false">"Instance orientation"</string>
     <string name="ui_361960e14c40" formatted="false">"Instance stopped"</string>
     <string name="ui_5fc688314cb0" formatted="false">"The instance stopped or restarted. Return to the list and select it again."</string>
     <string name="ui_7637fa012880" formatted="false">"Instance changed or a file with this name already exists"</string>
@@ -150,6 +151,7 @@
     <string name="ui_b0569c4c4048" formatted="false">"No preview yet"</string>
     <string name="ui_0ea00180a025" formatted="false">"not ready. Check this startup log. Stop the instance to disable root or retry."</string>
     <string name="ui_10b0999596e9" formatted="false">"Configuration unavailable. Select Authorize and check to continue."</string>
+    <string name="ui_7a67baf80ca6" formatted="false">"Orientation changed"</string>
     <string name="ui_2ecfd7e9af20" formatted="false">"disabled."</string>
     <string name="ui_0a522ea5c033" formatted="false">"File selection cancelled"</string>
     <string name="ui_54309b76b734" formatted="false">"Full log for this startup copied"</string>
@@ -199,6 +201,7 @@
     <string name="ui_c567011ba629" formatted="false">"Could not create instance. Check the manager log."</string>
     <string name="ui_96d7a34ea8df" formatted="false">"ROM for new instances: "</string>
     <string name="ui_83ff48e09334" formatted="false">"Each instance has its own apps, accounts and files.\nDefault: 960×540, OpenGL, 1.25 GiB memory limit (1.5 GiB with Google).\nOn a 4 GB Raspberry Pi, available memory and app workloads determine how many instances can run together."</string>
+    <string name="ui_866b439f84cb" formatted="false">"Could not change orientation. Try again shortly."</string>
     <string name="ui_8c9d5291cf02" formatted="false">"Cannot write to the selected location"</string>
     <string name="ui_63bda37a9075" formatted="false">"Cannot open selected file"</string>
     <string name="ui_a6112556325f" formatted="false">"Cannot obtain host root. Check Magisk and reconnect."</string>
@@ -228,6 +231,8 @@
     <string name="ui_3fa4a5d1287b" formatted="false">"Desktop ready"</string>
     <string name="ui_79eff70947fd" formatted="false">"Checking host"</string>
     <string name="ui_79b3bc1a9795" formatted="false">"Checking host and Magisk authorization"</string>
+    <string name="ui_088836f4131e" formatted="false">"Landscape"</string>
+    <string name="ui_1e54b5df0839" formatted="false">"Orientation"</string>
     <string name="ui_2df5017f4099" formatted="false">"Saving memory limit"</string>
     <string name="ui_2715af053797" formatted="false">"Saving memory limit…"</string>
     <string name="ui_6cde44994952" formatted="false">"Saving resolution"</string>
@@ -239,6 +244,7 @@
     <string name="ui_91783c475b4b" formatted="false">"Preparing export…"</string>
     <string name="ui_300d18c126af" formatted="false">"Preparing display and pointer input…"</string>
     <string name="ui_e29e654d3987" formatted="false">"Preparing the first preview"</string>
+    <string name="ui_43a12838bff9" formatted="false">"Changing orientation"</string>
     <string name="ui_4a6fc3dd7805" formatted="false">"Creating instance…"</string>
     <string name="ui_87533ec64f72" formatted="false">"Creating an independent instance…"</string>
     <string name="ui_729dc7d8433a" formatted="false">"Deleting instance"</string>
@@ -276,6 +282,7 @@
     <string name="ui_16ff9253f805" formatted="false">"Folder refresh cancelled"</string>
     <string name="ui_3c06abe11651" formatted="false">"Confirm deletion"</string>
     <string name="ui_30a6079ce340" formatted="false">"Confirm reset"</string>
+    <string name="ui_d5cf29ae57e3" formatted="false">"Portrait"</string>
     <string name="ui_f495347d6acf" formatted="false">"Page "</string>
     <string name="ui_81d95e0dc5fe" formatted="false">"Waiting for Magisk authorization and checking the host…"</string>
     <string name="ui_d9dce1b78d9e" formatted="false">"Waiting for instance startup"</string>
@@ -302,6 +309,7 @@
     <string name="ui_5b489b8fb50c" formatted="false">"Choose a trusted IrisBox ROM adapted for Raspberry Pi AOSP 13. After verification, it will be used for new instances."</string>
     <string name="ui_fca4b0aaeb83" formatted="false">"Select a ROM using the system file picker"</string>
     <string name="ui_09cb521a07d3" formatted="false">"Loading status"</string>
+    <string name="ui_140a67b51a72" formatted="false">"Follow app"</string>
     <string name="ui_5fce454fd37b" formatted="false">"Path escapes the staging folder"</string>
     <string name="ui_976a4799e83f" formatted="false">"Enter 0.5–2.5 GiB, for example 1.25 or 2.5.\nThis is a usage ceiling, not reserved RAM, and does not increase CPU or GPU performance.\n2.5 GiB is intended for single-instance testing. The host and other instances need memory too; the runtime guard can stop an instance if host memory becomes critically low.\nStop the instance before saving; changes apply at next startup."</string>
     <string name="ui_7570be66f8ac" formatted="false">"Connecting input"</string>

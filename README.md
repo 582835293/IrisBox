@@ -10,7 +10,7 @@ This preview supports one matched **Raspberry Vanilla AOSP 13 / ARM64 / Raspberr
 
 1. Read the [host and installation guide](docs/en/installation.md). The host needs the matched build, kernel capabilities, Wi-Fi and an already configured Permissive environment.
 2. Install **host Magisk yourself**, following its upstream installation instructions and the board's boot layout. IrisBox never installs or patches host Magisk.
-3. Install `IrisBox-0.1.3.apk`. Open it and choose **Authorize and check**, then **Install engine**.
+3. Install `IrisBox-0.1.4.apk`. Open it and choose **Authorize and check**, then **Install engine**.
 4. Choose **Import ROM**, select `IrisBox-rpi4-a13-aosp.irisrom`, then **Manage instances → New instance → Start → Enter**.
 5. Use **EN / 中文** to choose System default, English or 简体中文. This changes the host App UI only; each guest keeps its own Android language and data.
 
@@ -30,7 +30,19 @@ The image illustrates the workflow; it contains no account or device data.
 
 The public ROM contains AOSP and compatibility files, **without Google apps or accounts**. Optional Google support remains available for separately supplied, appropriately licensed matching components. Existing private Google-enabled instances retain their ROM and data. Guest Root uses the existing bundled component and per-instance switch; this is separate from installing host Magisk.
 
-The 0.1.3 test retained the Google account and device IDs, but the Store currently shows a Play Protect certification warning. Catalog/download validation is blocked; see the [current results](docs/en/validation.md#013--e17-user-namespace-results--2026-10-21). Each guest needs its own custom-ROM registration where applicable.
+The published 0.1.3 test was blocked by a Play Protect certification warning. On October 24, the local 0.1.4 candidate restored the catalog and actually installed Open Sudoku from Play; **device certification still has not passed**. See the [current results](docs/en/validation.md). Each guest needs its own custom-ROM registration where applicable; registration does not establish device certification.
+
+Version 0.1.4/e21 adds **Orientation → Follow app / Landscape / Portrait** to the fullscreen toolbar, with live changes and saved per-instance selections. English/Chinese menus, rotated input and persistence across Guest restart passed device tests. Existing 0.1.3 users need the stopped-state engine maintenance upgrade described in [building and recovery](docs/en/building.md).
+
+## Device screenshots
+
+| Play installation in progress | Installed from Play | Tiantian Xiangqi running |
+|---|---|---|
+| ![Actual Play installation](docs/images/play-download.png) | ![Installed calculator with Open button](docs/images/play-installed.png) | ![Actual game puzzle board](docs/images/game-running.png) |
+
+![Instance list with a live preview](docs/images/instance-previews.png)
+
+Real device captures, cropped and privacy-redacted with owner permission; no AI redraw. The game image shows a puzzle board. The owner separately confirmed WeChat and QQ QR login/gameplay. In this list capture, instance 1 is stopped and instance 2 has a live preview. Screenshots do not establish Google device certification. [Image details](docs/images/README.md).
 
 ## Documentation
 
@@ -42,6 +54,7 @@ The 0.1.3 test retained the Google account and device IDs, but the Store current
 | [Build, maintenance and recovery](docs/en/building.md) | [构建与维护](docs/04_构建与维护.md) |
 | [Comparison and learning route](docs/en/comparison.md) | [对比与学习](docs/05_对比与学习.md) |
 | [Validation and limitations](docs/en/validation.md) | [首次验收](docs/06_验收记录.md)、[登录后回归](docs/07_登录后回归与修复.md) |
+| [Google Play recovery and certification](docs/en/google-recovery.md) | [Google商店恢复、备份与认证区别](docs/10_Google商店恢复与认证说明.md) |
 
 ## Root identity isolation
 

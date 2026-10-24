@@ -21,8 +21,8 @@ def main():
         stage=shell('cat /data/rootvmos/engine-upgrade.pending').strip()
         assert re.fullmatch(r'/data/rootvmos/\.upgrade-[a-f0-9]{32}',stage)
         print(shell('test ! -L '+stage+'\nsh '+stage+'/recover.sh',timeout=180));return
-    old,_=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.1.3.apk')
-    assert old['version'] in ('0.1.2-e13','0.1.3-e14','0.1.3-e15','0.1.3-e16') and new['version']=='0.1.3-e17'
+    old,_=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.1.4.apk')
+    assert old['version'] in ('0.1.2-e13','0.1.3-e14','0.1.3-e15','0.1.3-e16','0.1.3-e17','0.1.4-e18','0.1.4-e19','0.1.4-e20') and new['version']=='0.1.4-e21'
     current=json.loads(shell('cat '+BASE+'/engine.json'))
     assert current==old,'Installed engine is not the supplied known baseline'
     with API() as api:

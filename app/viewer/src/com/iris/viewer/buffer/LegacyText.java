@@ -126,6 +126,7 @@ final class LegacyText {
         IDS.put("实例 ", R.string.ui_1150ec9bec2f);
         IDS.put("实例共享存储暂未就绪", R.string.ui_3b229178f89f);
         IDS.put("实例尺寸不匹配，输入已暂停", R.string.ui_e8e681da73a2);
+        IDS.put("实例屏幕方向", R.string.ui_af113b719faf);
         IDS.put("实例已停止", R.string.ui_361960e14c40);
         IDS.put("实例已停止或重新启动，请返回列表重新选择", R.string.ui_5fc688314cb0);
         IDS.put("实例已变化或存在同名文件", R.string.ui_7637fa012880);
@@ -152,6 +153,7 @@ final class LegacyText {
         IDS.put("尚无预览", R.string.ui_b0569c4c4048);
         IDS.put("尚未就绪，请查看本次启动日志。停止后可关闭或重试。", R.string.ui_0ea00180a025);
         IDS.put("尚未读取配置。点击“授权与检查”继续。", R.string.ui_10b0999596e9);
+        IDS.put("屏幕方向已切换", R.string.ui_7a67baf80ca6);
         IDS.put("已关闭。", R.string.ui_2ecfd7e9af20);
         IDS.put("已取消文件选择", R.string.ui_0a522ea5c033);
         IDS.put("已复制本次启动的完整日志", R.string.ui_54309b76b734);
@@ -201,6 +203,7 @@ final class LegacyText {
         IDS.put("新增实例未完成，请查看管理日志", R.string.ui_c567011ba629);
         IDS.put("新实例 ROM：", R.string.ui_96d7a34ea8df);
         IDS.put("新实例有独立的应用、账号和文件。\n默认 960×540、内存上限 1.25 GiB、OpenGL 游戏兼容环境。\n可以创建多个实例；4 GB 树莓派同时运行的数量取决于实际内存和应用负载。", R.string.ui_83ff48e09334);
+        IDS.put("方向切换失败，请稍后重试", R.string.ui_866b439f84cb);
         IDS.put("无法写入选择的位置", R.string.ui_8c9d5291cf02);
         IDS.put("无法打开所选文件", R.string.ui_63bda37a9075);
         IDS.put("无法申请宿主 root，请检查 Magisk 后重新连接。", R.string.ui_a6112556325f);
@@ -230,6 +233,8 @@ final class LegacyText {
         IDS.put("桌面已就绪", R.string.ui_3fa4a5d1287b);
         IDS.put("检查宿主", R.string.ui_79eff70947fd);
         IDS.put("检查宿主和 Magisk 授权", R.string.ui_79b3bc1a9795);
+        IDS.put("横屏", R.string.ui_088836f4131e);
+        IDS.put("横竖屏", R.string.ui_1e54b5df0839);
         IDS.put("正在保存内存上限", R.string.ui_2df5017f4099);
         IDS.put("正在保存内存上限…", R.string.ui_2715af053797);
         IDS.put("正在保存分辨率", R.string.ui_6cde44994952);
@@ -241,6 +246,7 @@ final class LegacyText {
         IDS.put("正在准备导出…", R.string.ui_91783c475b4b);
         IDS.put("正在准备显示和鼠标连接…", R.string.ui_300d18c126af);
         IDS.put("正在准备首张预览", R.string.ui_e29e654d3987);
+        IDS.put("正在切换屏幕方向", R.string.ui_43a12838bff9);
         IDS.put("正在创建实例…", R.string.ui_4a6fc3dd7805);
         IDS.put("正在创建独立实例…", R.string.ui_87533ec64f72);
         IDS.put("正在删除实例", R.string.ui_729dc7d8433a);
@@ -278,6 +284,7 @@ final class LegacyText {
         IDS.put("目录刷新已取消", R.string.ui_16ff9253f805);
         IDS.put("确认删除", R.string.ui_3c06abe11651);
         IDS.put("确认重置", R.string.ui_30a6079ce340);
+        IDS.put("竖屏", R.string.ui_d5cf29ae57e3);
         IDS.put("第 ", R.string.ui_f495347d6acf);
         IDS.put("等待 Magisk 授权并检查宿主…", R.string.ui_81d95e0dc5fe);
         IDS.put("等待实例启动", R.string.ui_d9dce1b78d9e);
@@ -304,6 +311,7 @@ final class LegacyText {
         IDS.put("请选择可信来源、已适配树莓派 AOSP13 的 RootVMOS ROM 包。校验完成后将用于新建实例。", R.string.ui_5b489b8fb50c);
         IDS.put("请通过系统文件选择器选择 ROM", R.string.ui_fca4b0aaeb83);
         IDS.put("读取状态中", R.string.ui_09cb521a07d3);
+        IDS.put("跟随应用", R.string.ui_140a67b51a72);
         IDS.put("路径越界", R.string.ui_5fce454fd37b);
         IDS.put("输入 0.5～2.5 GiB，例如 1.25 或 2.5。\n这是内存使用上限，不会预先占满，也不会增加 CPU 或显卡性能。\n2.5 GiB 适合单实例测试。宿主和其他实例也需要内存；宿主内存不足时仍会自动停止实例。\n停止后保存，下次启动生效。", R.string.ui_976a4799e83f);
         IDS.put("输入连接中", R.string.ui_7570be66f8ac);

@@ -205,7 +205,9 @@ start)
         [ "$VIEW_DURATION" -ge 5 ] || { echo 'Insufficient remaining display time' >&2; exit 7; }
     fi
     # am may echo Intent extras; never expose its output or persist bearer tokens.
-    am start -n "$APP/.DisplayActivity" --es gatewayName "$NAME" --es gatewayToken "$TOKEN" \
+    BROKER_TOKEN=$(cat "$D/broker.token")
+    [ "${#BROKER_TOKEN}" = 64 ] && [ "$(printf '%s' "$BROKER_TOKEN" | "$BB" tr -d 'a-f0-9')" = '' ] || exit 3
+    am start -n "$APP/.DisplayActivity" --es gatewayName "$NAME" --es gatewayToken "$TOKEN" --es brokerToken "$BROKER_TOKEN" \
         --ei instanceId "$ID" --ei instanceNumber "$INSTANCE_NUMBER" --es session "$SESSION" --ei seconds "$VIEW_DURATION" --ei inputWidth "$LW" --ei inputHeight "$LH" >/dev/null 2>&1
     for N in 1 2 3 4 5 6 7 8; do
         # Also record the process before its gateway handshake: an APK that

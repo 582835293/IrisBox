@@ -1,6 +1,7 @@
 package com.rootvmos.viewer;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -24,6 +25,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -63,13 +65,14 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
     private volatile LocalSocket gateway;
     private volatile boolean resumed,surfaceReady;
     private boolean attempted,down,cancelled,geometryLogged;
-    private String gatewayName="",gatewayToken="",session="";
+    private String gatewayName="",gatewayToken="",session="",brokerToken="";
     private int id,number,pid,seconds,inputWidth,inputHeight;
     private long tick,displayStartedAt;
     private long pointerWidth,pointerHeight,pointerRotation=-1;
     private SurfaceView surface;
     private TextView status;
-    private Button guestHome,guestBack,pointerMode;
+    private Button guestHome,guestBack,pointerMode,orientationButton;
+    private volatile boolean orientationBusy;
     private volatile boolean touchMode;
     private final HashMap<Integer,Integer> keyboardDevices=new HashMap<>();
     private InputManager devices;
@@ -85,10 +88,11 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
             nativeStats(current); // Preserve five-second diagnostic logs without cluttering the UI.
             long[] g=nativeGeometry(current);
             String problem=PointerGeometry.rejection(g,surface.getWidth(),surface.getHeight(),inputWidth,inputHeight);
-            boolean ready=problem.isEmpty()&&link!=null&&link.healthy();
+            boolean ready=problem.isEmpty()&&link!=null&&link.healthy()&&!orientationBusy;
             if(ready)followGeometry(g);else if(down)cancelPointer();
             guestHome.setEnabled(ready);guestBack.setEnabled(ready);
             pointerMode.setEnabled(ready);
+            orientationButton.setEnabled(ready&&GuestOrientation.validToken(brokerToken));
             long left=Math.max(0,seconds-(SystemClock.elapsedRealtime()-displayStartedAt)/1000);
             String remaining=String.format(java.util.Locale.US,"%d:%02d",left/60,left%60);
             status.setText(InstanceNames.title(number)+" · "+(ready?(touchMode?I18n.s(R.string.ui_3d4cf10d60ad):I18n.s(R.string.ui_8bf7092bfac6)):problem.isEmpty()?I18n.s(R.string.ui_7570be66f8ac):I18n.known(problem))+(seconds>0?I18n.s(R.string.ui_a005d2b0e33d)+remaining+(left<=20?I18n.s(R.string.ui_43d8ec69b3ed):""):""));
@@ -110,6 +114,7 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
         status=new TextView(this);status.setTextColor(Color.WHITE);status.setTextSize(14);status.setGravity(17);
         tools.addView(status,new LinearLayout.LayoutParams(0,-1,1));
         pointerMode=button(I18n.s(R.string.ui_eaa5b90e3aa4),"pointer-mode",this::togglePointerMode);tools.addView(pointerMode);pointerMode.setEnabled(false);
+        orientationButton=button(I18n.known("横竖屏"),"guest-orientation",this::chooseOrientation);tools.addView(orientationButton);orientationButton.setEnabled(false);
         guestHome=button(I18n.s(R.string.ui_428cbfb8a4e1),"guest-home",()->key("HOME"));tools.addView(guestHome);
         guestBack=button(I18n.s(R.string.ui_870379d0d76d),"guest-back",()->key("BACK"));tools.addView(guestBack);
         tools.addView(button(I18n.s(R.string.ui_53505b1fcd1a),"return-list",this::returnToList));
@@ -128,6 +133,7 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
     private int dp(int value) { return Math.round(value*getResources().getDisplayMetrics().density); }
     private void load(Intent intent) {
         gatewayName=intent.getStringExtra("gatewayName");gatewayToken=intent.getStringExtra("gatewayToken");session=intent.getStringExtra("session");
+        brokerToken=intent.getStringExtra("brokerToken");
         // Normal entry has no expiry; explicit diagnostic sessions remain bounded.
         id=intent.getIntExtra("instanceId",0);number=intent.getIntExtra("instanceNumber",0);seconds=intent.getIntExtra("seconds",0);
         touchMode=getSharedPreferences("pointer_modes",MODE_PRIVATE).getBoolean("touch_"+id,false);
@@ -156,7 +162,7 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
         // Consume typing before focused toolbar Buttons can interpret Space/Enter.
         if(action!=KeyEvent.ACTION_DOWN&&action!=KeyEvent.ACTION_UP)return true;
         InputLink link=input;
-        if(!resumed||!hasWindowFocus()||closing.get()||link==null||!link.healthy()) {cancelKeyboard();return true;}
+        if(!resumed||!hasWindowFocus()||closing.get()||orientationBusy||link==null||!link.healthy()) {cancelKeyboard();return true;}
         Integer owner=keyboardDevices.get(code);
         if(action==KeyEvent.ACTION_DOWN) {
             if(owner==null) {
@@ -235,7 +241,39 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
         });
     }
     private long[] geometry() { long current=handle;return current==0?null:nativeGeometry(current); }
-    private boolean inputReady(long[] g) { return !closing.get()&&input!=null&&input.healthy()&&PointerGeometry.rejection(g,surface.getWidth(),surface.getHeight(),inputWidth,inputHeight).isEmpty(); }
+    private boolean inputReady(long[] g) { return !closing.get()&&!orientationBusy&&input!=null&&input.healthy()&&PointerGeometry.rejection(g,surface.getWidth(),surface.getHeight(),inputWidth,inputHeight).isEmpty(); }
+    private void chooseOrientation() {
+        if(!inputReady(geometry())||!GuestOrientation.validToken(brokerToken))return;
+        orientationBusy=true;cancelKeyboard();cancelPointer();
+        control.execute(()->{
+            try{
+                String previous=GuestOrientation.state(brokerToken,id,session).getJSONObject("orientation").getString("mode");
+                ui.post(()->{
+                    orientationBusy=false;if(closing.get()||!resumed)return;
+                    int selected=Arrays.asList(GuestOrientation.MODES).indexOf(previous);
+                    new AlertDialog.Builder(this).setTitle(I18n.known("实例屏幕方向"))
+                        .setSingleChoiceItems(new String[]{I18n.known("跟随应用"),I18n.known("横屏"),I18n.known("竖屏")},selected,(dialog,index)->{
+                            dialog.dismiss();applyOrientation(GuestOrientation.MODES[index],previous);
+                        }).setNegativeButton(android.R.string.cancel,null).show();
+                });
+            }catch(Exception error){ui.post(()->orientationFinished(false));}
+        });
+    }
+    private void applyOrientation(String mode,String previous) {
+        if(closing.get()||!resumed)return;
+        orientationBusy=true;cancelKeyboard();cancelPointer();
+        control.execute(()->{
+            boolean success=false;
+            try{GuestOrientation.apply(brokerToken,id,session,mode,previous);success=true;}
+            catch(Exception error){Log.w("IrisBufferViewer","ORIENTATION_ERROR "+error.getClass().getSimpleName());}
+            final boolean completed=success;ui.post(()->orientationFinished(completed));
+        });
+    }
+    private void orientationFinished(boolean success) {
+        orientationBusy=false;if(closing.get()||!resumed)return;
+        geometryLogged=false;surface.requestFocus();
+        Toast.makeText(this,I18n.known(success?"屏幕方向已切换":"方向切换失败，请稍后重试"),Toast.LENGTH_SHORT).show();
+    }
     private void followGeometry(long[] g) {
         if(pointerWidth!=g[10]||pointerHeight!=g[11]||pointerRotation!=g[18]) {
             if(pointerRotation>=0)cancelPointer();

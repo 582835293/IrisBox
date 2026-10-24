@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">虹膜下载浏览器</string>
+    <string name="via">Via 官网</string>
+    <string name="appbao">应用宝官网</string>
+    <string name="downloads">下载列表</string>
+    <string name="go">前往</string>
+    <string name="back">返回</string>
+    <string name="address">HTTPS 网站地址</string>
+    <string name="download_confirm">下载 APK</string>
+    <string name="download_message">是否在本 Android 实例内下载 %1$s？</string>
+    <string name="download">下载</string>
+    <string name="cancel">取消</string>
+    <string name="empty">还没有下载。请打开官网，点击安卓版下载。</string>
+    <string name="complete">已完成 · 点击安装</string>
+    <string name="waiting">等待下载</string>
+    <string name="running">正在下载 %1$d%%</string>
+    <string name="paused">已暂停 · 原因 %1$d</string>
+    <string name="failed">下载失败 · 原因 %1$d</string>
+    <string name="https_required">此下载浏览器要求使用 HTTPS。</string>
+    <string name="apk_only">请选择 Android APK 安装包下载。</string>
+    <string name="error">操作失败</string>
+    <string name="source_permission">请在接下来的 Android 设置页允许此浏览器安装应用，返回后安装刚下载的 APK。</string>
+    <string name="continue_button">继续</string>
+    <string name="close">关闭</string>
+    <string name="download_started">已在本实例内开始下载。打开下载列表查看进度并安装。</string>
+</resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">IrisBox Browser</string>
+    <string name="via">Via website</string>
+    <string name="appbao">AppBao website</string>
+    <string name="downloads">Downloads</string>
+    <string name="go">Go</string>
+    <string name="back">Back</string>
+    <string name="address">HTTPS website address</string>
+    <string name="download_confirm">Download APK</string>
+    <string name="download_message">Download %1$s inside this Android instance?</string>
+    <string name="download">Download</string>
+    <string name="cancel">Cancel</string>
+    <string name="empty">No downloads yet. Open a website and select its Android download.</string>
+    <string name="complete">Complete · tap to install</string>
+    <string name="waiting">Waiting</string>
+    <string name="running">Downloading %1$d%%</string>
+    <string name="paused">Paused · reason %1$d</string>
+    <string name="failed">Failed · reason %1$d</string>
+    <string name="https_required">This download browser requires HTTPS.</string>
+    <string name="apk_only">Select an Android APK download.</string>
+    <string name="error">Operation failed</string>
+    <string name="source_permission">Allow this browser as an installation source on the next Android settings screen, then return to install the downloaded APK.</string>
+    <string name="continue_button">Continue</string>
+    <string name="close">Close</string>
+    <string name="download_started">Download started inside this instance. Open Downloads for progress and installation.</string>
+</resources>

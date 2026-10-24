@@ -18,6 +18,10 @@ if($LASTEXITCODE -ne 0){throw 'Translation generation failed'}
 New-Item -ItemType Directory -Force -Path "$taskRoot\app\viewer\assets\host-tools" | Out-Null
 Copy-Item -LiteralPath "$taskRoot\engine\runtime\root\magisk_30_7\busybox" -Destination "$taskRoot\app\viewer\assets\host-tools\busybox"
 if (-not $AppOnly) {
+& "$taskRoot\app\guest-browser\build.ps1" -SdkDir $SdkDir -JdkDir $JdkDir | Out-File "$taskRoot\out\guest-browser-build.log"
+if($LASTEXITCODE -ne 0){throw 'Guest browser build failed'}
+New-Item -ItemType Directory -Force -Path "$taskRoot\engine\runtime\browser" | Out-Null
+Copy-Item -LiteralPath "$taskRoot\app\guest-browser\build\IrisBoxBrowser.apk" -Destination "$taskRoot\engine\runtime\browser\IrisBoxBrowser.apk"
 if($RebuildProducer){
     if(-not $ProducerHost -or -not $AospDir){throw 'RebuildProducer requires ProducerHost and AospDir (or IRISBOX_BUILD_HOST / IRISBOX_AOSP_DIR).'}
     $taskProducerArgs=@('--host',$ProducerHost,'--aosp',$AospDir)
@@ -45,5 +49,5 @@ if($LASTEXITCODE -ne 0){throw 'Engine packaging failed'}
 }
 & "$taskRoot\app\viewer\build.ps1" -SdkDir $SdkDir -JdkDir $JdkDir -NdkVersion $NdkVersion
 if($LASTEXITCODE -ne 0){throw 'APK build failed'}
-Copy-Item -LiteralPath "$taskRoot\app\viewer\build\IrisBufferViewer.apk" -Destination "$taskRoot\out\IrisBox-0.1.3.apk"
-Get-FileHash -Algorithm SHA256 -LiteralPath "$taskRoot\out\IrisBox-0.1.3.apk"
+Copy-Item -LiteralPath "$taskRoot\app\viewer\build\IrisBufferViewer.apk" -Destination "$taskRoot\out\IrisBox-0.1.4.apk"
+Get-FileHash -Algorithm SHA256 -LiteralPath "$taskRoot\out\IrisBox-0.1.4.apk"

@@ -1,58 +1,62 @@
 {
   "product": "IrisBox",
   "chineseName": "虹膜空间",
-  "release": "v0.1.3-preview",
+  "release": "v0.1.4-preview",
   "repository": "https://github.com/582835293/IrisBox",
   "package": "com.rootvmos.viewer",
-  "versionName": "0.1.3",
-  "versionCode": 114,
-  "engineVersion": "0.1.3-e17",
+  "versionName": "0.1.4",
+  "versionCode": 118,
+  "engineVersion": "0.1.4-e21",
   "publicRomGoogleIncluded": false,
   "hostMagiskIncluded": false,
   "freshCardFlashTested": false,
   "userNamespaceIsolation": true,
   "legacyDataMigrationRequired": true,
+  "googlePlayDownloadTested": true,
+  "googleDeviceCertificationPassed": false,
+  "liveOrientationTested": true,
+  "gameQrLoginAndPlayOwnerConfirmed": true,
   "artifacts": [
     {
-      "file": "IrisBox-0.1.3.apk",
-      "bytes": 17560305,
-      "sha256": "56ed7f5114efb2005195e83ecf89f0ded26dde6b446db0ece4c8c1685566152c",
-      "distribution": "github-release",
-      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.3-preview/IrisBox-0.1.3.apk"
+      "file": "IrisBox-0.1.4.apk",
+      "bytes": 17580785,
+      "sha256": "12358664cf8219a3cabf2ffcaa90a81357c35bfe6bfb6c48be12e12fa205e50b",
+      "distribution": "release-page",
+      "downloadUrl": null
     },
     {
       "file": "IrisBox-rpi4-a13-aosp.irisrom",
       "bytes": 700475643,
       "sha256": "04d586a15459dec7fca963b37450b6b5cc722d3fe9477f58eaa3b5a5411ef629",
-      "distribution": "awaiting-owner-mirror",
+      "distribution": "release-page",
       "downloadUrl": null
     },
     {
       "file": "IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.img.xz",
       "bytes": 539066944,
       "sha256": "e13998996c47136373a0696f9d6424c7129888a91ee7804165f2681508a0fac2",
-      "distribution": "awaiting-owner-mirror",
+      "distribution": "release-page",
       "downloadUrl": null
     },
     {
       "file": "IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.json",
       "bytes": 1684,
       "sha256": "7e6d474d4e9b44c83f0f76109f8589e46db5ffc2ad1b6b5860affd13ae848717",
-      "distribution": "github-release",
-      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.2-preview/IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.json"
+      "distribution": "release-page",
+      "downloadUrl": null
     },
     {
       "file": "IrisBox-guest-root-sources.zip",
       "bytes": 13619310,
       "sha256": "d3125503a65f67b839c371d7b534f68a96747e0c930fe3333a6ca04f4e96e272",
-      "distribution": "github-release",
-      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.2-preview/IrisBox-guest-root-sources.zip"
+      "distribution": "release-page",
+      "downloadUrl": null
     },
     {
       "file": "IrisBox-upstream-sources.zip",
       "bytes": 215947520,
       "sha256": "9da344cad78f0a747ac7dcd14d0db94c541dff933c1ccc33de9f68af3449e682",
-      "distribution": "awaiting-owner-mirror",
+      "distribution": "release-page",
       "downloadUrl": null
     }
   ]

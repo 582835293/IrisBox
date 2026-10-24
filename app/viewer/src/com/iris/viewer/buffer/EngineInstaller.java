@@ -8,7 +8,7 @@ import java.util.UUID;
 import java.nio.charset.StandardCharsets;
 
 final class EngineInstaller {
-    static final String VERSION = "0.1.3-e17";
+    static final String VERSION = "0.1.4-e21";
     static String preflight(Context c) throws Exception {
         HostTools.ensure(c);
         String script;

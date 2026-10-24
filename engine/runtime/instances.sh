@@ -100,11 +100,11 @@ create)
         NEXT=$((NEXT+1));valid_instance_id "$NEXT" || { echo 'Instance ID space exhausted' >&2; exit 4; }
     done
     if [ "$GOOGLE" = 1 ]; then sh "$BASE/google/a13_arm64/guest_layer.sh" verify 7 >/dev/null; fi
-    for K in resolution_v1 memory_v1 graphics_v1 root_v1 rom_v1; do
+    for K in resolution_v1 orientation_v1 memory_v1 graphics_v1 root_v1 rom_v1; do
         [ ! -L "$BASE/config/$K" ] || exit 3
         "$BB" mkdir -p "$BASE/config/$K"
     done
-    for F in "$BASE/config/resolution_v1/$NEXT.profile" "$BASE/config/memory_v1/$NEXT.mib" "$BASE/config/graphics_v1/$NEXT.profile" "$BASE/config/root_v1/$NEXT.profile"; do
+    for F in "$BASE/config/resolution_v1/$NEXT.profile" "$BASE/config/orientation_v1/$NEXT.mode" "$BASE/config/memory_v1/$NEXT.mib" "$BASE/config/graphics_v1/$NEXT.profile" "$BASE/config/root_v1/$NEXT.profile"; do
         [ ! -e "$F" ] && [ ! -L "$F" ] || { echo 'Reserved instance configuration already exists' >&2; exit 3; }
     done
     [ -f "$ROM/rom.json" ] && [ -f "$ROM/system.img" ] && [ -f "$ROM/vendor.img" ] || {
@@ -133,8 +133,8 @@ create)
 reset|delete)
     record
     [ ! -L "$RUN" ] && [ -d "$RUN" ] && [ ! -L "$RUN/lifecycle.lock" ] || exit 3
-    for K in resolution_v1 memory_v1 graphics_v1 root_v1 rom_v1; do [ ! -L "$BASE/config/$K" ] || exit 3; done
-    for F in "$BASE/config/resolution_v1/$ID.profile" "$BASE/config/memory_v1/$ID.mib" "$BASE/config/graphics_v1/$ID.profile" "$BASE/config/root_v1/$ID.profile" "$RUN/google.core.enabled"; do [ ! -L "$F" ] || exit 3; done
+    for K in resolution_v1 orientation_v1 memory_v1 graphics_v1 root_v1 rom_v1; do [ ! -L "$BASE/config/$K" ] || exit 3; done
+    for F in "$BASE/config/resolution_v1/$ID.profile" "$BASE/config/orientation_v1/$ID.mode" "$BASE/config/memory_v1/$ID.mib" "$BASE/config/graphics_v1/$ID.profile" "$BASE/config/root_v1/$ID.profile" "$RUN/google.core.enabled"; do [ ! -L "$F" ] || exit 3; done
     if [ "${IRIS_INSTANCE_DATA_LOCKED:-}" != 1 ]; then
         exec "$BB" flock -x "$RUN/lifecycle.lock" "$BB" env IRIS_INSTANCE_DATA_LOCKED=1 sh "$BASE/instances.sh" "$@"
     fi
@@ -181,7 +181,7 @@ reset|delete)
         "$BB" rm -f "$PENDING"
         echo INSTANCE_RESET=$ID
     else
-        for F in "$BASE/config/resolution_v1/$ID.profile" "$BASE/config/memory_v1/$ID.mib" "$BASE/config/graphics_v1/$ID.profile" "$BASE/config/root_v1/$ID.profile" "$BASE/config/rom_v1/$ID.id"; do
+        for F in "$BASE/config/resolution_v1/$ID.profile" "$BASE/config/orientation_v1/$ID.mode" "$BASE/config/memory_v1/$ID.mib" "$BASE/config/graphics_v1/$ID.profile" "$BASE/config/root_v1/$ID.profile" "$BASE/config/rom_v1/$ID.id"; do
             [ ! -L "$F" ] || exit 3
             "$BB" rm -f "$F"
         done

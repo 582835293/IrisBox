@@ -332,5 +332,13 @@
   "等待窗口尺寸同步": "Waiting for window geometry",
   "实例尺寸不匹配，输入已暂停": "Guest geometry mismatch; input paused",
   "当前旋转或裁剪尚不支持输入": "Input does not support this rotation or crop yet",
-  "画面位置无效": "Invalid frame position"
+  "画面位置无效": "Invalid frame position",
+  "横竖屏": "Orientation",
+  "实例屏幕方向": "Instance orientation",
+  "跟随应用": "Follow app",
+  "横屏": "Landscape",
+  "竖屏": "Portrait",
+  "屏幕方向已切换": "Orientation changed",
+  "方向切换失败，请稍后重试": "Could not change orientation. Try again shortly.",
+  "正在切换屏幕方向": "Changing orientation"
 }

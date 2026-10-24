@@ -39,6 +39,23 @@ public final class BufferBroker {
 
     /** 支持的分辨率预设档位 */
     private static final List<String> RESOLUTIONS = Arrays.asList("legacy", "960x540", "1280x720", "1600x900", "1920x1080");
+    private static final List<String> ORIENTATIONS = Arrays.asList("auto", "landscape", "portrait");
+
+    private static String savedOrientation(int id) throws IOException {
+        Path p = Paths.get(BASE, "config/orientation_v1", id + ".mode");
+        if (Files.isSymbolicLink(p) || Files.isSymbolicLink(p.getParent()) || Files.isSymbolicLink(p.getParent().getParent()))
+            throw new IOException("Invalid orientation file");
+        String mode = Files.exists(p) ? read(p, 16) : "auto";
+        if (!ORIENTATIONS.contains(mode)) throw new IOException("Invalid orientation mode");
+        return mode;
+    }
+
+    private static JSONObject orientationState(int id) throws Exception {
+        JSONObject result = new JSONObject();
+        try { result.put("mode", savedOrientation(id)).put("valid", true); }
+        catch (IOException failure) { result.put("mode", "invalid").put("valid", false); }
+        return result;
+    }
 
     /** 将分辨率标识转换为前台 UI 友好展示的中文字符串 */
     private static String resolutionLabel(String profile) {
@@ -504,6 +521,7 @@ public final class BufferBroker {
             String stage = operation.equals("start") ? (s.isEmpty() ? "正在执行启动命令" : "Android 正在启动") :
                 operation.equals("stop") ? "正在停止实例" :
                 operation.equals("open") ? "正在打开画面" :
+                operation.equals("orientation") ? "正在切换屏幕方向" :
                 operation.equals("resolution") ? "正在保存分辨率" :
                 operation.equals("memory") ? "正在保存内存上限" :
                 operation.equals("root") ? "正在保存应用 Root" :
@@ -536,6 +554,7 @@ public final class BufferBroker {
                 .put("ready", ready).put("error", BootAttempt.safe(errors.getOrDefault(id, "")))
                 .put("busy", operation).put("stage", stage)
                 .put("resolution", resolutionState(id, s))
+                .put("orientation", orientationState(id))
                 .put("memory", memoryState(id, s)).put("root", rootState(id, s)).put("audio", audioState(id, s))
                 .put("cleanupPending", Files.exists(instance(id).resolve("cleanup.pending"), LinkOption.NOFOLLOW_LINKS))
                 .put("bootLog", logs).put("bootLogKey", attempt == null ? "" : attempt.key())
@@ -627,6 +646,9 @@ public final class BufferBroker {
                 if (display() != null) throw new IOException("Previous display is still open or cleaning up");
                 run(DIR + "/display.sh", id, expected, "", 55, "start", Integer.toString(id), expected,
                     Integer.toString(displaySeconds), Integer.toString(InstanceCatalog.number(currentCatalog, id)));
+            } else if (type.equals("orientation")) {
+                if (!expected.equals(readySessions.get(id))) throw new IOException("Guest is still booting");
+                run(BASE + "/orientation.sh", id, expected, "", 45, "set", Integer.toString(id), expected, profile, previousProfile);
             } else if (type.equals("app")) {
                 // 分支 8：打开常用应用（如 Magisk 授权管理、系统设置、时钟等）
                 if (app.equals("magisk") && (savedRoot(id).equals("off") || !rootState(id, now).optBoolean("ready")))
@@ -701,6 +723,7 @@ public final class BufferBroker {
                         if (realHome && session(id).equals(current)) {
                             try {
                                 runCaptured(BASE + "/resolution.sh", id, current, "", 35, attempt, "apply", Integer.toString(id), current);
+                                runCaptured(BASE + "/orientation.sh", id, current, "", 45, attempt, "apply", Integer.toString(id), current);
                             } catch (Exception failure) {
                                 if (current.equals(session(id))) {
                                     resolutionFailures.put(id, current);
@@ -919,11 +942,12 @@ public final class BufferBroker {
                 final String mib = v.getOrDefault("mib", ""), previousMib = v.getOrDefault("previousMib", "");
 
                 // 参数白名单严密防呆校验
-                if (!InstanceCatalog.contains(id) || !Arrays.asList("start", "stop", "open", "app", "resolution", "memory", "root", "reset", "delete").contains(type) ||
+                if (!InstanceCatalog.contains(id) || !Arrays.asList("start", "stop", "open", "app", "orientation", "resolution", "memory", "root", "reset", "delete").contains(type) ||
                     type.equals("app") && !Arrays.asList("settings", "clock", "magisk").contains(app) ||
                     type.equals("root") && (!Arrays.asList("off", "magisk", "magisk-safe").contains(profile) || !Arrays.asList("off", "magisk", "magisk-safe").contains(previousProfile)) ||
                     type.equals("memory") && (!validMemory(mib) || !(validMemory(previousMib) || previousMib.equals("-1"))) ||
-                    type.equals("resolution") && (!RESOLUTIONS.contains(profile) || !(RESOLUTIONS.contains(previousProfile) || previousProfile.equals("invalid")))) {
+                    type.equals("resolution") && (!RESOLUTIONS.contains(profile) || !(RESOLUTIONS.contains(previousProfile) || previousProfile.equals("invalid"))) ||
+                    type.equals("orientation") && (!ORIENTATIONS.contains(profile) || !ORIENTATIONS.contains(previousProfile))) {
                     json(socket, 400, new JSONObject().put("error", "Invalid action"));
                     return;
                 }

@@ -12,7 +12,7 @@ def main():
     if args.ids:
         assert set(args.ids)<=set(r['id'] for r in rows);rows=[r for r in rows if r['id'] in args.ids]
     assert rows and all(1007<=r['id']<=1134 and not r['running'] and not r['busy'] for r in rows),'Stop the selected instances first'
-    assert shell('cat '+BASE+'/engine.version').strip()=='0.1.3-e17'
+    assert shell('cat '+BASE+'/engine.version').strip() in ('0.1.3-e17','0.1.4-e18','0.1.4-e19','0.1.4-e20','0.1.4-e21')
     for r in rows:
         id=r['id'];revision=r['revision'];assert len(revision)==64
         print('Stopped instance',id,'revision',revision,'-> independent backup + mapped identity',flush=True)
