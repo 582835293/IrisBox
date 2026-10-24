@@ -30,7 +30,7 @@ The image illustrates the workflow; it contains no account or device data.
 
 The public ROM contains AOSP and compatibility files, **without Google apps or accounts**. Optional Google support remains available for separately supplied, appropriately licensed matching components. Existing private Google-enabled instances retain their ROM and data. Guest Root uses the existing bundled component and per-instance switch; this is separate from installing host Magisk.
 
-The published 0.1.3 test was blocked by a Play Protect certification warning. On October 24, the local 0.1.4 candidate restored the catalog and actually installed Open Sudoku from Play; **device certification still has not passed**. See the [current results](docs/en/validation.md). Each guest needs its own custom-ROM registration where applicable; registration does not establish device certification.
+The published 0.1.3 test was blocked by a Play Protect certification warning. On October 24, the 0.1.4 test restored the catalog and actually installed Open Sudoku and Google Calculator from Play; **device certification still has not passed**. See the [current results](docs/en/validation.md). Each guest needs its own custom-ROM registration where applicable; registration does not establish device certification.
 
 Version 0.1.4/e21 adds **Orientation → Follow app / Landscape / Portrait** to the fullscreen toolbar, with live changes and saved per-instance selections. English/Chinese menus, rotated input and persistence across Guest restart passed device tests. Existing 0.1.3 users need the stopped-state engine maintenance upgrade described in [building and recovery](docs/en/building.md).
 
