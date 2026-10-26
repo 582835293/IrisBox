@@ -6,7 +6,7 @@
 # all runtime binaries, sockets and authorization data belong to one Guest.
 set -eu
 ACTION=${1:-get};ID=${2:-7}
-. /data/rootvmos/runtime/common.sh "$ID"
+. /data/irisbox/runtime/common.sh "$ID"
 C=$BASE/config/root_v1
 COMPONENT=$BASE/root/magisk_30_7
 valid() { case "$1" in off|magisk|magisk-safe) ;; *) return 2 ;; esac; }

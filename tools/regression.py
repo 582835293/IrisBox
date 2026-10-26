@@ -81,9 +81,9 @@ pm list packages -3
 ''')
         print(redact(output))
     elif args.action in ('ui', 'tap'):
-        output = guest(row, 'uiautomator dump /data/local/tmp/rootvmos-ui.xml', timeout=25)
+        output = guest(row, 'uiautomator dump /data/local/tmp/irisbox-ui.xml', timeout=25)
         if 'dumped to:' not in output: raise RuntimeError(output)
-        raw = guest(row, 'cat /data/local/tmp/rootvmos-ui.xml')
+        raw = guest(row, 'cat /data/local/tmp/irisbox-ui.xml')
         (PRIVATE / f'guest-ui-{row["id"]}.xml').write_text(raw, encoding='utf-8')
         import xml.etree.ElementTree as ET
         nodes=list(ET.fromstring(raw).iter('node'))

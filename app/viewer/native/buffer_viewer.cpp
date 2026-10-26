@@ -219,7 +219,7 @@ std::shared_ptr<State> find(jlong handle){std::lock_guard<std::mutex> l(registry
 
 /* 一进程只接一条固定连接，退出释放GraphicBuffer缓存/迟到回调，不跨实例复用缓存。
  */
-extern "C" JNIEXPORT jlong JNICALL Java_com_rootvmos_viewer_DisplayActivity_nativeStart(JNIEnv* env,jclass,jobject surface,jint inputFd,jint id,jint pid,jlong tick,jint seconds,jint width,jint height) {
+extern "C" JNIEXPORT jlong JNICALL Java_com_irisbox_viewer_DisplayActivity_nativeStart(JNIEnv* env,jclass,jobject surface,jint inputFd,jint id,jint pid,jlong tick,jint seconds,jint width,jint height) {
     if(seconds<0||seconds>900)return 0;
     std::lock_guard<std::mutex> l(registryLock);if(everStarted)fatal("Renderer process cannot reuse GraphicBuffer cache across connections",65);everStarted=true;
     auto s=std::make_shared<State>();s->fd=fcntl(inputFd,F_DUPFD_CLOEXEC,0);if(s->fd<0)return 0;
@@ -234,9 +234,9 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_rootvmos_viewer_DisplayActivity_nati
     s->watchdog=std::thread([s]{while(!s->finished){uint64_t now=nowNs(),began=s->operationAt;if((began&&now>=began&&now-began>4000000000ULL)||(s->deadline&&now>s->deadline+7000000000ULL))fatal("Receiver hard watchdog expired",63);std::this_thread::sleep_for(std::chrono::milliseconds(100));}});
     return handle;
 }
-extern "C" JNIEXPORT jstring JNICALL Java_com_rootvmos_viewer_DisplayActivity_nativeStats(JNIEnv* env,jclass,jlong handle){auto s=find(handle);std::string text=s?s->stats():"显示连接已关闭";return env->NewStringUTF(text.c_str());}
-extern "C" JNIEXPORT void JNICALL Java_com_rootvmos_viewer_DisplayActivity_nativeResize(JNIEnv*,jclass,jlong handle,jint width,jint height){auto s=find(handle);if(s){s->viewWidth=width;s->viewHeight=height;}}
-extern "C" JNIEXPORT void JNICALL Java_com_rootvmos_viewer_DisplayActivity_nativeStop(JNIEnv*,jclass,jlong handle){auto s=find(handle);if(!s)return;s->stop("Host stopped display");if(s->reader.joinable())s->reader.join();if(s->watchdog.joinable())s->watchdog.join();std::lock_guard<std::mutex> l(registryLock);registry.erase(handle);}
+extern "C" JNIEXPORT jstring JNICALL Java_com_irisbox_viewer_DisplayActivity_nativeStats(JNIEnv* env,jclass,jlong handle){auto s=find(handle);std::string text=s?s->stats():"显示连接已关闭";return env->NewStringUTF(text.c_str());}
+extern "C" JNIEXPORT void JNICALL Java_com_irisbox_viewer_DisplayActivity_nativeResize(JNIEnv*,jclass,jlong handle,jint width,jint height){auto s=find(handle);if(s){s->viewWidth=width;s->viewHeight=height;}}
+extern "C" JNIEXPORT void JNICALL Java_com_irisbox_viewer_DisplayActivity_nativeStop(JNIEnv*,jclass,jlong handle){auto s=find(handle);if(!s)return;s->stop("Host stopped display");if(s->reader.joinable())s->reader.join();if(s->watchdog.joinable())s->watchdog.join();std::lock_guard<std::mutex> l(registryLock);registry.erase(handle);}
 
 // Snapshot of the last COMPLETED transaction, never merely submitted geometry.
 // A static frame remains interactive. A resize invalidates input until a frame
@@ -244,7 +244,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_rootvmos_viewer_DisplayActivity_nativ
 /* 输出最近完成事务的19项几何给PointerGeometry，静止画面也可交互。
  * View resize后旧几何立即无效，等新尺寸事务完成；字段顺序变动须同步Java。
  */
-extern "C" JNIEXPORT jlongArray JNICALL Java_com_rootvmos_viewer_DisplayActivity_nativeGeometry(JNIEnv* env,jclass,jlong handle) {
+extern "C" JNIEXPORT jlongArray JNICALL Java_com_irisbox_viewer_DisplayActivity_nativeGeometry(JNIEnv* env,jclass,jlong handle) {
     jlong values[19]{};auto s=find(handle);
     if(s){std::lock_guard<std::mutex> l(s->mu);const Header& h=s->visibleFrame;const ARect& d=s->visibleDestination;
         values[0]=!s->stopping&&!s->finished&&s->visibleSequence&&s->visibleViewWidth==s->viewWidth&&s->visibleViewHeight==s->viewHeight;
@@ -256,7 +256,7 @@ extern "C" JNIEXPORT jlongArray JNICALL Java_com_rootvmos_viewer_DisplayActivity
     jlongArray result=env->NewLongArray(19);if(result)env->SetLongArrayRegion(result,0,19,values);return result;
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_com_rootvmos_viewer_DisplayActivity_nativeInputTypeIsStream(JNIEnv*,jclass,jint fd) {
+extern "C" JNIEXPORT jboolean JNICALL Java_com_irisbox_viewer_DisplayActivity_nativeInputTypeIsStream(JNIEnv*,jclass,jint fd) {
     int type=0;socklen_t length=sizeof(type);
     return getsockopt(fd,SOL_SOCKET,SO_TYPE,&type,&length)==0&&type==SOCK_STREAM;
 }

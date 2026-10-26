@@ -1,0 +1,31 @@
+--- a/system/vold/Utils.cpp
++++ b/system/vold/Utils.cpp
+@@ -198,7 +198,20 @@
+     return ret;
+ }
+ 
++// IrisBox mapped guests cannot change initial-namespace project quota state.
++// Keep normal fs_prepare_dir/chown/mode/default ACL checks. Only quota tagging
++// is unavailable on this shared-kernel profile; never fall back to Host UID0.
++static bool IrisBoxMappedGuest() {
++    std::string map;
++    unsigned inside, outside, span; char extra;
++    return getuid() == 0 && android::base::ReadFileToString("/proc/self/uid_map", &map) &&
++        sscanf(map.c_str(), "%u %u %u %c", &inside, &outside, &span, &extra) == 3 &&
++        inside == 0 && outside >= 2000000000U && outside < 2012800000U &&
++        outside % 100000U == 0 && span == 100000U;
++}
++
+ int SetQuotaInherit(const std::string& path) {
++    if (IrisBoxMappedGuest()) return 0;
+     unsigned int flags;
+ 
+     android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(path.c_str(), O_RDONLY | O_CLOEXEC)));
+@@ -225,6 +238,7 @@
+ }
+ 
+ int SetQuotaProjectId(const std::string& path, long projectId) {
++    if (IrisBoxMappedGuest()) return 0;
+     struct fsxattr fsx;
+ 
+     android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(path.c_str(), O_RDONLY | O_CLOEXEC)));

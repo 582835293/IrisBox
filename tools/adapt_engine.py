@@ -84,7 +84,7 @@ COMPAT=$ROM/compat''')
     for folder in ('engine/runtime','app'):
         for p in (ROOT/folder).rglob('*'):
             if p.suffix in ('.java','.sh','.cpp'):
-                text=p.read_text(encoding='utf-8').replace('iris_buffer_viewer_', 'rootvmos_viewer_')
+                text=p.read_text(encoding='utf-8').replace('iris_buffer_viewer_', 'irisbox_viewer_')
                 p.write_text(text,encoding='utf-8',newline='\n')
     edit('app/viewer/AndroidManifest.xml', 'android:versionCode="1" android:versionName="0.1"', 'android:versionCode="100" android:versionName="0.1.0"')
     edit('app/viewer/AndroidManifest.xml', '<activity android:name=".ListActivity"', '<activity android:name=".SetupActivity" android:exported="true" android:screenOrientation="landscape"><intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter></activity>\n        <activity android:name=".ListActivity"')
@@ -94,9 +94,9 @@ COMPAT=$ROM/compat''')
         roms.setText("ROM与引擎");
         roms.setOnClickListener(v -> startActivity(new Intent(this, SetupActivity.class)));
         heading.addView(roms);''')
-    edit('app/viewer/src/com/iris/viewer/buffer/ListActivity.java', 'Iris · 选择实例', 'RootVMOS · 实例')
+    edit('app/viewer/src/com/iris/viewer/buffer/ListActivity.java', 'Iris · 选择实例', 'IrisBox · 实例')
     for p in (ROOT/'app/viewer/res').rglob('*.xml'):
-        text=p.read_text(encoding='utf-8').replace('Iris', 'RootVMOS');p.write_text(text,encoding='utf-8',newline='\n')
+        text=p.read_text(encoding='utf-8').replace('Iris', 'IrisBox');p.write_text(text,encoding='utf-8',newline='\n')
     old=Path(r'PATH_TO_PREVIOUS_IRIS_PROJECT\experiments\init_migration\runtime_v1\compatibility\inet_permissions')
     for name in ('policy_insns.h',): shutil.copy2(old/'build'/name, ROOT/'engine/native/inet'/name)
     for name in ('embed_bpf.py','guest_inet.patch','build_native.sh'): shutil.copy2(old/name, ROOT/'engine/native/inet'/name)

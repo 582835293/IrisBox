@@ -1,4 +1,4 @@
-package com.rootvmos.buffer.viewer.broker;
+package com.irisbox.buffer.viewer.broker;
 
 import android.os.SystemClock;
 import org.json.JSONArray;
@@ -118,7 +118,7 @@ final class BootAttempt {
     synchronized void captureGuest(int id,String expected) {
         if(closed||store==null||!expected.equals(session)||guestCapture!=null&&guestCapture.isAlive())return;
         try {
-            ArrayList<String> cmd=new ArrayList<>(Arrays.asList("/system/bin/sh","/data/rootvmos/runtime/ctl.sh","exec",Integer.toString(id),"logcat","-b","main,system,events,crash","-v","threadtime,epoch,usec"));
+            ArrayList<String> cmd=new ArrayList<>(Arrays.asList("/system/bin/sh","/data/irisbox/runtime/ctl.sh","exec",Integer.toString(id),"logcat","-b","main,system,events,crash","-v","threadtime,epoch,usec"));
             String cursor=guestCursor,fingerprint=guestFingerprint;
             if(!cursor.isEmpty()){cmd.add("-T");cmd.add(cursor);}
             ProcessBuilder builder=new ProcessBuilder(cmd).redirectErrorStream(true);builder.environment().remove("CLASSPATH");builder.environment().put("IRIS_EXPECT_SESSION",expected);

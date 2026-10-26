@@ -28,12 +28,12 @@
 set -eu
 
 # 引入基础运行库环境（根据实例 ID 加载环境变量、配置路径与辅助函数）
-. /data/rootvmos/runtime/common.sh "$1"
+. /data/irisbox/runtime/common.sh "$1"
 
 # Guest 容器切根目标挂载点
 ROOT=$RUN/rootfs
 [ -n "${IRIS_USERNS_PREPARE_PID:-}" ] || exit 3
-"$BASE/rootvmos_userns" verify-preinit "$ID" "$IRIS_USERNS_PREPARE_PID" "$(ticks "$IRIS_USERNS_PREPARE_PID")"
+"$BASE/irisbox_userns" verify-preinit "$ID" "$IRIS_USERNS_PREPARE_PID" "$(ticks "$IRIS_USERNS_PREPARE_PID")"
 
 # 【启动阶段打点函数】
 # 利用内核单调时间 /proc/uptime 精准记录每个准备环节的耗时，区分环境准备耗时与 Android 自身启动耗时
@@ -111,6 +111,13 @@ $BB chmod 0644 "$ROOT/system/product/app/IrisBoxBrowser/IrisBoxBrowser.apk"
 # ------------------------------------------------------------------------------
 # 3. 核心专用载荷注入（图形、Init 与系统工具）
 # ------------------------------------------------------------------------------
+# The shared host kernel forbids project-quota changes from a User namespace.
+# This matched vold skips only quota tagging in the strictly mapped Guest;
+# directory creation, UID/GID ownership and ACL checks remain mandatory.
+copy_payload "$BASE/storage/vold" "$ROOT/system/bin/vold"
+$BB chmod 0755 "$ROOT/system/bin/vold"
+/system/bin/chcon u:object_r:vold_exec:s0 "$ROOT/system/bin/vold"
+
 # 【容器专用 Gralloc 渲染缓冲标识】：
 # Guest 专用的 gralloc ID 直接来源于 Linux 内核全局物理唯一的活动 dma-buf inode 节点。
 # 宿主机的 vendor 分区保持官方原厂不变，只在此私有 OverlayFS 写层中替换。
@@ -141,23 +148,23 @@ $BB chmod 0644 "$CODECS"
 # Mask only this fixed ROM system-app directory in the already-private mount tree.
 TRACEUR=$ROOT/system/app/Traceur
 [ -d "$TRACEUR" ] && [ ! -L "$TRACEUR" ] && [ "$($BB realpath "$TRACEUR")" = "$TRACEUR" ] || exit 3
-$BB mount -t tmpfs -o mode=0755,nodev,nosuid,size=64k rootvmos_traceur "$TRACEUR"
+$BB mount -t tmpfs -o mode=0755,nodev,nosuid,size=64k irisbox_traceur "$TRACEUR"
 /system/bin/chcon u:object_r:system_file:s0 "$TRACEUR"
 
-copy_payload "$BASE/audio/audio.jar" "$ROOT/system/framework/rootvmos-audio.jar"
+copy_payload "$BASE/audio/audio.jar" "$ROOT/system/framework/irisbox-audio.jar"
 # AOSP-only ROMs do not inherit the optional Google product directories.
 for D in "$ROOT/system/product" "$ROOT/system/product/etc" "$ROOT/system/product/etc/init"; do
     [ ! -L "$D" ] || exit 3
     $BB mkdir -p "$D"
 done
-copy_payload "$BASE/audio/media.rc" "$ROOT/system/product/etc/init/zzz_rootvmos_media.rc"
-$BB chmod 0644 "$ROOT/system/product/etc/init/zzz_rootvmos_media.rc"
-/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/product/etc/init/zzz_rootvmos_media.rc"
-copy_payload "$BASE/audio/health.sh" "$ROOT/system/etc/rootvmos-health.sh"
-$BB chmod 0644 "$ROOT/system/framework/rootvmos-audio.jar"
-$BB chmod 0644 "$ROOT/system/etc/rootvmos-health.sh"
-/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/framework/rootvmos-audio.jar"
-/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/etc/rootvmos-health.sh"
+copy_payload "$BASE/audio/media.rc" "$ROOT/system/product/etc/init/zzz_irisbox_media.rc"
+$BB chmod 0644 "$ROOT/system/product/etc/init/zzz_irisbox_media.rc"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/product/etc/init/zzz_irisbox_media.rc"
+copy_payload "$BASE/audio/health.sh" "$ROOT/system/etc/irisbox-health.sh"
+$BB chmod 0644 "$ROOT/system/framework/irisbox-audio.jar"
+$BB chmod 0644 "$ROOT/system/etc/irisbox-health.sh"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/framework/irisbox-audio.jar"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/etc/irisbox-health.sh"
 
 # 植入容器专用的 init 二进制跳板，赋予 init_exec 标签
 copy_payload "$COMPAT/iris_init" "$ROOT/system/bin/init"
@@ -228,6 +235,15 @@ while IFS= read -r FILE; do
         *) SYSTEM_RC[${#SYSTEM_RC[@]}]="$ROOT$DEST" ;;
     esac
 done < "$COMPAT/loaded_files.txt"
+
+# Keep the framework camera service available even with physical providers
+# disabled. Apps query Camera.getNumberOfCameras() during startup; replacing
+# cameraserver with /system/bin/true leaves Binder getService waiting forever.
+# Restore only the stock framework service. No camera provider RC or physical
+# camera device is enabled/exposed by this change.
+CAMERA_DISABLE=$ROOT/system/product/etc/init/zz_disable_system.rc
+[ "$($BB grep -c '^service cameraserver /system/bin/true' "$CAMERA_DISABLE")" = 1 ] || exit 3
+$BB sed -i '/^service cameraserver \/system\/bin\/true/,/^$/d' "$CAMERA_DISABLE"
 
 # 性能优化：原来对每个文件单独执行 chmod 与 chcon 会引发几百次进程 fork；
 # 改为按类别合并数组一次性批量赋予权限与 SELinux 标签，效果相同但大幅缩短启动时间
@@ -363,7 +379,7 @@ done
 # 将已委托给本实例的 managed 子 cgroup 目录绑定到容器的 /dev/cpuctl、/dev/cpuset、/dev/blkio、/dev/memcg，
 # 确保容器内部的资源限制（配额）完全生效，且杜绝容器访问宿主机的根控制器
 for CONTROL in cpuctl cpuset blkio; do
-    $BB mount -o bind "/dev/$CONTROL/rootvmos_$ID/managed" "$ROOT/dev/$CONTROL"
+    $BB mount -o bind "/dev/$CONTROL/irisbox_$ID/managed" "$ROOT/dev/$CONTROL"
 done
 $BB mount -o bind "$MEM/managed" "$ROOT/dev/memcg"
 
@@ -403,7 +419,7 @@ NETWORK_SESSION=$HOST_PID:$START
 NETWORK_NET=$($BB readlink /proc/$HOST_PID/ns/net)
 
 # Refresh only adapter-owned files after the previous Guest has stopped.
-AD=$RUN/data/rootvmos_audio
+AD=$RUN/data/irisbox_audio
 [ ! -L "$AD" ] || exit 3
 $BB mkdir -p "$AD"
 $BB chmod 0700 "$AD"
@@ -412,9 +428,9 @@ if [ -e "$AD/pcm.sock" ]; then [ -S "$AD/pcm.sock" ] || exit 3; $BB rm -f "$AD/p
 $BB od -An -N32 -tx1 /dev/urandom | $BB tr -d ' \n' > "$AD/token"
 printf '%s\n' "$NETWORK_SESSION" > "$AD/session"
 $BB chmod 0600 "$AD/token" "$AD/session"
-$BB sed "s/ROOTVMOS_SESSION/$NETWORK_SESSION/g" "$BASE/audio/guest.rc" > "$ROOT/system/etc/init/zz_rootvmos_audio.rc"
-$BB chmod 0644 "$ROOT/system/etc/init/zz_rootvmos_audio.rc"
-/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/etc/init/zz_rootvmos_audio.rc"
+$BB sed "s/IRISBOX_SESSION/$NETWORK_SESSION/g" "$BASE/audio/guest.rc" > "$ROOT/system/etc/init/zz_irisbox_audio.rc"
+$BB chmod 0644 "$ROOT/system/etc/init/zz_irisbox_audio.rc"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/etc/init/zz_irisbox_audio.rc"
 
 # 【发布网络准备握手请求】：
 # 向宿主机日志目录发布网络布线请求 network.request，由 Host 侧看门狗负责创建 veth 对并接入网桥
@@ -453,10 +469,10 @@ $BB mount -o bind "$INET_MAP_PATH" "$INET_TARGET"
 # 【bpffs 内核标签说明】：
 # bpffs 中的固化 inode 使用内核原生标签，对 chcon 会返回 EOPNOTSUPP；
 # 当前容器运行时依赖宿主机 SELinux 保持宽容模式（Permissive），请勿擅自修改
-copy_payload "$BASE/security/userns/guest_entry.sh" "$ROOT/system/bin/rootvmos_userns_entry.sh"
-$BB chmod 0755 "$ROOT/system/bin/rootvmos_userns_entry.sh"
-/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/bin/rootvmos_userns_entry.sh"
-copy_payload "$BASE/security/userns/guest.rc" "$ROOT/system/etc/init/zz_rootvmos_userns.rc"
+copy_payload "$BASE/security/userns/guest_entry.sh" "$ROOT/system/bin/irisbox_userns_entry.sh"
+$BB chmod 0755 "$ROOT/system/bin/irisbox_userns_entry.sh"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/bin/irisbox_userns_entry.sh"
+copy_payload "$BASE/security/userns/guest.rc" "$ROOT/system/etc/init/zz_irisbox_userns.rc"
 copy_payload "$BASE/security/userns/libalarm_jni.so" "$ROOT/system/lib64/libalarm_jni.so"
 $BB chmod 0644 "$ROOT/system/lib64/libalarm_jni.so"
 /system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/lib64/libalarm_jni.so"
@@ -475,8 +491,8 @@ while IFS= read -r FEATURE_XML; do
     $BB sed -i '/^[[:space:]]*<feature name="android\.hardware\.bluetooth"[[:space:]]*\/>[[:space:]]*$/d; /^[[:space:]]*<feature name="android\.hardware\.bluetooth_le"[[:space:]]*\/>[[:space:]]*$/d' "$FEATURE_XML"
     /system/bin/chcon u:object_r:vendor_configs_file:s0 "$FEATURE_XML"
 done
-$BB chmod 0644 "$ROOT/system/etc/init/zz_rootvmos_userns.rc"
-/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/etc/init/zz_rootvmos_userns.rc"
+$BB chmod 0644 "$ROOT/system/etc/init/zz_irisbox_userns.rc"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/etc/init/zz_irisbox_userns.rc"
 # Android13 lmkd's vmpressure fallback asks for CgroupEventControl, while
 # this ROM defines MemCgroupEventControl. Add an alias, retain the original.
 TASK_JSON=$ROOT/system/etc/task_profiles.json

@@ -1,0 +1,78 @@
+{
+  "date": "2026-10-27",
+  "app": "0.1.5",
+  "engine": "0.1.5-e25",
+  "name": {
+    "en": "IrisBox",
+    "zh": "虹膜空间"
+  },
+  "package": "com.irisbox.viewer",
+  "deviceRoot": "/data/irisbox",
+  "apkSha256": "10157a8059bfc12d75b64f7d3e8180ab98dac627565e10b6f7dfe3dd0e305b1a",
+  "inputAudits": {
+    "engine": 52,
+    "rom": 116,
+    "guestRoot": 11,
+    "privateGoogleFiles": 54,
+    "localeEntries": 343
+  },
+  "independentPublicBuild": {
+    "nonBrowserPayloadsMatched": 51,
+    "unsignedBrowserEntriesMatched": 3,
+    "privateGooglePayloadsExcluded": true
+  },
+  "userNamespaces": {
+    "uidGidAndProjectMapsVerified": true,
+    "hostUid0Fallback": false,
+    "foreignAndHostRootDummyFileReadDenied": true,
+    "stalePidTickRejected": true
+  },
+  "data": {
+    "instanceIdsAndRevisionsRetained": true,
+    "googleAccountFingerprintRetained": true,
+    "gsfIdRetained": true,
+    "separatePreviousProjectConfigRetained": true,
+    "oldProjectRemainsStopped": true,
+    "ownerAuthorizedAngryBirdsOnlyReset": true
+  },
+  "tests": {
+    "playActualDownloads": true,
+    "clashTutorialInteraction": true,
+    "clashLongTermBattles": false,
+    "youtubeProgressSeconds": [
+      95,
+      182
+    ],
+    "youtubeRealViewerAndAudio": true,
+    "angryBirds2Gameplay": false,
+    "angryBirds2CurrentState": "Main scene reached; update reports offline; network comparison pending",
+    "dualInstances": true,
+    "dualMemoryMiB": [
+      768,
+      2048
+    ],
+    "dualHeavyGames": false,
+    "realKeyboardSwipeReentry": true,
+    "internetPermissionDenial": true,
+    "separateFileRoundTrips": true,
+    "independentAudio": true,
+    "externalStorageReadWrite": true,
+    "newQaGuestRootViaNormalUi": true,
+    "languageRestartPersistence": true
+  },
+  "limitations": {
+    "googleDeviceCertificationPassed": false,
+    "guestPerAppProjectDiskQuotaEnforced": false,
+    "physicalCameraExposed": false,
+    "freshHostFlashBootTested": false,
+    "hostMagiskIncluded": false,
+    "hostRebootTestedThisEngine": false
+  },
+  "evidence": "Raw images, account comparisons, logs, receipts and backups stay private; selected deterministic crops in docs/images",
+  "sources": [
+    "docs/06_验收记录.md",
+    "docs/en/validation.md",
+    "docs/11_Iris命名迁移.md",
+    "engine/native/storage/README.md"
+  ]
+}

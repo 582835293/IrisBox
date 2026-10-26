@@ -1,4 +1,4 @@
-package com.rootvmos.viewer;
+package com.irisbox.viewer;
 
 import android.app.*;
 import android.content.*;
@@ -20,7 +20,7 @@ public final class SetupService extends Service {
     }
     private Notification notification(String text) {
         PendingIntent intent = PendingIntent.getActivity(this, 0, new Intent(this, SetupActivity.class), PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-        return new Notification.Builder(this, "setup").setContentTitle(I18n.s(R.string.ui_d554ebd78752))
+        return new Notification.Builder(this, "setup").setContentTitle(I18n.s(R.string.ui_84f938378054))
             .setContentText(text).setSmallIcon(android.R.drawable.stat_sys_download).setContentIntent(intent).setOngoing(true).build();
     }
     @Override public void onCreate() {

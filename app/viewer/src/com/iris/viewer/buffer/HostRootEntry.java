@@ -1,4 +1,4 @@
-package com.rootvmos.viewer;
+package com.irisbox.viewer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -18,9 +18,9 @@ import java.util.concurrent.TimeUnit;
 final class HostRootEntry {
     /** 硬编码的启动与唤起命令：先 start 启动后台 Broker，再 open 唤起前台查看器 Activity */
     private static final String COMMAND =
-        "test ! -e /data/rootvmos/engine-upgrade.pending && " +
-        "/system/bin/sh /data/rootvmos/runtime/display/buffer_viewer/manager.sh start && " +
-        "/system/bin/sh /data/rootvmos/runtime/display/buffer_viewer/manager.sh open";
+        "test ! -e /data/irisbox/engine-upgrade.pending && " +
+        "/system/bin/sh /data/irisbox/runtime/display/buffer_viewer/manager.sh start && " +
+        "/system/bin/sh /data/irisbox/runtime/display/buffer_viewer/manager.sh open";
 
     /** 宿主系统常见 Magisk su 二进制文件候选路径（兼容不同 Android 固件及 root 安装方案） */
     private static final String[] CANDIDATES = {
@@ -63,7 +63,7 @@ final class HostRootEntry {
             if (result.code == 0) return "";
             if (result.code == -1) return I18n.s(R.string.ui_b8f44104e192);
             if (result.output.toLowerCase(java.util.Locale.ROOT).contains("permission denied"))
-                return I18n.s(R.string.ui_acfea807c04b);
+                return I18n.s(R.string.ui_3950e1128b8e);
 
             return I18n.s(R.string.ui_f04e11a0ff14);
         } catch (InterruptedException cancelled) {

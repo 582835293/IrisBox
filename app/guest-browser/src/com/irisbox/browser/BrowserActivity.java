@@ -1,4 +1,4 @@
-package com.rootvmos.browser;
+package com.irisbox.browser;
 
 import android.app.Activity;
 import android.app.AlertDialog;

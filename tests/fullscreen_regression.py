@@ -7,8 +7,8 @@ from regression import target, guest, PRIVATE
 from ui import dump as host_ui
 
 def guest_nodes(row):
-    assert 'dumped to:' in guest(row,'uiautomator dump /data/local/tmp/rootvmos-input-ui.xml',30)
-    raw=guest(row,'cat /data/local/tmp/rootvmos-input-ui.xml')
+    assert 'dumped to:' in guest(row,'uiautomator dump /data/local/tmp/irisbox-input-ui.xml',30)
+    raw=guest(row,'cat /data/local/tmp/irisbox-input-ui.xml')
     (PRIVATE/f'input-ui-{row["id"]}.xml').write_text(raw,encoding='utf-8')
     return list(ET.fromstring(raw).iter('node'))
 
@@ -36,7 +36,7 @@ def wait_display(api,row,active):
                 try:
                     if 'STOPPED' not in shell('sh '+BASE+'/display/buffer_viewer/display.sh status '+str(row['id'])):
                         time.sleep(1);continue
-                    shell('/data/rootvmos/host/bin/busybox flock -n '+BASE+'/display/buffer_viewer/operation.lock /data/rootvmos/host/bin/busybox true')
+                    shell('/data/irisbox/host/bin/busybox flock -n '+BASE+'/display/buffer_viewer/operation.lock /data/irisbox/host/bin/busybox true')
                 except RuntimeError:time.sleep(1);continue
             return now
         if now['error'] and not now['busy']:raise RuntimeError(now['error'])
@@ -52,15 +52,15 @@ def return_list():
 def ensure_viewer():
     focused=adb('shell','dumpsys','window')
     line=next((s for s in focused.splitlines() if 'mCurrentFocus=' in s),'')
-    assert 'com.rootvmos.viewer' in line and 'DisplayActivity' in line,'Viewer lost focus; input cancelled'
+    assert 'com.irisbox.viewer' in line and 'DisplayActivity' in line,'Viewer lost focus; input cancelled'
 
 def main():
     results={}
     with API() as api:
         for number in (1,2):
             row=target(number);assert row['ready']
-            guest(row,'am force-stop com.rootvmos.probe; am start -W -n com.rootvmos.probe/.ProbeActivity',40)
-            initial=json.loads(guest(row,'cat /data/user/0/com.rootvmos.probe/files/proof.json'))
+            guest(row,'am force-stop com.irisbox.probe; am start -W -n com.irisbox.probe/.ProbeActivity',40)
+            initial=json.loads(guest(row,'cat /data/user/0/com.irisbox.probe/files/proof.json'))
             # UiAutomator is a separate ART VM. Read bounds before opening the
             # stream so this instrumentation cannot starve a 768-MiB Guest.
             nodes=guest_nodes(row)
@@ -79,7 +79,7 @@ def main():
             # bursts. This mixed-case sample stays within its supported bound.
             ensure_viewer();adb('shell','input','text',text)
             for _ in range(12):
-                proof=json.loads(guest(row,'cat /data/user/0/com.rootvmos.probe/files/proof.json'))
+                proof=json.loads(guest(row,'cat /data/user/0/com.irisbox.probe/files/proof.json'))
                 if proof['edit']==text:break
                 time.sleep(1)
             else:raise AssertionError('Keyboard text was not received through Viewer: '+str(proof['edit']))
@@ -89,7 +89,7 @@ def main():
             rect=gpu_rect;y=(rect[1]+rect[3])/2
             a=host(rect[0]+(rect[2]-rect[0])*.2,y);b=host(rect[0]+(rect[2]-rect[0])*.8,y)
             ensure_viewer();adb('shell','input','swipe',str(a[0]),str(a[1]),str(b[0]),str(b[1]),'400')
-            time.sleep(1);proof=json.loads(guest(row,'cat /data/user/0/com.rootvmos.probe/files/proof.json'))
+            time.sleep(1);proof=json.loads(guest(row,'cat /data/user/0/com.irisbox.probe/files/proof.json'))
             assert proof['touches']>0 and proof['swipes']>0 and proof['counter']==initial['counter']
             return_list();wait_display(api,row,False)
             api.call(f'/action?id={row["id"]}&type=open&session={row["session"]}&seconds=0',True)

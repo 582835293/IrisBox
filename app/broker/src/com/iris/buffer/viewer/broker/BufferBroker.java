@@ -1,4 +1,4 @@
-package com.rootvmos.buffer.viewer.broker;
+package com.irisbox.buffer.viewer.broker;
 
 import android.os.SystemClock;
 import android.system.Os;
@@ -26,7 +26,7 @@ import java.util.concurrent.*;
  */
 public final class BufferBroker {
     /** 基础路径、工作目录与 busybox 执行文件常量 */
-    private static final String BASE = "/data/rootvmos/runtime", DIR = BASE + "/display/buffer_viewer", BB = "/data/rootvmos/host/bin/busybox";
+    private static final String BASE = "/data/irisbox/runtime", DIR = BASE + "/display/buffer_viewer", BB = "/data/irisbox/host/bin/busybox";
 
     /** 本次启动生成的 64 字符随机认证 Token（防宿主未授权应用越权访问） */
     private final String token = randomToken();
@@ -92,7 +92,7 @@ public final class BufferBroker {
             result.put("mib", -1).put("valid", false);
         }
         if (!session.isEmpty()) try {
-            long bytes = Long.parseLong(read(Paths.get("/dev/memcg/rootvmos_" + id + "/memory.limit_in_bytes"), 32));
+            long bytes = Long.parseLong(read(Paths.get("/dev/memcg/irisbox_" + id + "/memory.limit_in_bytes"), 32));
             if (bytes % 1048576 == 0 && bytes >= 512L * 1048576 && bytes <= 2560L * 1048576 && session.equals(session(id)))
                 result.put("effectiveMiB", bytes / 1048576);
         } catch (IOException | NumberFormatException ignored) {}
@@ -272,8 +272,8 @@ public final class BufferBroker {
                 if (Files.readSymbolicLink(Paths.get("/proc", pid, "ns", ns)).equals(Files.readSymbolicLink(Paths.get("/proc/1/ns", ns)))) return "";
             String mounts = read(Paths.get("/proc", pid, "mountinfo"), 262144), groups = read(Paths.get("/proc", pid, "cgroup"), 16384);
             if (!mounts.contains("upperdir=" + instance(id) + "/upper,") ||
-                !groups.contains("0::/rootvmos_" + id + "/managed") ||
-                !groups.contains(":memory:/rootvmos_" + id + "/managed")) return "";
+                !groups.contains("0::/irisbox_" + id + "/managed") ||
+                !groups.contains(":memory:/irisbox_" + id + "/managed")) return "";
             return pid + ":" + ident[1];
         } catch (Exception e) { return ""; }
     }
@@ -296,7 +296,7 @@ public final class BufferBroker {
             if (!run.normalize().equals(run) || !run.startsWith(instance(id)) || !run.toRealPath().equals(run) ||
                 !read(run.resolve("init.identity"), 128).replace(' ', ':').equals(expected)) return result;
             Path status = run.resolve("audio/host.status");
-            if (!process(run.resolve("audio/player.identity"), "com.rootvmos.audio.AudioBridge", false) ||
+            if (!process(run.resolve("audio/player.identity"), "com.irisbox.audio.AudioBridge", false) ||
                 System.currentTimeMillis() - Files.getLastModifiedTime(status).toMillis() > 5000) return result;
             for (String field : read(status, 256).split(" +")) {
                 String[] pair = field.split("=");
@@ -328,7 +328,7 @@ public final class BufferBroker {
             if (!InstanceCatalog.contains(id)) return null;
             String s = read(r.resolve("init.identity"), 128).replace(' ', ':');
             boolean active = s.equals(session(id)) &&
-                process(r.resolve("display.identity"), "com.rootvmos.viewer:display", true) &&
+                process(r.resolve("display.identity"), "com.irisbox.viewer:display", true) &&
                 process(r.resolve("producer.identity"), "/iris_buffer_producer", false);
             return new Display(r, id, s, active);
         } catch (Exception e) { return null; }

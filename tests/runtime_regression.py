@@ -23,13 +23,13 @@ def main():
     if args.audio_recovery:
         identity_command='. '+BASE+'/common.sh '+str(r['id'])+'; cat "$(cat "$RUN/latest.logdir")/audio/player.identity"'
         old_player=shell(identity_command).strip()
-        pid=guest(r,'getprop init.svc_debug_pid.rootvmos_audio').strip();assert pid.isdigit() and int(pid)>1
-        assert 'com.rootvmos.audio.AudioBridge' in guest(r,'cat /proc/'+pid+'/cmdline')
+        pid=guest(r,'getprop init.svc_debug_pid.irisbox_audio').strip();assert pid.isdigit() and int(pid)>1
+        assert 'com.irisbox.audio.AudioBridge' in guest(r,'cat /proc/'+pid+'/cmdline')
         started=time.monotonic();guest(r,'kill -KILL '+pid)
         restored=False
         while time.monotonic()-started<40:
             now=target();assert now['session']==r['session'] and now['running'],'Main Guest session changed'
-            newpid=guest(now,'getprop init.svc_debug_pid.rootvmos_audio').strip()
+            newpid=guest(now,'getprop init.svc_debug_pid.irisbox_audio').strip()
             new_player=shell(identity_command).strip()
             if newpid and newpid!=pid and new_player!=old_player and now.get('audio',{}).get('ready'):
                 first=now['audio']['bytes'];time.sleep(2);stable=target()
@@ -38,7 +38,7 @@ def main():
                 results['audioRecovery']={'seconds':round(time.monotonic()-started,2),'oldPid':pid,'newPid':newpid,'hostPlayerReplaced':True,'mainSessionUnchanged':True};restored=True;break
             time.sleep(1)
         assert restored,'Audio did not recover'
-        guest(now,'am force-stop com.rootvmos.probe; am start -W -n com.rootvmos.probe/.ProbeActivity --ez audio true --ez root true',40)
+        guest(now,'am force-stop com.irisbox.probe; am start -W -n com.irisbox.probe/.ProbeActivity --ez audio true --ez root true',40)
         for attempt in range(15):
             time.sleep(1);current=target()
             if current.get('audio',{}).get('nonzero',0)>0:
@@ -52,7 +52,7 @@ def main():
         current=target(row['number']);assert current['session']==row['session'] and current['audio']['bytes']>before[row['id']]
         results['dualAudio'][str(row['id'])]=current['audio']
     compare()
-    memory=shell('for I in 1007 1010; do echo INSTANCE=$I; for F in memory.usage_in_bytes memory.max_usage_in_bytes memory.limit_in_bytes memory.failcnt memory.oom_control; do echo "$F"; cat /dev/memcg/rootvmos_$I/$F; done; done; head -n 3 /proc/meminfo')
+    memory=shell('for I in 1007 1010; do echo INSTANCE=$I; for F in memory.usage_in_bytes memory.max_usage_in_bytes memory.limit_in_bytes memory.failcnt memory.oom_control; do echo "$F"; cat /dev/memcg/irisbox_$I/$F; done; done; head -n 3 /proc/meminfo')
     (PRIVATE/'memory-dual.txt').write_text(memory,encoding='utf-8')
     (PRIVATE/'runtime-result.json').write_text(json.dumps(results,ensure_ascii=False,indent=2),encoding='utf-8')
     print(json.dumps(results,ensure_ascii=False))

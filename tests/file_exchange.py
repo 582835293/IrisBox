@@ -4,7 +4,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 from device import API,ROOT
 from regression import PRIVATE
-name='RootVMOS_check_'+uuid.uuid4().hex[:8]+'.txt'
+name='IrisBox_check_'+uuid.uuid4().hex[:8]+'.txt'
 parser=argparse.ArgumentParser();parser.add_argument('--ids',type=int,nargs=2);args=parser.parse_args()
 results=[]
 def request_ready(request):
@@ -22,7 +22,7 @@ with API() as api:
     for id in ids:
         r=states[id];assert r['ready']
         query=urllib.parse.urlencode({'id':id,'session':r['session'],'name':name})
-        body=f'RootVMOS independent Guest {id}\n文件交换验收\n'.encode('utf-8')
+        body=f'IrisBox independent Guest {id}\n文件交换验收\n'.encode('utf-8')
         headers={'Authorization':'Bearer '+api.token,'Content-Type':'application/octet-stream'}
         request=urllib.request.Request(f'http://127.0.0.1:{api.port}/files/import?'+query,data=body,headers=headers,method='POST')
         with request_ready(request) as response:

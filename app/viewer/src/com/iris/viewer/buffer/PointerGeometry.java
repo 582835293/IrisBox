@@ -1,4 +1,4 @@
-package com.rootvmos.viewer;
+package com.irisbox.viewer;
 
 /** 纯坐标换算：nativeGeometry的19项快照 → 已完成显示矩形 → Guest逻辑坐标。
  * 黑边返回null，窗口/方向未同步时拒绝，不用View宽高直接当Guest尺寸。

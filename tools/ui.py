@@ -3,9 +3,9 @@ import argparse,subprocess,xml.etree.ElementTree as ET,re
 from pathlib import Path
 from device import adb,ADB,ROOT
 def dump():
-    result=adb('shell','uiautomator','dump','/data/local/tmp/rootvmos-ui.xml',timeout=20)
+    result=adb('shell','uiautomator','dump','/data/local/tmp/irisbox-ui.xml',timeout=20)
     if 'dumped to:' not in result:raise RuntimeError(result)
-    raw=adb('exec-out','cat','/data/local/tmp/rootvmos-ui.xml')
+    raw=adb('exec-out','cat','/data/local/tmp/irisbox-ui.xml')
     (ROOT/'validation/private/ui.xml').write_text(raw,encoding='utf-8')
     return ET.fromstring(raw)
 def main():

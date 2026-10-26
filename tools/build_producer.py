@@ -7,7 +7,7 @@ def main():
     parser=argparse.ArgumentParser();parser.add_argument('--host',required=True);parser.add_argument('--key',type=Path,default=Path.home()/'.ssh/id_ed25519');parser.add_argument('--aosp',required=True);parser.add_argument('--cache',type=Path,default=ROOT/'out/native-producer/compile_variables.json');args=parser.parse_args()
     ssh=['ssh','-i',str(args.key),'-o','BatchMode=yes','-o','ConnectTimeout=8',args.host]
     scp=['scp','-i',str(args.key),'-o','BatchMode=yes']
-    remote='/tmp/rootvmos-producer-'+uuid.uuid4().hex
+    remote='/tmp/irisbox-producer-'+uuid.uuid4().hex
     result=ROOT/'out/native-producer';result.mkdir(parents=True,exist_ok=True)
     subprocess.run(ssh+['mkdir -m 0700 '+remote+' && mkdir '+remote+'/build'],check=True,timeout=15)
     for file in ('buffer_producer.cpp','build_direct.py'):

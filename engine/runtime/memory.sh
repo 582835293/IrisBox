@@ -5,7 +5,7 @@
 set -eu
 ACTION=${1:-get}
 ID=${2:-7}
-. /data/rootvmos/runtime/common.sh "$ID"
+. /data/irisbox/runtime/common.sh "$ID"
 host_only || exit 3
 case "$ACTION" in
 get) saved_memory_mib; echo "$MEMORY_MIB" ;;

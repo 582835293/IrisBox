@@ -2,7 +2,7 @@
 # Host在实例完全停止时设置预算，wrapper/ctl exec随后加入managed子组。
 # memory用v1、pids用v2；父组限制覆盖后代，不能照抄纯v2配置。
 set -eu
-. /data/rootvmos/runtime/common.sh "$1"
+. /data/irisbox/runtime/common.sh "$1"
 host_only && groups_empty || exit 3
 load_memory_limit
 # A reboot clears the earlier manual root-controller delegation. Restore only
@@ -31,7 +31,7 @@ echo -pids > "$PIDS/managed/cgroup.subtree_control"
 $BB chown 1000:1000 "$PIDS/managed"
 $BB chmod 0775 "$PIDS/managed"
 for CONTROL in cpuctl cpuset blkio; do
-    G=/dev/$CONTROL/rootvmos_$ID
+    G=/dev/$CONTROL/irisbox_$ID
     $BB mkdir -p "$G/managed"
     if [ "$CONTROL" = cpuset ]; then
         for F in cpus mems; do

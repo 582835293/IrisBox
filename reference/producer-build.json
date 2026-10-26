@@ -1,7 +1,7 @@
 {
   "source_sha256": "110e8f0d7171cb52b4110daac98e55f4a7d4382cff5195bb50f9ad0873c52c0e",
-  "binary_sha256": "076678d1f3b87fa8ed6df2813eef24f5edd5c7d7dd1ad5c107b4112e2f960570",
-  "binary_bytes": 686232,
+  "binary_sha256": "0be714a850a72148ee164d8d9522740ecfb55ccb7dc2de9d735479eca9ad37d1",
+  "binary_bytes": 686224,
   "compiled_only": true,
   "device_tested": false
 }

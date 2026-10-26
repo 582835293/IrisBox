@@ -1,4 +1,4 @@
-# RootVMOS ROM 包规范 v1
+# IrisBox ROM 包规范 v1
 
 扩展名 `.irisrom`，内容为普通 ZIP/ZIP64，第一项必须是UTF-8 `rom.json`，不含顶层目录。镜像为raw ext4，不接受Android sparse、super、boot、OTA刷机包。
 

@@ -1,4 +1,4 @@
-package com.rootvmos.viewer;
+package com.irisbox.viewer;
 
 /** Only public ordinals enter UI labels. Permanent internal IDs select data. */
 final class InstanceNames {

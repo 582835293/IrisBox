@@ -31,12 +31,12 @@ if($RebuildProducer){
 }
 & "$taskRoot\tests\audio\build.ps1" -SdkDir $SdkDir -JdkDir $JdkDir | Out-File "$taskRoot\out\audio-build.log"
 if($LASTEXITCODE -ne 0){throw 'Audio bridge build failed'}
-Copy-Item -LiteralPath "$taskRoot\out\RootVMOS-Audio.jar" -Destination "$taskRoot\engine\runtime\audio\audio.jar"
+Copy-Item -LiteralPath "$taskRoot\out\IrisBox-Audio.jar" -Destination "$taskRoot\engine\runtime\audio\audio.jar"
 & "$taskNdk\aarch64-linux-android30-clang.cmd" -static -O2 -Wall -Wextra -Werror -I "$taskRoot\engine\native\inet" "$taskRoot\engine\native\inet\policy.c" -o "$taskRoot\engine\runtime\iris_inet_policy"
 if($LASTEXITCODE -ne 0){throw 'INET helper build failed'}
-& "$taskNdk\aarch64-linux-android30-clang.cmd" -static -O2 -Wall -Wextra -Werror "$taskRoot\engine\native\iris_runtime_ns.c" -o "$taskRoot\engine\runtime\rootvmos_ns"
+& "$taskNdk\aarch64-linux-android30-clang.cmd" -static -O2 -Wall -Wextra -Werror "$taskRoot\engine\native\iris_runtime_ns.c" -o "$taskRoot\engine\runtime\irisbox_ns"
 if($LASTEXITCODE -ne 0){throw 'Namespace helper build failed'}
-& "$taskNdk\aarch64-linux-android30-clang.cmd" -std=c11 -O2 -static -Wall -Wextra -Werror "$taskRoot\engine\native\userns\rootvmos_userns.c" -o "$taskRoot\engine\runtime\rootvmos_userns"
+& "$taskNdk\aarch64-linux-android30-clang.cmd" -std=c11 -O2 -static -Wall -Wextra -Werror "$taskRoot\engine\native\userns\irisbox_userns.c" -o "$taskRoot\engine\runtime\irisbox_userns"
 if($LASTEXITCODE -ne 0){throw 'Mapped namespace launcher build failed'}
 & "$taskRoot\app\broker\build.ps1" -SdkDir $SdkDir -JdkDir $JdkDir | Out-File "$taskRoot\out\broker-build.log"
 if($LASTEXITCODE -ne 0){throw 'Broker build failed'}
@@ -49,5 +49,5 @@ if($LASTEXITCODE -ne 0){throw 'Engine packaging failed'}
 }
 & "$taskRoot\app\viewer\build.ps1" -SdkDir $SdkDir -JdkDir $JdkDir -NdkVersion $NdkVersion
 if($LASTEXITCODE -ne 0){throw 'APK build failed'}
-Copy-Item -LiteralPath "$taskRoot\app\viewer\build\IrisBufferViewer.apk" -Destination "$taskRoot\out\IrisBox-0.1.4.apk"
-Get-FileHash -Algorithm SHA256 -LiteralPath "$taskRoot\out\IrisBox-0.1.4.apk"
+Copy-Item -LiteralPath "$taskRoot\app\viewer\build\IrisBufferViewer.apk" -Destination "$taskRoot\out\IrisBox-0.1.5.apk"
+Get-FileHash -Algorithm SHA256 -LiteralPath "$taskRoot\out\IrisBox-0.1.5.apk"

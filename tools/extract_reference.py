@@ -15,14 +15,14 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 def transform(text):
-    return (text.replace('/data/guest/iris_runtime_v1', '/data/rootvmos/runtime')
-        .replace('com.iris.viewer.buffer', 'com.rootvmos.viewer')
-        .replace('com.iris.buffer.viewer', 'com.rootvmos.buffer.viewer')
-        .replace('Java_com_iris_viewer_buffer_', 'Java_com_rootvmos_viewer_')
-        .replace('iris_runtime_', 'rootvmos_')
+    return (text.replace('/data/guest/iris_runtime_v1', '/data/irisbox/runtime')
+        .replace('com.iris.viewer.buffer', 'com.irisbox.viewer')
+        .replace('com.iris.buffer.viewer', 'com.irisbox.buffer.viewer')
+        .replace('Java_com_iris_viewer_buffer_', 'Java_com_irisbox_viewer_')
+        .replace('iris_runtime_', 'irisbox_')
         .replace('iris${ID}h', 'rv${ID}h')
-        .replace('IRIS_RUNTIME_NET_', 'ROOTVMOS_NET_')
-        .replace('TAG=IRIS_NET_', 'TAG=ROOTVMOS_NET_')
+        .replace('IRIS_RUNTIME_NET_', 'IRISBOX_NET_')
+        .replace('TAG=IRIS_NET_', 'TAG=IRISBOX_NET_')
         .replace('18762', '19762'))
 
 def put(path, data):

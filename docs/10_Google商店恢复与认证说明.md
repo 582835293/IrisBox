@@ -69,7 +69,7 @@ am broadcast -a android.provider.Telephony.SECRET_CODE -d android_secret_code://
 
 ## 备份、回退与当前状态
 
-开发者本机的私有索引在`validation/private/google-orientation-20261024/`：`google-backup.json`记录Google组件备份，`store-data-refresh-backup.json`记录商店数据备份，`gms-current-version-restored.json`记录新版恢复结果。备份实际保存在新项目Host目录`/data/rootvmos/maintenance/`下的独立目录，0700目录/0600文件，并有SHA-256核验；索引和备份均不随公开源码分发。
+开发者本机的私有索引在`validation/private/google-orientation-20261024/`：`google-backup.json`记录Google组件备份，`store-data-refresh-backup.json`记录商店数据备份，`gms-current-version-restored.json`记录新版恢复结果。备份实际保存在新项目Host目录`/data/irisbox/maintenance/`下的独立目录，0700目录/0600文件，并有SHA-256核验；索引和备份均不随公开源码分发。
 
 备份含GMS/商店的CE/DE状态及当时的原版APK，另有GSF SQLite一致性参考。它不等于整个Android账号系统、Keystore和实例的完整快照。数据清理可能使旧密钥失效，直接解压tar不能保证恢复全部授权；需人工分析版本及一致性，必要时由本人重新登录。日常使用保留当前经验证的新服务状态，勿自动覆盖旧tar。
 

@@ -16,8 +16,8 @@ def host_tap(label):
 def main():
     before=target();assert before['ready'] and before['displaying']
     other=target(1)['orientation']
-    guest(before,'am force-stop com.rootvmos.probe; am start -W -n com.rootvmos.probe/.ProbeActivity')
-    initial=json.loads(guest(before,'cat /data/user/0/com.rootvmos.probe/files/proof.json'))
+    guest(before,'am force-stop com.irisbox.probe; am start -W -n com.irisbox.probe/.ProbeActivity')
+    initial=json.loads(guest(before,'cat /data/user/0/com.irisbox.probe/files/proof.json'))
     results={}
     with API() as api:
         for mode in ('landscape','portrait','auto'):
@@ -57,7 +57,7 @@ def main():
             text='Iris9L' if mode=='landscape' else 'Iris8P'
             ensure_viewer();adb('shell','input','text',text)
             for _ in range(15):
-                proof=json.loads(guest(row,'cat /data/user/0/com.rootvmos.probe/files/proof.json'))
+                proof=json.loads(guest(row,'cat /data/user/0/com.irisbox.probe/files/proof.json'))
                 if proof['edit']==text:break
                 time.sleep(.5)
             else:raise RuntimeError('Rotated keyboard input failed')

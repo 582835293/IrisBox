@@ -1,4 +1,4 @@
-package com.rootvmos.viewer;
+package com.irisbox.viewer;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -209,7 +209,7 @@ public final class ListActivity extends Activity {
         // 顶部操作栏：标题 + 重新连接 + 新增实例
         LinearLayout heading = new LinearLayout(this);
         heading.setGravity(Gravity.CENTER_VERTICAL);
-        heading.addView(text(I18n.s(R.string.ui_aaa44cd7a45d), 24), new LinearLayout.LayoutParams(0, -2, 1));
+        heading.addView(text(I18n.s(R.string.ui_f8c2bbefe46a), 24), new LinearLayout.LayoutParams(0, -2, 1));
         reconnect = new Button(this);
         reconnect.setText(I18n.s(R.string.ui_bac95e1e52fe));
         reconnect.setContentDescription("iris-reconnect-manager");
@@ -312,7 +312,7 @@ public final class ListActivity extends Activity {
      */
     private void connectManager() {
         if (connecting || rootAttempted) {
-            notice.setText(connecting ? I18n.s(R.string.ui_ab08390623d4) : connectionError);
+            notice.setText(connecting ? I18n.s(R.string.ui_664be1b554d0) : connectionError);
             return;
         }
         connecting = true;
@@ -320,7 +320,7 @@ public final class ListActivity extends Activity {
         connectionError = "";
         reconnect.setVisibility(View.VISIBLE);
         reconnect.setEnabled(false);
-        notice.setText(I18n.s(R.string.ui_c508f63c1389));
+        notice.setText(I18n.s(R.string.ui_50f106ba30fc));
         rootWorker.execute(() -> {
             String error = HostRootEntry.connect(this);
             ui.post(() -> {

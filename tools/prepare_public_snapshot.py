@@ -17,6 +17,15 @@ def main():
     dest.mkdir(parents=True,exist_ok=True)
     raw=subprocess.check_output(['git','-c','safe.directory='+ROOT.as_posix(),'ls-files','--cached','--others','--exclude-standard','-z'],cwd=ROOT)
     names=sorted(set(raw.decode().strip('\0').split('\0')))
+    # Retire renamed tracked sources, preserving ignored builds and signing keys.
+    if (dest/'.git').exists():
+        previous=subprocess.check_output(['git','-c','safe.directory='+dest.as_posix(),'-C',str(dest),'ls-files','-z']).decode().strip('\0').split('\0')
+        wanted={n for n in names if (ROOT/n).is_file()}|{'PUBLICATION.json'}
+        for name in previous:
+            if not name or name in wanted:continue
+            target=dest/name
+            assert target.resolve().is_relative_to(dest) and not target.is_symlink()
+            if target.is_file():target.unlink()
     copied=[]
     for name in names:
         source=ROOT/name

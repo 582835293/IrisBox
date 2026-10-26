@@ -16,13 +16,16 @@ def engine(apk):
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--apply',action='store_true');parser.add_argument('--recover',action='store_true');parser.add_argument('--from-apk',type=Path,default=ROOT/'out/RootVMOS-0.1.0.apk');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--apply',action='store_true');parser.add_argument('--recover',action='store_true');parser.add_argument('--from-apk',type=Path,required=True,help='Exact APK matching the installed engine; cross-namespace upgrades require migrate_namespace.py');args=parser.parse_args()
     if args.recover:
-        stage=shell('cat /data/rootvmos/engine-upgrade.pending').strip()
-        assert re.fullmatch(r'/data/rootvmos/\.upgrade-[a-f0-9]{32}',stage)
+        stage=shell('cat /data/irisbox/engine-upgrade.pending').strip()
+        assert re.fullmatch(r'/data/irisbox/\.upgrade-[a-f0-9]{32}',stage)
         print(shell('test ! -L '+stage+'\nsh '+stage+'/recover.sh',timeout=180));return
-    old,_=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.1.4.apk')
-    assert old['version'] in ('0.1.2-e13','0.1.3-e14','0.1.3-e15','0.1.3-e16','0.1.3-e17','0.1.4-e18','0.1.4-e19','0.1.4-e20') and new['version']=='0.1.4-e21'
+    old,old_raw=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.1.5.apk')
+    with zipfile.ZipFile(io.BytesIO(old_raw)) as archive:
+        old_base=re.search(r'^BASE=(/data/[a-z0-9_]+/runtime)$',archive.read('common.sh').decode(),re.M)
+    assert old_base and old_base[1]==BASE,'Use migrate_namespace.py for a different package/storage namespace'
+    assert old['version'] in ('0.1.5-e22','0.1.5-e23','0.1.5-e24') and new['version']=='0.1.5-e25'
     current=json.loads(shell('cat '+BASE+'/engine.json'))
     assert current==old,'Installed engine is not the supplied known baseline'
     with API() as api:
@@ -30,7 +33,7 @@ def main():
     assert all(not r['running'] and not r['busy'] for r in rows),'Stop all NEW Guests first'
     print('Precheck:',old['version'],'; all new Guests stopped; new engine contains',len(new['files']),'verified files')
     if not args.apply:return
-    stage='/data/rootvmos/.upgrade-'+uuid.uuid4().hex
+    stage='/data/irisbox/.upgrade-'+uuid.uuid4().hex
     work=ROOT/'out'/Path(stage).name;work.mkdir()
     payload=work/'engine.zip';payload.write_bytes(raw)
     old_list=''.join(e['sha256']+'  '+n+'\n' for n,e in sorted(old['files'].items()))
@@ -41,14 +44,14 @@ def main():
     added=sorted(set(new['files'])-set(old['files']))
     rollback=['#!/system/bin/sh','set -eu','B='+BASE,'S='+stage,'BB=/system/bin/busybox',
               '[ ! -L "$S" ] && [ "$($BB realpath "$S")" = "$S" ]',
-              '[ "$(cat /data/rootvmos/engine-upgrade.pending)" = "$S" ]']
+              '[ "$(cat /data/irisbox/engine-upgrade.pending)" = "$S" ]']
     for name in backup:
         rollback += [f'cp -p "$S/backup/{name}" "$B/{name}.restore"',f'mv -f "$B/{name}.restore" "$B/{name}"']
     for name in added:rollback += [f'[ ! -L "$B/{name}" ]',f'rm -f "$B/{name}"']
-    rollback += ['sync','rm -f /data/rootvmos/engine-upgrade.pending','echo ENGINE_ROLLED_BACK_DATA_PRESERVED']
+    rollback += ['sync','rm -f /data/irisbox/engine-upgrade.pending','echo ENGINE_ROLLED_BACK_DATA_PRESERVED']
     (work/'recover.sh').write_text('\n'.join(rollback)+'\n',encoding='utf-8',newline='\n')
     script=['#!/system/bin/sh','set -eu','B='+BASE,'S='+stage,'BB=/system/bin/busybox',
-            '[ ! -e /data/rootvmos/engine-upgrade.pending ]',
+            '[ ! -e /data/irisbox/engine-upgrade.pending ]',
             '[ ! -L "$S" ] && [ "$($BB realpath "$S")" = "$S" ]',
             '. "$B/common.sh" 7','host_only',
             'for F in "$B"/config/instances_v1/*.record; do N=${F##*/}; N=${N%.record};',
@@ -65,25 +68,25 @@ def main():
     for name in backup:
         parent=str(Path(name).parent).replace('\\','/')
         script += [f'[ ! -L "$B/{name}" ] && [ -f "$B/{name}" ]',f'mkdir -p "$S/backup/{parent}"',f'cp -p "$B/{name}" "$S/backup/{name}"']
-    script += ['sync','printf "%s\\n" "$S" > /data/rootvmos/engine-upgrade.pending',
+    script += ['sync','printf "%s\\n" "$S" > /data/irisbox/engine-upgrade.pending',
                'trap \'CODE=$?; trap - EXIT; if [ "$CODE" != 0 ]; then sh "$S/recover.sh"; fi; exit "$CODE"\' EXIT']
     for name in sorted(new['files']):
         parent=str(Path(name).parent).replace('\\','/')
         script += [f'mkdir -p "$B/{parent}"',f'[ ! -L "$B/{name}" ]',f'cp "$S/payload/{name}" "$B/{name}.upgrade"',f'chmod 0644 "$B/{name}.upgrade"',f'mv -f "$B/{name}.upgrade" "$B/{name}"']
-    executable=('rootvmos_ns','rootvmos_userns','iris_inet_policy','display/buffer_bridge/iris_buffer_producer','root/magisk_30_7/busybox','root/magisk_30_7/magisk','root/magisk_30_7/magisk32','root/magisk_30_7/magiskpolicy')
+    executable=('irisbox_ns','irisbox_userns','iris_inet_policy','display/buffer_bridge/iris_buffer_producer','root/magisk_30_7/busybox','root/magisk_30_7/magisk','root/magisk_30_7/magisk32','root/magisk_30_7/magiskpolicy')
     script += ['chmod 0755 '+' '.join('"$B/'+n+'"' for n in executable),
                'cp "$S/payload/engine.json" "$B/engine.json"','cp "$S/files.sha256" "$B/files.sha256"',
                '(cd "$B" && "$BB" sha256sum -c files.sha256 >/dev/null)',
                'printf "%s\\n" '+new['version']+' > "$B/engine.version"',
                '"$BB" sha256sum "$B/files.sha256" | "$BB" cut -d " " -f 1 > "$B/engine.sha256"',
-               'sync','rm -f /data/rootvmos/engine-upgrade.pending','trap - EXIT','echo ENGINE_UPGRADED_DATA_PRESERVED']
+               'sync','rm -f /data/irisbox/engine-upgrade.pending','trap - EXIT','echo ENGINE_UPGRADED_DATA_PRESERVED']
     (work/'apply.sh').write_text('\n'.join(script)+'\n',encoding='utf-8',newline='\n')
     assert all(b'\r' not in f.read_bytes() for f in work.iterdir() if f.suffix!='.zip')
-    subprocess.run(ADB+['shell','am','force-stop','com.rootvmos.viewer'],check=True)
+    subprocess.run(ADB+['shell','am','force-stop','com.irisbox.viewer'],check=True)
     print(shell('sh '+BASE+'/display/buffer_viewer/manager.sh stop',timeout=30))
     shell('mkdir -m 0700 '+stage)
     for file in work.iterdir():
-        remote='/data/local/tmp/rootvmos-upgrade-'+file.name
+        remote='/data/local/tmp/irisbox-upgrade-'+file.name
         subprocess.run(ADB+['push',str(file),remote],check=True,stdout=subprocess.DEVNULL)
         shell('cp '+shlex.quote(remote)+' '+stage+'/'+file.name+'\nchmod 0600 '+stage+'/'+file.name)
     shell('sh -n '+stage+'/apply.sh\nsh -n '+stage+'/recover.sh')

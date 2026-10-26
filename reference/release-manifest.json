@@ -1,12 +1,12 @@
 {
   "product": "IrisBox",
   "chineseName": "虹膜空间",
-  "release": "v0.1.4-preview",
+  "release": "v0.1.5-preview",
   "repository": "https://github.com/582835293/IrisBox",
-  "package": "com.rootvmos.viewer",
-  "versionName": "0.1.4",
-  "versionCode": 118,
-  "engineVersion": "0.1.4-e21",
+  "package": "com.irisbox.viewer",
+  "versionName": "0.1.5",
+  "versionCode": 119,
+  "engineVersion": "0.1.5-e25",
   "publicRomGoogleIncluded": false,
   "hostMagiskIncluded": false,
   "freshCardFlashTested": false,
@@ -16,13 +16,27 @@
   "googleDeviceCertificationPassed": false,
   "liveOrientationTested": true,
   "gameQrLoginAndPlayOwnerConfirmed": true,
+  "hostCameraExposed": false,
+  "guestProjectDiskQuotaEnforced": false,
+  "appLanguageChoices": [
+    "system",
+    "en",
+    "zh-CN"
+  ],
+  "languagePersistenceTested": true,
+  "clashTutorialInteractionTested": true,
+  "clashLongTermBattlesTested": false,
+  "youtubePlaybackTested": true,
+  "angryBirds2GameplayTested": false,
+  "dualInstanceTested": true,
+  "dualHeavyGamesTested": false,
   "artifacts": [
     {
-      "file": "IrisBox-0.1.4.apk",
-      "bytes": 17580785,
-      "sha256": "12358664cf8219a3cabf2ffcaa90a81357c35bfe6bfb6c48be12e12fa205e50b",
-      "distribution": "github-release",
-      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.4-preview/IrisBox-0.1.4.apk"
+      "file": "IrisBox-0.1.5.apk",
+      "bytes": 17961713,
+      "sha256": "10157a8059bfc12d75b64f7d3e8180ab98dac627565e10b6f7dfe3dd0e305b1a",
+      "distribution": "release-page",
+      "downloadUrl": null
     },
     {
       "file": "IrisBox-rpi4-a13-aosp.irisrom",

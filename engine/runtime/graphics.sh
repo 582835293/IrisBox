@@ -5,7 +5,7 @@
 set -eu
 ACTION=${1:-get}
 ID=${2:-7}
-. /data/rootvmos/runtime/common.sh "$ID"
+. /data/irisbox/runtime/common.sh "$ID"
 C=$BASE/config/graphics_v1
 valid() { case "$1" in native|opengl) ;; *) echo 'Graphics mode must be native or opengl' >&2;return 2 ;; esac; }
 saved() {

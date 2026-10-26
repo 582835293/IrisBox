@@ -1,5 +1,7 @@
 # Building and maintenance
 
+Current version: **0.1.5/e25**. Existing 0.1.4/e21 installations require the stopped-state [Iris namespace migration](namespace-migration.md). Historical upgrade examples below do not replace this procedure.
+
 [中文](../04_构建与维护.md)
 
 Use JDK 17, Python 3, Android SDK platform android-30, build-tools 34.0.0 and NDK 28.2.13676358. The APK targets API 33; SDK 30 is the compilation interface baseline.
@@ -9,7 +11,7 @@ $env:JAVA_TOOL_OPTIONS='-Xmx256m -Xms16m -XX:+UseSerialGC'
 ./build.ps1 -SdkDir "$env:LOCALAPPDATA/Android/Sdk" -JdkDir 'C:/path/to/jdk-17'
 ```
 
-The full build generates EN/ZH resources, packages the fixed host BusyBox, builds the ordinary Guest download browser, compiles native helpers, AudioBridge, Broker and Gateway, normalizes JAR times, generates engine/profile hashes, compiles Viewer JNI/Java, links resources with generated R.java, aligns and signs the APK. Current development output: `out/IrisBox-0.1.4.apk`. `-AppOnly` is appropriate only when the engine is unchanged and already packaged. Engine changes require a new engine version and full build.
+The full build generates EN/ZH resources, packages the fixed host BusyBox, builds the ordinary Guest download browser, compiles native helpers, AudioBridge, Broker and Gateway, normalizes JAR times, generates engine/profile hashes, compiles Viewer JNI/Java, links resources with generated R.java, aligns and signs the APK. Current development output: `out/IrisBox-0.1.5.apk`. `-AppOnly` is appropriate only when the engine is unchanged and already packaged. Engine changes require a new engine version and full build.
 
 The local signing key is generated under the ignored App build directory. Preserve the private key for updates; it is not published. A clone creates a different development key and cannot overwrite a release-signed installation. This preview keeps its original development signing identity; there is no automated release-signing service.
 
@@ -35,7 +37,7 @@ An incomplete upgrade leaves `engine-upgrade.pending`; the App refuses startup. 
 
 The e13 → e17 upgrade additionally requires the independent, stopped-state userdata backup and ownership migration described in [User namespace migration](userns.md). After the first mapped boot, restoring an older engine alone is unsafe. The original full data snapshot must remain available. Fresh instances receive mappings automatically.
 
-Uninstalling the APK preserves `/data/rootvmos`. Complete removal requires stopping/deleting only this project's instances, verifying no owned mounts/cgroups remain and stopping its manager before targeted cleanup. Never remove `/data/guest`, flush shared BPF or firewall tables, or reset user data to resolve host compatibility errors.
+Uninstalling the APK preserves `/data/irisbox`. Complete removal requires stopping/deleting only this project's instances, verifying no owned mounts/cgroups remain and stopping its manager before targeted cleanup. Never remove `/data/guest`, flush shared BPF or firewall tables, or reset user data to resolve host compatibility errors.
 
 Keep Android scripts LF. The packager rejects CR bytes. Do not rerun the initial extraction/adaptation scripts over the maintained source tree. Raw logs, screenshots, account baselines and signing keys stay private.
 

@@ -21,12 +21,21 @@ def digest(path):
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument('--published-assets',type=Path,help='Saved gh release view JSON for an already public release; URLs and hashes are verified before use')
+    parser.add_argument('--reuse-assets',type=Path,help='Saved public older release JSON; reuse only identical non-APK resources after size/digest checks')
     args=parser.parse_args()
     published={}
     if args.published_assets:
         observed=json.loads(args.published_assets.read_text(encoding='utf-8-sig'))
         assert observed['tagName']==TAG and observed['isDraft'] is False, 'Require an actually published matching release'
         published={row['name']:row for row in observed['assets']}
+    reused={}
+    if args.reuse_assets:
+        older=json.loads(args.reuse_assets.read_text(encoding='utf-8-sig'))
+        assert older['isDraft'] is False and older['tagName']!=TAG
+        assert older['tagName'].startswith('v') and '/' not in older['tagName']
+        for item in older['assets']:
+            assert item['url'].startswith(REPO+'/releases/download/'+older['tagName']+'/')
+            if not item['name'].lower().endswith('.apk'):reused[item['name']]=item
     release=ROOT/'out/release';release.mkdir(parents=True,exist_ok=True)
     apk='IrisBox-'+VERSION+'.apk'
     for name in (apk,'IrisBox-rpi4-a13-aosp.irisrom'):
@@ -37,11 +46,12 @@ def main():
            'IrisBox-host-aosp13-rpi4-20260916-usb-16gb-preview.json','IrisBox-guest-root-sources.zip','IrisBox-upstream-sources.zip']
     artifacts=[{'file':name,'bytes':(release/name).stat().st_size,'sha256':digest(release/name)} for name in names if (release/name).exists()]
     for row in artifacts:
-        item=published.get(row['file'])
-        if args.published_assets:
+        item=published.get(row['file']) or reused.get(row['file'])
+        if item:
             assert item and item['state']=='uploaded' and item['size']==row['bytes'],row['file']
             assert item['digest']=='sha256:'+row['sha256'],row['file']
-            assert item['url'].startswith(REPO+'/releases/download/'+TAG+'/'),row['file']
+        elif args.published_assets:
+            raise AssertionError('No verified published asset: '+row['file'])
         row['distribution']='github-release' if item else 'release-page'
         row['downloadUrl']=item['url'] if item else None
     assert all(row['bytes']<2*1024**3 for row in artifacts)
@@ -54,7 +64,12 @@ def main():
           'publicRomGoogleIncluded':False,'hostMagiskIncluded':False,'freshCardFlashTested':False,
           'userNamespaceIsolation':True,'legacyDataMigrationRequired':True,
           'googlePlayDownloadTested':True,'googleDeviceCertificationPassed':False,
-          'liveOrientationTested':True,'gameQrLoginAndPlayOwnerConfirmed':True,'artifacts':artifacts}
+          'liveOrientationTested':True,'gameQrLoginAndPlayOwnerConfirmed':True,
+          'hostCameraExposed':False,'guestProjectDiskQuotaEnforced':False,
+          'appLanguageChoices':['system','en','zh-CN'],'languagePersistenceTested':True,
+          'clashTutorialInteractionTested':True,'clashLongTermBattlesTested':False,
+          'youtubePlaybackTested':True,'angryBirds2GameplayTested':False,
+          'dualInstanceTested':True,'dualHeavyGamesTested':False,'artifacts':artifacts}
     (release/'release-manifest.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
     (release/'SHA256SUMS').write_text(''.join(row['sha256']+'  '+row['file']+'\n' for row in artifacts),encoding='ascii')
     (release/'上传说明.txt').write_text(

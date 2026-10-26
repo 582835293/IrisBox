@@ -9,7 +9,7 @@
 # inner writes LOG/network.request before init and waits for identical network.ready.
 # Existing watchdog owns lifetime; its every exit and ctl stop call exact cleanup.
 set -eu
-BB=/data/rootvmos/host/bin/busybox
+BB=/data/irisbox/host/bin/busybox
 ACTION=${1:-}
 ID=${2:-}
 SESSION=${3:-}
@@ -48,7 +48,7 @@ if [ "$ACTION" = guest ]; then
 fi
 
 case "$ACTION:$#" in prepare:5|cleanup:4) ;; *) exit 2 ;; esac
-. /data/rootvmos/runtime/common.sh "$ID"
+. /data/irisbox/runtime/common.sh "$ID"
 host_only || exit 3
 LOG=$4
 case "$LOG" in "$RUN"/*) ;; *) exit 3 ;; esac
@@ -59,7 +59,7 @@ case "$LOG_NAME" in ''|*[!0-9_]*) exit 3 ;; esac
 STATE=$LOG/network
 CURRENT=$RUN/network.current
 IFACE=rv${ID}h
-ALIAS=ROOTVMOS_NET_${ID}_${PID}_${TICK}
+ALIAS=IRISBOX_NET_${ID}_${PID}_${TICK}
 # 产品保留ID范围对应独立172.30网段，避免与旧Iris的10.*地址重叠。
 OCTET3=$((ID - 1000))
 SUBNET=172.30.$OCTET3.0/24
@@ -75,8 +75,8 @@ PREF_OUT=12009
 case "$ID" in 7|8) PREF_RETURN=1090$ID; PREF_OUT=1200$ID ;; esac
 return_rule() { "$IP" rule show | "$BB" awk -v p="$PREF_RETURN:" -v n="$SUBNET" '$1==p && index(" " $0 " "," to " n " ") {print}'; }
 out_rule() { "$IP" rule show | "$BB" awk -v p="$PREF_OUT:" -v i="$IFACE" '$1==p && index(" " $0 " "," iif " i " ") {print}'; }
-TAG=ROOTVMOS_NET_${ID}_${PID}_${TICK}
-REQUESTER=rootvmos_${ID}_${PID}_${TICK}
+TAG=IRISBOX_NET_${ID}_${PID}_${TICK}
+REQUESTER=irisbox_${ID}_${PID}_${TICK}
 IP=/system/bin/ip
 IPT=/system/bin/iptables
 NDC=/system/bin/ndc
@@ -104,15 +104,15 @@ preinit_is_ours() {
     alive "$PID" "$TICK" || return 3
     [ ! -L "$LOG/network.request" ] &&
         [ "$($BB cat "$LOG/network.request")" = "$SESSION" ] || return 3
-    "$BASE/rootvmos_userns" verify-preinit "$ID" "$PID" "$TICK" || return 3
-    $BB tr '\000' '\n' < "/proc/$PID/cmdline" | $BB grep -qx "$BASE/rootvmos_userns" || return 3
+    "$BASE/irisbox_userns" verify-preinit "$ID" "$PID" "$TICK" || return 3
+    $BB tr '\000' '\n' < "/proc/$PID/cmdline" | $BB grep -qx "$BASE/irisbox_userns" || return 3
     [ "$($BB awk '/^NSpid:/ {print $NF}' "/proc/$PID/status")" = 1 ] || return 3
     $BB grep -F "upperdir=$RUN/upper," "/proc/$PID/mountinfo" >/dev/null || return 3
     for NS in pid mnt net ipc uts cgroup; do
         [ "$($BB readlink /proc/$PID/ns/$NS)" != "$($BB readlink /proc/1/ns/$NS)" ] || return 3
     done
-    $BB grep -F ":memory:/rootvmos_$ID/managed" "/proc/$PID/cgroup" >/dev/null || return 3
-    $BB grep -F "0::/rootvmos_$ID/managed" "/proc/$PID/cgroup" >/dev/null || return 3
+    $BB grep -F ":memory:/irisbox_$ID/managed" "/proc/$PID/cgroup" >/dev/null || return 3
+    $BB grep -F "0::/irisbox_$ID/managed" "/proc/$PID/cgroup" >/dev/null || return 3
 }
 
 # 同名网卡不等于同一资源，核alias/ifindex及必要时互相对应的veth端点。

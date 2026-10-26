@@ -6,7 +6,7 @@
 set -eu
 ACTION=${1:-get}
 ID=${2:-7}
-. /data/rootvmos/runtime/common.sh "$ID"
+. /data/irisbox/runtime/common.sh "$ID"
 host_only || exit 3
 C=$BASE/config/resolution_v1
 profile_size() {

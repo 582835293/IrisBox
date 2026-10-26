@@ -28,7 +28,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define HOME_BASE "/data/rootvmos/runtime"
+#define HOME_BASE "/data/irisbox/runtime"
 #define MAPS HOME_BASE "/config/userns_v1"
 #define SPAN 100000U
 #define FIRST_BASE 2000000000U /* Disjoint from previous Iris ranges [1100000000,2000000000). */
@@ -91,7 +91,7 @@ static unsigned profile(unsigned id) {
 }
 static unsigned enable(unsigned id) {
     char rev[65], path[256], data[256], value[256]; revision(id, rev);
-    snprintf(path, sizeof(path), "/sys/fs/cgroup/rootvmos_%u/cgroup.events", id);
+    snprintf(path, sizeof(path), "/sys/fs/cgroup/irisbox_%u/cgroup.events", id);
     if (read_text(path, data, sizeof(data)) >= 0 && !strstr(data, "populated 0\n")) {
         errno = EBUSY; die("stop instance before mapping");
     }
@@ -143,7 +143,8 @@ static int map_is(unsigned pid, unsigned base, const char *kind) {
 }
 static void verify_map(unsigned id, unsigned pid, unsigned long long tick, int preinit) {
     unsigned base = profile(id);
-    if (!tick || ticks(pid) != tick || !map_is(pid, base, "uid") || !map_is(pid, base, "gid")) die("Guest mapped identity");
+    if (!tick || ticks(pid) != tick || !map_is(pid, base, "uid") || !map_is(pid, base, "gid") ||
+        !map_is(pid, base, "projid")) die("Guest mapped identity");
     if (!preinit) {
         char status_path[128], status[16384];
         snprintf(status_path, sizeof(status_path), "/proc/%u/status", pid);
@@ -178,7 +179,7 @@ static void join_child(unsigned id, pid_t pid) {
     const char *controllers[] = {"/dev/memcg", "/sys/fs/cgroup", "/dev/cpuctl", "/dev/cpuset", "/dev/blkio"};
     char path[256], value[32]; snprintf(value, sizeof(value), "%d\n", pid);
     for (unsigned i = 0; i < 5; ++i) {
-        snprintf(path, sizeof(path), "%s/rootvmos_%u/managed/cgroup.procs", controllers[i], id); put(path, value);
+        snprintf(path, sizeof(path), "%s/irisbox_%u/managed/cgroup.procs", controllers[i], id); put(path, value);
     }
 }
 static void seal_and_map(unsigned id, unsigned base) {
@@ -194,7 +195,7 @@ static void seal_and_map(unsigned id, unsigned base) {
      */
     const char *controllers[] = {"/dev/memcg", "/sys/fs/cgroup", "/dev/cpuctl", "/dev/cpuset", "/dev/blkio"};
     for (unsigned i = 0; i < 5; ++i) {
-        snprintf(path, sizeof(path), "%s/rootvmos_%u/managed", controllers[i], id); shift_tree(path, base);
+        snprintf(path, sizeof(path), "%s/irisbox_%u/managed", controllers[i], id); shift_tree(path, base);
     }
     struct mount_attr readonly = {.attr_set = MOUNT_ATTR_RDONLY | MOUNT_ATTR_NOSUID};
     if (syscall(__NR_mount_setattr, AT_FDCWD, root, 0, &readonly, sizeof(readonly))) die("seal system root");
@@ -238,7 +239,7 @@ static int guest_main(void *arg) {
     /* APEX is not active yet; mksh's ELF interpreter is in /apex. The
      * existing static BusyBox can run this pre-init step without Host APEX.
      */
-    execl("/system/bin/busybox", "busybox", "sh", "/system/bin/rootvmos_userns_entry.sh", id, session, net, NULL);
+    execl("/system/bin/busybox", "busybox", "sh", "/system/bin/irisbox_userns_entry.sh", id, session, net, NULL);
     perror("Guest entry"); _exit(3);
 }
 static int wait_result(pid_t pid) {
@@ -300,6 +301,12 @@ static int launch(unsigned id, const char *log) {
     snprintf(value, sizeof(value), "0 %u %u\n", a.base, SPAN);
     snprintf(path, sizeof(path), "/proc/%d/uid_map", guest); put(path, value);
     snprintf(path, sizeof(path), "/proc/%d/gid_map", guest); put(path, value);
+    /* Keep project-ID bookkeeping disjoint, alongside UID/GID mappings.
+     * The matched kernel still forbids changing project quota state from a
+     * noninitial user namespace; the Guest vold profile handles that limit.
+     * This map alone does not enable filesystem quota enforcement.
+     */
+    snprintf(path, sizeof(path), "/proc/%d/projid_map", guest); put(path, value);
     join_child(id, guest);
     struct release go = {.pid = (unsigned)guest, .tick = ticks((unsigned)guest)};
     snprintf(path, sizeof(path), "%s/userns.launch.identity", log);
@@ -315,7 +322,7 @@ static int launch(unsigned id, const char *log) {
         }
         char number[32], gid[32]; snprintf(number, sizeof(number), "%u", id); snprintf(gid, sizeof(gid), "%d", guest);
         setenv("IRIS_USERNS_PREPARE_PID", gid, 1); setenv("IRIS_RUNTIME_LOG", log, 1);
-        execl("/data/rootvmos/host/bin/busybox", "busybox", "timeout", "-s", "KILL", "70", "/system/bin/sh",
+        execl("/data/irisbox/host/bin/busybox", "busybox", "timeout", "-s", "KILL", "70", "/system/bin/sh",
             HOME_BASE "/inner.sh", number, NULL); _exit(3);
     }
     int result = wait_result(prep);
@@ -327,7 +334,7 @@ static int launch(unsigned id, const char *log) {
     pid_t proc = fork(); if (proc < 0) die("proc setup fork");
     if (!proc) { guest_proc_mount((unsigned)guest, a.root, a.base); _exit(0); }
     if (wait_result(proc)) { kill(guest, SIGKILL); wait_result(guest); return 3; }
-    /* /data/rootvmos remains Host-root-only (0700). Expose the prepared root
+    /* /data/irisbox remains Host-root-only (0700). Expose the prepared root
      * at /mnt ONLY in this already-private preparer/child mount namespace.
      * No Host-visible directory is created or chmodded; /mnt inside Guest
      * after pivot is still its own tmpfs, not this pre-pivot alias. */

@@ -1,4 +1,4 @@
-package com.rootvmos.probe;
+package com.irisbox.probe;
 import android.app.Activity;
 import android.os.Bundle;
 import android.widget.*;
@@ -24,6 +24,7 @@ public final class ProbeActivity extends Activity {
     private String instance,edit="";
     private volatile String network="checking",googleNetwork="checking",dns="checking",root="not requested",audio="not requested",renderer="starting",gpuCheck="starting";
     private volatile long frames;
+    private String externalStorage="not checked";
     private int swipes,touches,maxPointers;
     private float firstX,firstY;
     private boolean alive=true;
@@ -71,7 +72,22 @@ public final class ProbeActivity extends Activity {
         LinearLayout buttons=new LinearLayout(this);outer.addView(buttons);
         button(buttons,"COUNT +1",()->{prefs.edit().putInt("counter",prefs.getInt("counter",0)+1).commit();show();});
         button(buttons,"REQUEST ROOT",this::requestRoot);button(buttons,"AUDIO TEST",this::testAudio);
-        setContentView(outer);show();
+        setContentView(outer);
+        // Exercise Android's ordinary app-directory path through vold/FUSE.
+        // This detects a missing User namespace project-ID map, not just DAC.
+        try{
+            File dir=getExternalFilesDir("irisbox-storage-check");
+            if(dir==null)throw new IOException("external directory unavailable");
+            File sample=File.createTempFile("roundtrip-",".tmp",dir);
+            try{
+                byte[] expected="IrisBox scoped storage".getBytes("UTF-8");
+                try(FileOutputStream out=new FileOutputStream(sample)){out.write(expected);out.getFD().sync();}
+                byte[] actual=new byte[expected.length];
+                try(FileInputStream in=new FileInputStream(sample)){if(in.read(actual)!=actual.length||!java.util.Arrays.equals(expected,actual))throw new IOException("readback mismatch");}
+                externalStorage="PASS write + read";
+            }finally{if(!sample.delete())throw new IOException("temporary file cleanup failed");}
+        }catch(Exception failure){externalStorage=failure.getClass().getSimpleName()+": "+failure.getMessage();}
+        show();
         new Thread(()->{network=http("https://example.com/");googleNetwork=http("https://www.gstatic.com/generate_204");try{dns="PASS "+InetAddress.getAllByName("accounts.google.com").length+" addresses";}catch(Exception e){dns=e.getClass().getSimpleName();}runOnUiThread(this::show);},"ordinary-uid-network").start();
         if(getIntent().getBooleanExtra("root",false))requestRoot();
         if(getIntent().getBooleanExtra("audio",false))testAudio();
@@ -90,8 +106,8 @@ public final class ProbeActivity extends Activity {
     }
     private void show(){
         if(!alive)return;int count=prefs.getInt("counter",0);
-        label.setText("Instance "+instance+" | UID "+android.os.Process.myUid()+" | Counter "+count+"\nHTTPS "+network+"\nGoogle "+googleNetwork+" | DNS "+dns+"\nRoot "+root+"\nGPU "+renderer+"\nFrames "+frames+" "+gpuCheck+"\nTouches "+touches+" swipes "+swipes+" pointers "+maxPointers+"\nAudio "+audio);
-        try(FileOutputStream out=new FileOutputStream(new File(getFilesDir(),"proof.json"))){JSONObject j=new JSONObject().put("instance",instance).put("uid",android.os.Process.myUid()).put("counter",count).put("network",network).put("googleNetwork",googleNetwork).put("dns",dns).put("root",root).put("renderer",renderer).put("frames",frames).put("gpuCheck",gpuCheck).put("touches",touches).put("swipes",swipes).put("maxPointers",maxPointers).put("edit",edit).put("audio",audio);out.write(j.toString().getBytes("UTF-8"));out.getFD().sync();}catch(Exception e){throw new RuntimeException(e);}
+        label.setText("Instance "+instance+" | UID "+android.os.Process.myUid()+" | Counter "+count+"\nHTTPS "+network+"\nGoogle "+googleNetwork+" | DNS "+dns+"\nRoot "+root+"\nGPU "+renderer+"\nFrames "+frames+" "+gpuCheck+"\nTouches "+touches+" swipes "+swipes+" pointers "+maxPointers+"\nAudio "+audio+"\nStorage "+externalStorage);
+        try(FileOutputStream out=new FileOutputStream(new File(getFilesDir(),"proof.json"))){JSONObject j=new JSONObject().put("instance",instance).put("uid",android.os.Process.myUid()).put("counter",count).put("network",network).put("googleNetwork",googleNetwork).put("dns",dns).put("root",root).put("renderer",renderer).put("frames",frames).put("gpuCheck",gpuCheck).put("touches",touches).put("swipes",swipes).put("maxPointers",maxPointers).put("edit",edit).put("audio",audio).put("externalStorage",externalStorage);out.write(j.toString().getBytes("UTF-8"));out.getFD().sync();}catch(Exception e){throw new RuntimeException(e);}
     }
     @Override protected void onPause(){gpu.onPause();super.onPause();}
     @Override protected void onResume(){super.onResume();gpu.onResume();}

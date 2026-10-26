@@ -6,7 +6,7 @@ ID=${2:?Instance required}
 case "$ID" in ???? ) ;; *) exit 2;; esac
 case "$ID" in *[!0-9]*) exit 2;; esac
 [ "$ID" -ge 1007 ] && [ "$ID" -le 1134 ] || exit 2
-. /data/rootvmos/runtime/common.sh "$ID"
+. /data/irisbox/runtime/common.sh "$ID"
 host_only || exit 3
 C=$BASE/config/orientation_v1
 valid_mode(){ case "$1" in auto|landscape|portrait) return 0;; *) return 2;; esac; }

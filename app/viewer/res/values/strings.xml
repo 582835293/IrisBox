@@ -41,13 +41,10 @@
     <string name="ui_84d265278316" formatted="false">"A matched Raspberry Pi 4 AOSP 13 ARM64 ROM is required"</string>
     <string name="ui_624266d31bd4" formatted="false">"ROM and engine"</string>
     <string name="ui_a6e0efe3cd4f" formatted="false">"ROM: not imported"</string>
-    <string name="ui_acfea807c04b" formatted="false">"Root was denied. Allow IrisBox in host Magisk, then select Reconnect."</string>
+    <string name="ui_3950e1128b8e" formatted="false">"Root was denied. Allow IrisBox in host Magisk, then select Reconnect."</string>
     <string name="ui_4e1c76b3df0a" formatted="false">"Root action failed ("</string>
     <string name="ui_c90dc17c7d0f" formatted="false">"Root action timed out. Check Magisk authorization; incomplete ROM imports are not registered."</string>
     <string name="ui_0218a26e7532" formatted="false">"Root settings incomplete. Check the latest status and retry."</string>
-    <string name="ui_aaa44cd7a45d" formatted="false">"IrisBox · Instances"</string>
-    <string name="ui_8ae4101b0f19" formatted="false">"IrisBox · Raspberry Pi Android"</string>
-    <string name="ui_d554ebd78752" formatted="false">"IrisBox setup"</string>
     <string name="ui_eac94fb94a6b" formatted="false">"Root: off"</string>
     <string name="ui_cd7761cd9dba" formatted="false">"Root: starting"</string>
     <string name="ui_624b011b8eaa" formatted="false">"Root: enabled"</string>
@@ -183,7 +180,7 @@
     <string name="ui_0d8fd3900016" formatted="false">"Hide log"</string>
     <string name="ui_f7a937916bc3" formatted="false">"Rescue startup: disable modules and Zygisk; preserve data"</string>
     <string name="ui_49deaf7da20d" formatted="false">"Files"</string>
-    <string name="ui_a4de6c507772" formatted="false">"Invalid IrisBox package; the first entry must be "</string>
+    <string name="ui_f6067ecbdfb1" formatted="false">"Invalid IrisBox package; the first entry must be "</string>
     <string name="ui_fbc96d57a5de" formatted="false">"File content verification failed"</string>
     <string name="ui_6a061766d816" formatted="false">"File list exceeds the limit"</string>
     <string name="ui_826bfe2082bf" formatted="false">"Use a plain filename without path separators (up to 128 bytes)"</string>
@@ -219,7 +216,7 @@
     <string name="ui_f225019fde8f" formatted="false">"Not started.\n"</string>
     <string name="ui_9807d3930434" formatted="false">"Not started.\n\n"</string>
     <string name="ui_f5064e36fb9d" formatted="false">"Not completed: "</string>
-    <string name="ui_b81c17cb6353" formatted="false">"MagiskSU not found. Install Magisk on the host and authorize IrisBox."</string>
+    <string name="ui_72166f0ac194" formatted="false">"MagiskSU not found. Install Magisk on the host and authorize IrisBox."</string>
     <string name="ui_831cdf82e2aa" formatted="false">"Unknown setup action"</string>
     <string name="ui_b2ba9634d9cf" formatted="false">"Stopped"</string>
     <string name="ui_f2f3e9803ccb" formatted="false">"Disconnected"</string>
@@ -255,7 +252,7 @@
     <string name="ui_7bd6558138e4" formatted="false">"Opening app"</string>
     <string name="ui_a693a667f993" formatted="false">"Opening display"</string>
     <string name="ui_7fb4ae902ad7" formatted="false">"Starting the instance"</string>
-    <string name="ui_c508f63c1389" formatted="false">"Requesting host root. Allow IrisBox in Magisk on first use…"</string>
+    <string name="ui_50f106ba30fc" formatted="false">"Requesting host root. Allow IrisBox in Magisk on first use…"</string>
     <string name="ui_84cb10f62524" formatted="false">"Checking instance and exchange folder"</string>
     <string name="ui_73685fac59f8" formatted="false">"Waiting for the previous transfer to finish; keeping the current folder view…"</string>
     <string name="ui_bd6948a6f441" formatted="false">"Loading the full history. Wait before copying."</string>
@@ -297,16 +294,19 @@
     <string name="ui_8551a052e534" formatted="false">"Manager receipt has a different instance identity"</string>
     <string name="ui_34cbe1449ed7" formatted="false">"Manager connection expired. Reopen from the list."</string>
     <string name="ui_b22e5edeb5a7" formatted="false">"Valid file verification data is missing; export refused"</string>
+    <string name="ui_f8c2bbefe46a" formatted="false">"IrisBox · Instances"</string>
+    <string name="ui_1e14f55edbd2" formatted="false">"IrisBox · Raspberry Pi Android"</string>
+    <string name="ui_84f938378054" formatted="false">"IrisBox setup"</string>
     <string name="ui_249d1f176718" formatted="false">"Extracting and verifying "</string>
     <string name="ui_7debf9cb0372" formatted="false">"Settings"</string>
     <string name="ui_28c63e19176b" formatted="false">"Open an instance from the list"</string>
-    <string name="ui_ab08390623d4" formatted="false">"Allow IrisBox in the host Magisk prompt. Connecting…"</string>
+    <string name="ui_664be1b554d0" formatted="false">"Allow IrisBox in the host Magisk prompt. Connecting…"</string>
     <string name="ui_e9813c6d4b9f" formatted="false">"Install the engine and import a compatible ROM first.\n"</string>
     <string name="ui_f82e3b292bba" formatted="false">"Request sent. Processing…"</string>
     <string name="ui_4216aa6e21bd" formatted="false">"Request incomplete ("</string>
     <string name="ui_75f8cff9ecbb" formatted="false">"Enter "</string>
     <string name="ui_62553256518f" formatted="false">"Enter 0.5–2.5 with up to three decimal places"</string>
-    <string name="ui_5b489b8fb50c" formatted="false">"Choose a trusted IrisBox ROM adapted for Raspberry Pi AOSP 13. After verification, it will be used for new instances."</string>
+    <string name="ui_926bfbf0ee0b" formatted="false">"Choose a trusted IrisBox ROM adapted for Raspberry Pi AOSP 13. After verification, it will be used for new instances."</string>
     <string name="ui_fca4b0aaeb83" formatted="false">"Select a ROM using the system file picker"</string>
     <string name="ui_09cb521a07d3" formatted="false">"Loading status"</string>
     <string name="ui_140a67b51a72" formatted="false">"Follow app"</string>

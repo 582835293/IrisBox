@@ -22,7 +22,7 @@ def main():
 host_only
 groups_empty
 [ "$(cat "$BASE/config/instances_v1/$ID.record")" = REVISION ]
-if "$BASE/rootvmos_userns" profile "$ID" >/dev/null 2>&1; then
+if "$BASE/irisbox_userns" profile "$ID" >/dev/null 2>&1; then
     [ ! -e "$RUN/userns.pending" ] && [ ! -L "$RUN/userns.pending" ]
     echo USERNS_ALREADY_ENABLED
     exit 0
@@ -30,7 +30,7 @@ fi
 [ ! -e "$RUN/userns.pending" ] && [ ! -L "$RUN/userns.pending" ]
 sh "$BASE/security/userns/backup.sh" "$ID"
 : > "$RUN/userns.pending"
-"$BASE/rootvmos_userns" enable "$ID"
+"$BASE/irisbox_userns" enable "$ID"
 sync
 rm "$RUN/userns.pending"
 echo USERNS_MAPPING_COMMITTED_DATA_BACKUP_RETAINED

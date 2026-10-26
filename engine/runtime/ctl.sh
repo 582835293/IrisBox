@@ -15,7 +15,7 @@ ACTION=${1:-status}
 shift || true
 
 # 导入公共定义（传入实例 ID，默认为 7），$BASE、$RUN、$BB 等变量在此被声明
-. /data/rootvmos/runtime/common.sh "${1:-7}"
+. /data/irisbox/runtime/common.sh "${1:-7}"
 [ $# -eq 0 ] || shift
 
 # 环境安全自检：必须在宿主环境（Host 6大Namespace与Root权限）下执行
@@ -186,8 +186,8 @@ case "$ACTION" in
         [ $# -gt 0 ] || set -- /system/bin/sh
         # 先加入该实例的 cgroup 资源组，避免注入的调试进程脱离配额
         join_groups
-        # 使用 rootvmos_ns 工具切换进入该实例的 6 大命名空间执行命令
-        exec "$BASE/rootvmos_ns" enter "$PID" "$TICK" -- "$@"
+        # 使用 irisbox_ns 工具切换进入该实例的 6 大命名空间执行命令
+        exec "$BASE/irisbox_ns" enter "$PID" "$TICK" -- "$@"
         ;;
 
     start)
@@ -196,7 +196,7 @@ case "$ACTION" in
         [ ! -e "$RUN/cleanup.pending" ] && [ ! -L "$RUN/cleanup.pending" ] || { echo 'Finish the pending reset or delete first' >&2; exit 4; }
 
         [ ! -e "$RUN/userns.pending" ] && [ ! -L "$RUN/userns.pending" ] || exit 4
-        "$BASE/rootvmos_userns" profile "$ID" >/dev/null
+        "$BASE/irisbox_userns" profile "$ID" >/dev/null
 
         # 获取运行超时期限（0 代表永不自动超时，或 180/300/600/1800 秒）
         DEADLINE=${1:-0}
@@ -221,7 +221,7 @@ case "$ACTION" in
 
         # 核验 ROM 底包与关键 ELF 二进制完整性
         for F in system.img vendor.img; do [ -f "$ROM/$F" ] || exit 3; done
-        [ -x "$BASE/rootvmos_ns" ] && [ -x "$COMPAT/iris_init" ] || exit 3
+        [ -x "$BASE/irisbox_ns" ] && [ -x "$COMPAT/iris_init" ] || exit 3
 
         # 创建启动防重入目录锁
         $BB mkdir -p "$RUN"

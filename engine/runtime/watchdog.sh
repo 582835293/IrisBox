@@ -4,7 +4,7 @@
 # 退出/异常按准确会话清理，旧看护不能关闭新一轮实例。
 # Existing Host supervisor also owns this attempt's network setup and cleanup.
 set -eu
-. /data/rootvmos/runtime/common.sh "$1"
+. /data/irisbox/runtime/common.sh "$1"
 host_only || exit 3
 MAX_SECONDS=$2
 case "$MAX_SECONDS" in 0|180|300|600|1800) ;; *) exit 2 ;; esac

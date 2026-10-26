@@ -1,4 +1,4 @@
-package com.rootvmos.viewer;
+package com.irisbox.viewer;
 
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;

@@ -43,7 +43,15 @@ def tap(row,label,seconds=35):
         if len(found)>1:found=[n for n in found if n.get('clickable')=='true']
         if len(found)==1:
             x1,y1,x2,y2=rectangle(found[0]);guest(row,f'input tap {(x1+x2)//2} {(y1+y2)//2}')
-            print('TAPPED_OBSERVED_CONTROL',redact(label),flush=True);return observe(row)
+            print('TAPPED_OBSERVED_CONTROL',redact(label),flush=True)
+            try:return observe(row)
+            except RuntimeError as error:
+                # Download progress and games can keep animating after a valid
+                # click. Do not report a failed click or send it a second time.
+                # Callers still verify the actual package/page result separately.
+                if 'idle snapshot' not in str(error):raise
+                print('POST_TAP_UI_BUSY; action sent once, verify result separately',flush=True)
+                return []
         if time.monotonic()>=deadline:raise RuntimeError('Visible control unavailable: '+label+'; snapshot='+json.dumps(labels(nodes),ensure_ascii=False))
         time.sleep(1)
 

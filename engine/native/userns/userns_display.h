@@ -91,8 +91,8 @@ static void socket_line(int fd, char *line, size_t capacity) {
 static int display_bridge(unsigned id, unsigned pid, unsigned long long tick,
                            const char *control_name, unsigned width, unsigned height) {
     verify_map(id, pid, tick, 0); unsigned base = profile(id);
-    const size_t prefix = strlen("rootvmos_userns_bridge_");
-    if (strncmp(control_name, "rootvmos_userns_bridge_", prefix) ||
+    const size_t prefix = strlen("irisbox_userns_bridge_");
+    if (strncmp(control_name, "irisbox_userns_bridge_", prefix) ||
         strspn(control_name + prefix, "0123456789abcdef") != 32 || strlen(control_name) != prefix + 32 ||
         width < 540 || width > 1920 || height < 540 || height > 1920) return 2;
     int control = unix_connect(control_name, SOCK_STREAM, 1); peer_uid(control, 0);
@@ -133,8 +133,8 @@ static int display_bridge(unsigned id, unsigned pid, unsigned long long tick,
  * touch the Guest token/socket. The authenticated PCM FD is passed back. */
 static int audio_bridge(unsigned id, unsigned pid, unsigned long long tick, const char *name) {
     verify_map(id, pid, tick, 0); unsigned base = profile(id);
-    const size_t prefix = strlen("rootvmos_audio_bridge_");
-    if (strncmp(name, "rootvmos_audio_bridge_", prefix) || strlen(name) != prefix + 32 ||
+    const size_t prefix = strlen("irisbox_audio_bridge_");
+    if (strncmp(name, "irisbox_audio_bridge_", prefix) || strlen(name) != prefix + 32 ||
         strspn(name + prefix, "0123456789abcdef") != 32) return 2;
     int control = unix_connect(name, SOCK_STREAM, 1); peer_uid(control, 0);
     int data = data_dir(id, base);
@@ -146,10 +146,10 @@ static int audio_bridge(unsigned id, unsigned pid, unsigned long long tick, cons
     struct __user_cap_data_struct caps[2] = {};
     if (syscall(__NR_capset, &header, caps)) die("clear audio connector capabilities");
     char token[128];
-    ssize_t n = read_text("rootvmos_audio/token", token, sizeof(token));
+    ssize_t n = read_text("irisbox_audio/token", token, sizeof(token));
     if (n == 65 && token[64] == '\n') token[--n] = 0;
     if (n != 64 || strspn(token, "0123456789abcdef") != 64) die("audio token format");
-    int pcm = unix_connect("rootvmos_audio/pcm.sock", SOCK_STREAM, 0); peer_uid(pcm, base);
+    int pcm = unix_connect("irisbox_audio/pcm.sock", SOCK_STREAM, 0); peer_uid(pcm, base);
     unsigned char hello[66] = {0, 64}; memcpy(hello + 2, token, 64); memset(token, 0, sizeof(token));
     if (send(pcm, hello, sizeof(hello), MSG_NOSIGNAL) != sizeof(hello)) die("audio token handshake");
     char marker = 'A', ancillary[CMSG_SPACE(sizeof(pcm))] = {};

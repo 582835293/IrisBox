@@ -1,4 +1,4 @@
-package com.rootvmos.viewer;
+package com.irisbox.viewer;
 import android.app.Instrumentation;
 import android.os.Bundle;
 import java.io.*;

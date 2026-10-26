@@ -1,0 +1,11 @@
+{
+  "source": "system/vold/Utils.cpp",
+  "baseline": "android-13.0.0_r75",
+  "sourceSha256": "c97c2487d1bd146fb630f804a34b1d09a07651a539a83e531d880609d02a6c1d",
+  "patchedSourceSha256": "472e9e2b689f6d59b296f0507a5dec0db05a05ce62cc005bc9e2a2066d3ba6c0",
+  "binarySha256": "50840e45274fc76721e229c882e2a2f140a6f95641c77f01093780f1879676d4",
+  "binaryBytes": 925072,
+  "compiledOnlyUtils": true,
+  "aospInputsReadOnly": true,
+  "guestProjectQuotaEnforced": false
+}

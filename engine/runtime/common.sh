@@ -8,8 +8,8 @@
 # ==============================================================================
 
 # 基础执行路径与 ROM 底包定义
-BB=/data/rootvmos/host/bin/busybox
-BASE=/data/rootvmos/runtime
+BB=/data/irisbox/host/bin/busybox
+BASE=/data/irisbox/runtime
 # 每个实例锁定 ROM ID；导入另一个 ROM 不改变已有实例。
 ROM_ID=
 ROM_RECORD=$BASE/config/rom_v1/${1:-7}.id
@@ -50,8 +50,8 @@ registered_instance() {
 # 本设备混用 v1 memory 和 v2 pids 接口，路径与监控指标不可当成纯 v2 处理。
 # 内存上限是 cgroup 预算限制，不是预先划走物理内存，宿主（Host）与 GPU 仍需保留足够运行余量。
 # ------------------------------------------------------------------------------
-MEM=/dev/memcg/rootvmos_$ID
-PIDS=/sys/fs/cgroup/rootvmos_$ID
+MEM=/dev/memcg/irisbox_$ID
+PIDS=/sys/fs/cgroup/irisbox_$ID
 MEM_BYTES=1342177280      # 默认 1280 MiB 对应的字节数
 MEM_DEFAULT_MIB=1280     # 默认内存配额（MiB）
 MEM_MIN_MIB=512          # 允许配置的最小内存（MiB）
@@ -129,15 +129,15 @@ host_only() {
 # ------------------------------------------------------------------------------
 verify_init() {
     alive "$1" "$2" || return 1
-    "$BASE/rootvmos_userns" verify "$ID" "$1" "$2" || return 1
+    "$BASE/irisbox_userns" verify "$ID" "$1" "$2" || return 1
     $BB grep -aq '/system/bin/iris_init' "/proc/$1/cmdline" || return 1
     [ "$($BB awk '/^NSpid:/ {print $NF}' "/proc/$1/status")" = 1 ] || return 1
     $BB grep -F "upperdir=$RUN/upper," "/proc/$1/mountinfo" >/dev/null || return 1
     for N in pid mnt net ipc uts cgroup; do
         [ "$($BB readlink /proc/$1/ns/$N)" != "$($BB readlink /proc/1/ns/$N)" ] || return 1
     done
-    $BB grep -F ":memory:/rootvmos_$ID/managed" "/proc/$1/cgroup" >/dev/null || return 1
-    $BB grep -F "0::/rootvmos_$ID/managed" "/proc/$1/cgroup" >/dev/null || return 1
+    $BB grep -F ":memory:/irisbox_$ID/managed" "/proc/$1/cgroup" >/dev/null || return 1
+    $BB grep -F "0::/irisbox_$ID/managed" "/proc/$1/cgroup" >/dev/null || return 1
 }
 
 # ------------------------------------------------------------------------------
@@ -158,8 +158,8 @@ groups_empty() {
 join_groups() {
     echo 0 > /proc/$$/oom_score_adj
     for G in "$MEM/managed" "$PIDS/managed" \
-        /dev/cpuctl/rootvmos_$ID/managed /dev/cpuset/rootvmos_$ID/managed \
-        /dev/blkio/rootvmos_$ID/managed; do
+        /dev/cpuctl/irisbox_$ID/managed /dev/cpuset/irisbox_$ID/managed \
+        /dev/blkio/irisbox_$ID/managed; do
         echo "$$" > "$G/cgroup.procs" || return 3
     done
 }

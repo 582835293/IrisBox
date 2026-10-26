@@ -44,7 +44,7 @@ python tools/migrate_userns.py
 python tools/migrate_userns.py --apply
 ```
 
-维护工具在生命周期锁下复制data/upper/vendor.upper/metadata与实例配置，保留mode、属主、SELinux和扩展属性；备份是独立inode，源与备份逐文件SHA256必须一致。备份在 `/data/rootvmos/maintenance/userns_migration_v1/ID_REVISION`，不覆盖已有快照。登记映射不改变实例ID、revision、ROM、Root/Google开关或文件字节；身份元数据在首次映射启动时准备。
+维护工具在生命周期锁下复制data/upper/vendor.upper/metadata与实例配置，保留mode、属主、SELinux和扩展属性；备份是独立inode，源与备份逐文件SHA256必须一致。备份在 `/data/irisbox/maintenance/userns_migration_v1/ID_REVISION`，不覆盖已有快照。登记映射不改变实例ID、revision、ROM、Root/Google开关或文件字节；身份元数据在首次映射启动时准备。
 
 **源码、引擎产物和数据回退是三件事。** 第一次映射启动后，data的Host属主已变化；不能仅回退Git或APK后交给旧引擎，也不能对整个/data或共享lower递归chown。需要正常停机、核对身份和挂载、保留迁移后的新数据，再按对应完整备份恢复树和配置。中断可能发生在能力元数据恢复之间，不能承诺任意中断位置都能自动无损续跑；不确定时保留现场并从已核验副本恢复。
 

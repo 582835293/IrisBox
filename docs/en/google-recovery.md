@@ -61,7 +61,7 @@ Google's [Play-services troubleshooting guidance](https://support.google.com/goo
 
 ## Backups and current state
 
-The developer's private `validation/private/google-orientation-20261024/` indexes include `google-backup.json`, `store-data-refresh-backup.json` and `gms-current-version-restored.json`. Verified backups are in separate Host-private directories under `/data/rootvmos/maintenance/`, with 0700 directories/0600 files and SHA-256 checks. They are absent from public source.
+The developer's private `validation/private/google-orientation-20261024/` indexes include `google-backup.json`, `store-data-refresh-backup.json` and `gms-current-version-restored.json`. Verified backups are in separate Host-private directories under `/data/irisbox/maintenance/`, with 0700 directories/0600 files and SHA-256 checks. They are absent from public source.
 
 They include GMS/Store CE/DE state, original APKs and a consistent GSF SQLite reference. They are not a complete AccountManager/Keystore/Guest snapshot. Clearing data can invalidate keys; extracting old tar files cannot guarantee authorization recovery. Restoration needs version/consistency analysis and may require owner re-login. Keep the currently validated fresh state rather than automatically overwriting it with old archives.
 

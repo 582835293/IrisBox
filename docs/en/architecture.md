@@ -26,12 +26,12 @@ Instances share a Linux kernel. Each has User/mount/PID/network/IPC/UTS/cgroup n
 
 | Resource | Previous Iris | IrisBox |
 |---|---|---|
-| Host package | com.iris.viewer.buffer | com.rootvmos.viewer |
-| Runtime | /data/guest/iris_runtime_v1 | /data/rootvmos/runtime |
+| Host package | com.iris.viewer.buffer | com.irisbox.viewer |
+| Runtime | /data/guest/iris_runtime_v1 | /data/irisbox/runtime |
 | Manager port | 18762 | 19762 |
 | Internal IDs | 7, 8, 23, etc. | 1007–1134 |
 | veth | iris* | rv* |
-| cgroup prefix | iris_runtime_ | rootvmos_ |
+| cgroup prefix | iris_runtime_ | irisbox_ |
 
 The explicit shared exception is `/sys/fs/bpf/iris_inet_v1`, the host-global socket permission dispatcher. IrisBox verifies its identity and the host maps, then registers only its own netns-cookie/private-UID-map pairs. It never restores an old policy, removes another guest map or flushes host firewall rules. Fresh-host dispatcher creation is a separate unverified installation path.
 

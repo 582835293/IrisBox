@@ -8,7 +8,7 @@
 set -eu
 
 # 虚拟机根目录与公共环境初始化
-BASE=/data/rootvmos/runtime
+BASE=/data/irisbox/runtime
 . "$BASE/common.sh" 7
 
 # 环境自检：必须在宿主环境（Host 6大Namespace与Root权限）下执行
@@ -51,7 +51,7 @@ broker_alive() {
     # 结合 PID 与进程启动 Tick 校验，防止因 PID 循环复用而把其他进程误判为 Broker
     alive "$BP" "$BT" || return 1
     # 核验进程命令行确实是 BufferBroker
-    "$BB" grep -aq 'com.rootvmos.buffer.viewer.broker.BufferBroker' "/proc/$BP/cmdline" || return 1
+    "$BB" grep -aq 'com.irisbox.buffer.viewer.broker.BufferBroker' "/proc/$BP/cmdline" || return 1
     # 核验 6 个命名空间与宿主 1 号进程完全一致，确保该进程始终运行在 Host 侧
     for N in pid mnt net ipc uts cgroup; do
         [ "$("$BB" readlink /proc/$BP/ns/$N)" = "$("$BB" readlink /proc/1/ns/$N)" ] || return 1
@@ -86,7 +86,7 @@ start)
 
     # 通过 Android 原生 Java 运行时（app_process）在后台静默启动 BufferBroker 服务
     "$BB" nohup "$BB" env CLASSPATH="$D/broker.jar" /system/bin/app_process /system/bin \
-        com.rootvmos.buffer.viewer.broker.BufferBroker > "$D/broker.log" 2>&1 < /dev/null &
+        com.irisbox.buffer.viewer.broker.BufferBroker > "$D/broker.log" 2>&1 < /dev/null &
     BP=$!
     # 记录该进程的 PID 及其启动 Tick，作为唯一的不可伪造身份凭据
     echo "$BP $(ticks "$BP")" > "$D/broker.identity"
@@ -107,7 +107,7 @@ open)
     TOKEN=$(cat "$D/broker.token")
     [ "${#TOKEN}" = 64 ] || exit 3
     # 通过 ActivityManager 携带认证 Token 与通信端口拉起实例列表页面
-    am start -n com.rootvmos.viewer/.ListActivity --es brokerToken "$TOKEN" --ei brokerPort 19762 >/dev/null 2>&1
+    am start -n com.irisbox.viewer/.ListActivity --es brokerToken "$TOKEN" --ei brokerPort 19762 >/dev/null 2>&1
     echo 'Buffer instance list opened'
     ;;
 

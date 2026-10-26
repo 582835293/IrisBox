@@ -31,9 +31,9 @@ print('ROM compat profile:',len(profile),'files PASS')
 with zipfile.ZipFile(ROOT/'app/viewer/assets/engine.zip') as archive:
     engine=json.loads(archive.read('engine.json'))
     for name,entry in engine['files'].items():assert sha(ROOT/'engine/runtime'/name)==entry['sha256'],name
-    assert 'rootvmos_ns' in engine['files']
-    elf=(ROOT/'engine/runtime/rootvmos_ns').read_bytes()
+    assert 'irisbox_ns' in engine['files']
+    elf=(ROOT/'engine/runtime/irisbox_ns').read_bytes()
     assert elf[:4]==b'\x7fELF' and elf[4]==2 and int.from_bytes(elf[18:20],'little')==183
-    assert '$BASE/rootvmos_ns' in (ROOT/'engine/runtime/ctl.sh').read_text(encoding='utf-8')
-    assert '$BASE/rootvmos_userns' in (ROOT/'engine/runtime/wrapper.sh').read_text(encoding='utf-8')
+    assert '$BASE/irisbox_ns' in (ROOT/'engine/runtime/ctl.sh').read_text(encoding='utf-8')
+    assert '$BASE/irisbox_userns' in (ROOT/'engine/runtime/wrapper.sh').read_text(encoding='utf-8')
     print('Engine source/payload matches APK asset:',len(engine['files']),'files PASS')

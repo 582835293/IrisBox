@@ -1,4 +1,4 @@
-package com.rootvmos.viewer;
+package com.irisbox.viewer;
 
 import android.app.*;
 import android.content.*;
@@ -33,7 +33,7 @@ public final class SetupActivity extends Activity {
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved); I18n.init(this);
         LinearLayout layout = new LinearLayout(this); layout.setOrientation(1); layout.setPadding(28,16,28,16); layout.setBackgroundColor(Color.rgb(20,24,30));
-        TextView title = label(I18n.s(R.string.ui_8ae4101b0f19), 25); layout.addView(title);
+        TextView title = label(I18n.s(R.string.ui_1e14f55edbd2), 25); layout.addView(title);
         layout.addView(label(I18n.s(R.string.ui_735e5a8789a6),16));
         language=new Button(this);language.setText("EN / 中文");language.setOnClickListener(v->I18n.choose(this));layout.addView(language);
         LinearLayout row = new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL); layout.addView(row);
@@ -48,7 +48,7 @@ public final class SetupActivity extends Activity {
             checking=true;
             worker.execute(() -> {
                 try {
-                    RootShell.run("test -s /data/rootvmos/runtime/config/default_rom",15);
+                    RootShell.run("test -s /data/irisbox/runtime/config/default_rom",15);
                     ui.post(() -> startActivity(new Intent(this,ListActivity.class)));
                 } catch (Exception e) { SetupService.message(this,I18n.s(R.string.ui_e9813c6d4b9f)+e.getMessage()); }
                 finally { ui.post(() -> checking=false); }
@@ -91,7 +91,7 @@ public final class SetupActivity extends Activity {
             Uri uri=data.getData();
             try { getContentResolver().takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION); } catch(SecurityException ignored) {}
             new AlertDialog.Builder(this).setTitle(I18n.s(R.string.ui_233cfdb13ce4))
-                .setMessage(I18n.s(R.string.ui_5b489b8fb50c))
+                .setMessage(I18n.s(R.string.ui_926bfbf0ee0b))
                 .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787),null).setPositiveButton(I18n.s(R.string.ui_60e2bcad85ac),(d,w)->task("import",uri)).show();
         }
     }

@@ -3,7 +3,7 @@
 # Copies bytes and metadata; never hard-links a backup to the live data.
 set -eu
 set -o pipefail
-. /data/rootvmos/runtime/common.sh "${1:?Instance ID}"
+. /data/irisbox/runtime/common.sh "${1:?Instance ID}"
 host_only || exit 3
 [ -d "$RUN" ] && [ ! -L "$RUN" ] && [ ! -L "$RUN/lifecycle.lock" ] || exit 3
 if [ "${IRIS_USERNS_BACKUP_LOCKED:-}" != 1 ]; then
@@ -19,7 +19,7 @@ fi
 REV=$(cat "$BASE/config/instances_v1/$ID.record")
 [ "${#REV}" = 64 ] || exit 3
 case "$REV" in *[!a-f0-9]*) exit 3 ;; esac
-PARENT=/data/rootvmos/maintenance/userns_migration_v1
+PARENT=/data/irisbox/maintenance/userns_migration_v1
 SAVE=$PARENT/${ID}_${REV}
 umask 077
 [ ! -L "$PARENT" ] || exit 3

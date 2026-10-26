@@ -41,13 +41,10 @@
     <string name="ui_84d265278316" formatted="false">"ROM 需要匹配的树莓派4 AOSP13 ARM64 适配包"</string>
     <string name="ui_624266d31bd4" formatted="false">"ROM与引擎"</string>
     <string name="ui_a6e0efe3cd4f" formatted="false">"ROM：尚未导入"</string>
-    <string name="ui_acfea807c04b" formatted="false">"Root 授权被拒绝，请在宿主 Magisk 中允许 虹膜空间，再点重新连接。"</string>
+    <string name="ui_3950e1128b8e" formatted="false">"Root 授权被拒绝，请在宿主 Magisk 中允许 虹膜空间，再点重新连接。"</string>
     <string name="ui_4e1c76b3df0a" formatted="false">"Root 操作失败（"</string>
     <string name="ui_c90dc17c7d0f" formatted="false">"Root 操作超时。请核对 Magisk 授权；导入未完成的 ROM 不会登记。"</string>
     <string name="ui_0218a26e7532" formatted="false">"Root 设置未完成，请查看最新状态后重试"</string>
-    <string name="ui_aaa44cd7a45d" formatted="false">"虹膜空间 · 实例"</string>
-    <string name="ui_8ae4101b0f19" formatted="false">"虹膜空间 · 树莓派 Android"</string>
-    <string name="ui_d554ebd78752" formatted="false">"虹膜空间 配置"</string>
     <string name="ui_eac94fb94a6b" formatted="false">"Root：关闭"</string>
     <string name="ui_cd7761cd9dba" formatted="false">"Root：启动中"</string>
     <string name="ui_624b011b8eaa" formatted="false">"Root：已开启"</string>
@@ -183,7 +180,7 @@
     <string name="ui_0d8fd3900016" formatted="false">"收起日志"</string>
     <string name="ui_f7a937916bc3" formatted="false">"救援启动：禁用所有模块和 Zygisk，保留数据"</string>
     <string name="ui_49deaf7da20d" formatted="false">"文件"</string>
-    <string name="ui_a4de6c507772" formatted="false">"文件不是有效的 虹膜空间 包；首项必须是 "</string>
+    <string name="ui_f6067ecbdfb1" formatted="false">"文件不是有效的 虹膜空间 包；首项必须是 "</string>
     <string name="ui_fbc96d57a5de" formatted="false">"文件内容校验失败"</string>
     <string name="ui_6a061766d816" formatted="false">"文件列表超过上限"</string>
     <string name="ui_826bfe2082bf" formatted="false">"文件名不受支持，请使用不含路径符号的普通文件名（最多128字节）"</string>
@@ -219,7 +216,7 @@
     <string name="ui_f225019fde8f" formatted="false">"未启动。\n"</string>
     <string name="ui_9807d3930434" formatted="false">"未启动。\n\n"</string>
     <string name="ui_f5064e36fb9d" formatted="false">"未完成："</string>
-    <string name="ui_b81c17cb6353" formatted="false">"未找到 MagiskSU。请先在宿主安装 Magisk，并允许 虹膜空间 获取 root。"</string>
+    <string name="ui_72166f0ac194" formatted="false">"未找到 MagiskSU。请先在宿主安装 Magisk，并允许 虹膜空间 获取 root。"</string>
     <string name="ui_831cdf82e2aa" formatted="false">"未知配置操作"</string>
     <string name="ui_b2ba9634d9cf" formatted="false">"未运行"</string>
     <string name="ui_f2f3e9803ccb" formatted="false">"未连接"</string>
@@ -255,7 +252,7 @@
     <string name="ui_7bd6558138e4" formatted="false">"正在打开应用"</string>
     <string name="ui_a693a667f993" formatted="false">"正在打开画面"</string>
     <string name="ui_7fb4ae902ad7" formatted="false">"正在执行启动命令"</string>
-    <string name="ui_c508f63c1389" formatted="false">"正在申请宿主 root；首次请允许 Magisk 的 虹膜空间 授权…"</string>
+    <string name="ui_50f106ba30fc" formatted="false">"正在申请宿主 root；首次请允许 Magisk 的 虹膜空间 授权…"</string>
     <string name="ui_84cb10f62524" formatted="false">"正在确认实例和交换目录"</string>
     <string name="ui_73685fac59f8" formatted="false">"正在等待上一项传输收尾，暂时保留当前目录…"</string>
     <string name="ui_bd6948a6f441" formatted="false">"正在读取完整历史，请稍后再复制"</string>
@@ -297,16 +294,19 @@
     <string name="ui_8551a052e534" formatted="false">"管理回执的实例身份不一致"</string>
     <string name="ui_34cbe1449ed7" formatted="false">"管理连接已失效，请返回列表重新进入"</string>
     <string name="ui_b22e5edeb5a7" formatted="false">"缺少有效的文件校验信息，拒绝导出"</string>
+    <string name="ui_f8c2bbefe46a" formatted="false">"虹膜空间 · 实例"</string>
+    <string name="ui_1e14f55edbd2" formatted="false">"虹膜空间 · 树莓派 Android"</string>
+    <string name="ui_84f938378054" formatted="false">"虹膜空间 配置"</string>
     <string name="ui_249d1f176718" formatted="false">"解压并校验 "</string>
     <string name="ui_7debf9cb0372" formatted="false">"设置"</string>
     <string name="ui_28c63e19176b" formatted="false">"请从实例列表进入"</string>
-    <string name="ui_ab08390623d4" formatted="false">"请允许宿主 Magisk 的 虹膜空间 授权，正在连接…"</string>
+    <string name="ui_664be1b554d0" formatted="false">"请允许宿主 Magisk 的 虹膜空间 授权，正在连接…"</string>
     <string name="ui_e9813c6d4b9f" formatted="false">"请先安装引擎并导入适配 ROM。\n"</string>
     <string name="ui_f82e3b292bba" formatted="false">"请求已发出，正在处理…"</string>
     <string name="ui_4216aa6e21bd" formatted="false">"请求未完成（"</string>
     <string name="ui_75f8cff9ecbb" formatted="false">"请输入 "</string>
     <string name="ui_62553256518f" formatted="false">"请输入 0.5～2.5，最多三位小数"</string>
-    <string name="ui_5b489b8fb50c" formatted="false">"请选择可信来源、已适配树莓派 AOSP13 的 虹膜空间 ROM 包。校验完成后将用于新建实例。"</string>
+    <string name="ui_926bfbf0ee0b" formatted="false">"请选择可信来源、已适配树莓派 AOSP13 的 虹膜空间 ROM 包。校验完成后将用于新建实例。"</string>
     <string name="ui_fca4b0aaeb83" formatted="false">"请通过系统文件选择器选择 ROM"</string>
     <string name="ui_09cb521a07d3" formatted="false">"读取状态中"</string>
     <string name="ui_140a67b51a72" formatted="false">"跟随应用"</string>

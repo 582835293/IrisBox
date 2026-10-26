@@ -1,4 +1,4 @@
-package com.rootvmos.buffer.viewer.broker;
+package com.irisbox.buffer.viewer.broker;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,7 +11,7 @@ import java.util.concurrent.*;
  * One bounded list thumbnail. This is separate from the shared-buffer fullscreen path.
  */
 final class PreviewFrames {
-    private static final String BASE="/data/rootvmos/runtime",BB="/data/rootvmos/host/bin/busybox";
+    private static final String BASE="/data/irisbox/runtime",BB="/data/irisbox/host/bin/busybox";
     static byte[] capture(int id,String session,ScheduledExecutorService deadlines)throws Exception {
         String path="/data/iris_buffer/"+session.replace(':','_')+"/output.sock";
         ProcessBuilder builder=new ProcessBuilder(Arrays.asList(BB,"timeout","8","sh",BASE+"/ctl.sh","exec",Integer.toString(id),"/system/bin/busybox","timeout","6",

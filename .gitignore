@@ -5,7 +5,6 @@ app/viewer/assets/engine.zip
 engine/runtime/**/*.jar
 engine/runtime/iris_inet_policy
 engine/runtime/iris_runtime_ns
-engine/runtime/rootvmos_ns
 !engine/runtime/file_exchange/guest.jar
 !engine/runtime/display/stream/input.jar
 rom/compat/google/rootfs/
@@ -17,5 +16,7 @@ __pycache__/
 validation/private/
 app/viewer/assets/host-tools/
 
-engine/runtime/rootvmos_userns
 engine/runtime/browser/IrisBoxBrowser.apk
+
+engine/runtime/irisbox_ns
+engine/runtime/irisbox_userns

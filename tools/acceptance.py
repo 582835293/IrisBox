@@ -14,9 +14,9 @@ def wait(api,id,condition,seconds=30):
     raise RuntimeError('Timed out: '+str(compact(r)))
 def main():
     p=argparse.ArgumentParser();p.add_argument('action',choices=['create','memory','start','stop','ready','install-probe','proof','reset','delete']);p.add_argument('--id',type=int,default=1007);p.add_argument('--mib',type=int,default=512);p.add_argument('--google',action='store_true');p.add_argument('--root',choices=['off','magisk'],default='off');p.add_argument('--confirm-temporary-data',action='store_true');a=p.parse_args()
-    if not 1007<=a.id<=1134:raise SystemExit('Only RootVMOS reserved IDs allowed')
+    if not 1007<=a.id<=1134:raise SystemExit('Only IrisBox reserved IDs allowed')
     if a.action=='proof':
-        value=json.loads(shell(f'sh {BASE}/ctl.sh exec {a.id} cat /data/user/0/com.rootvmos.probe/files/proof.json'))
+        value=json.loads(shell(f'sh {BASE}/ctl.sh exec {a.id} cat /data/user/0/com.irisbox.probe/files/proof.json'))
         path=ROOT/f'validation/private/proof-{a.id}.json';path.write_text(json.dumps(value,indent=2),encoding='utf-8');print(json.dumps(value));return
     with API() as api:
         if a.action=='create':
@@ -52,11 +52,11 @@ def main():
             print(api.call(f"/action?id={a.id}&type=stop&session={r['session']}",True));print(json.dumps(compact(wait(api,a.id,lambda x:not x['running'] and not x['busy']))));return
         if a.action=='install-probe':
             if not r['ready']:raise RuntimeError('Guest is not ready')
-            subprocess.run(ADB+['push',str(ROOT/'out/RootVMOS-Probe.apk'),'/data/local/tmp/rootvmos-probe.apk'],check=True,timeout=30)
-            size=(ROOT/'out/RootVMOS-Probe.apk').stat().st_size
+            subprocess.run(ADB+['push',str(ROOT/'out/IrisBox-Probe.apk'),'/data/local/tmp/irisbox-probe.apk'],check=True,timeout=30)
+            size=(ROOT/'out/IrisBox-Probe.apk').stat().st_size
             script=f'''export IRIS_EXPECT_SESSION={r['session']}
-sh {BASE}/ctl.sh exec {a.id} pm install -r -S {size} < /data/local/tmp/rootvmos-probe.apk
-sh {BASE}/ctl.sh exec {a.id} am start -W -n com.rootvmos.probe/.ProbeActivity --es instance {a.id}
+sh {BASE}/ctl.sh exec {a.id} pm install -r -S {size} < /data/local/tmp/irisbox-probe.apk
+sh {BASE}/ctl.sh exec {a.id} am start -W -n com.irisbox.probe/.ProbeActivity --es instance {a.id}
 '''
             print(shell(script,timeout=90))
 if __name__=='__main__':main()

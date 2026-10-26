@@ -1,4 +1,4 @@
-package com.rootvmos.buffer.viewer.broker;
+package com.irisbox.buffer.viewer.broker;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -11,7 +11,7 @@ import java.util.*;
  * Small persistent registry. Guest accounts and files never live in this registry.
  */
 final class InstanceCatalog {
-    private static final Path ROOT=Paths.get("/data/rootvmos/runtime/config/instances_v1");
+    private static final Path ROOT=Paths.get("/data/irisbox/runtime/config/instances_v1");
     static boolean valid(int id){return id>=1007&&id<=1134;}
     static SortedMap<Integer,String> all()throws IOException{return read(ROOT);}
     static SortedMap<Integer,String> read(Path root)throws IOException {

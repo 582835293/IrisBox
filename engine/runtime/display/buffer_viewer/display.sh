@@ -6,10 +6,10 @@
 set -eu
 ACTION=${1:-status}
 ID=${2:-7}
-. /data/rootvmos/runtime/common.sh "$ID"
+. /data/irisbox/runtime/common.sh "$ID"
 host_only || exit 3
 D=$BASE/display/buffer_viewer
-APP=com.rootvmos.viewer
+APP=com.irisbox.viewer
 PROCESS=$APP:display
 if [ "${IRIS_VIEWER_LOCKED:-}" != 1 ] && [ "$ACTION" != status ]; then
     exec "$BB" flock -n "$D/operation.lock" "$BB" env IRIS_VIEWER_LOCKED=1 IRIS_VIEWER_LOCK_OWNER= sh "$D/display.sh" "$@"
@@ -76,7 +76,7 @@ stop_display() {
     [ -z "${IRIS_EXPECT_SESSION:-}" ] || [ "$IRIS_EXPECT_SESSION" = "$GI:$GT" ] || return 3
     [ "$(cat "$R/state" 2>/dev/null || true)" != STOPPED ] || return 0
     stop_display_process || return $?
-    if checked_process "$R/gateway.identity" com.rootvmos.buffer.viewer.gateway.BufferGateway; then
+    if checked_process "$R/gateway.identity" com.irisbox.buffer.viewer.gateway.BufferGateway; then
         kill -TERM "$PP" 2>/dev/null || { gone_or_refuse || return $?; }
     fi
     stop_producer_process || return $?
@@ -138,7 +138,7 @@ start)
     TOKEN=$("$BB" od -An -N32 -tx1 /dev/urandom | "$BB" tr -d ' \n')
     [ "${#TOKEN}" = 64 ] || exit 3
     echo "$TOKEN" > "$R/token"
-    NAME=rootvmos_viewer_${ID}_${PID}_${STAMP}
+    NAME=irisbox_viewer_${ID}_${PID}_${STAMP}
     echo "$NAME" > "$R/gateway.name"
     echo "$R" > "$D/current"
     STARTED=0
@@ -154,7 +154,7 @@ start)
         IRIS_EXPECT_SESSION="$SESSION" "$BB" timeout 15 sh "$BASE/ctl.sh" exec "$ID" \
             /system/bin/busybox timeout 12 sh "$INPUT_REL/stop_input.sh" "$SESSION" > "$R/input-previous-stop.log" 2>&1
     fi
-    "$BASE/rootvmos_userns" stage-display "$ID" "$PID" "$TICK"
+    "$BASE/irisbox_userns" stage-display "$ID" "$PID" "$TICK"
     echo 1 > "$R/input.started"
     "$BB" nohup "$BB" env -u CLASSPATH IRIS_EXPECT_SESSION="$SESSION" sh "$BASE/ctl.sh" exec "$ID" \
         sh "$INPUT_REL/start_input.sh" "$SESSION" "$LW" "$LH" "$PROBE_DURATION" > "$R/input.log" 2>&1 < /dev/null &
@@ -188,7 +188,7 @@ start)
     done
     [ "$FOUND" = 1 ] && [ -S "$GD/output.sock" ] || { echo 'Producer did not start' >&2; exit 7; }
     "$BB" nohup "$BB" env CLASSPATH="$D/gateway.jar" /system/bin/app_process /system/bin \
-        com.rootvmos.buffer.viewer.gateway.BufferGateway "$ID" "$SESSION" "$NAME" "$R/token" "$APP_UID" "$PROBE_DURATION" "$LW" "$LH" \
+        com.irisbox.buffer.viewer.gateway.BufferGateway "$ID" "$SESSION" "$NAME" "$R/token" "$APP_UID" "$PROBE_DURATION" "$LW" "$LH" \
         > "$R/gateway.log" 2>&1 < /dev/null &
     GP=$!
     echo "$GP $(ticks "$GP")" > "$R/gateway.identity"

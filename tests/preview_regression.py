@@ -11,9 +11,9 @@ def main():
  results={}
  for number in a.numbers:
   r=target(number);assert r['ready'];session=r['session'];started=time.monotonic()
-  command='set -eu\nfor N in $(busybox seq 1 '+str(a.count)+'); do busybox timeout 8 /system/bin/iris_preview_capture '+str(r['id'])+' '+session+' /data/iris_buffer/'+session.replace(':','_')+'/output.sock --mode preview --width 640 --height 360 > /data/local/tmp/rootvmos-preview-check.jpg; done; echo PREVIEW_BATCH_PASS'
+  command='set -eu\nfor N in $(busybox seq 1 '+str(a.count)+'); do busybox timeout 8 /system/bin/iris_preview_capture '+str(r['id'])+' '+session+' /data/iris_buffer/'+session.replace(':','_')+'/output.sock --mode preview --width 640 --height 360 > /data/local/tmp/irisbox-preview-check.jpg; done; echo PREVIEW_BATCH_PASS'
   assert 'PREVIEW_BATCH_PASS' in guest(r,command,180)
-  remote=BASE+'/instances/'+str(r['id'])+'/data/local/tmp/rootvmos-preview-check.jpg'
+  remote=BASE+'/instances/'+str(r['id'])+'/data/local/tmp/irisbox-preview-check.jpg'
   raw=subprocess.check_output(ADB+['exec-out','/system/xbin/su','0','/system/bin/cat',remote],timeout=15)
   img=Image.open(io.BytesIO(raw));img.load();assert img.format=='JPEG' and img.size==(640,360)
   crash=guest(r,'logcat -b crash -d');(PRIVATE/('crash-'+str(r['id'])+'.txt')).write_text(crash,encoding='utf-8')

@@ -30,7 +30,7 @@ python tools/migrate_userns.py
 python tools/migrate_userns.py --apply
 ```
 
-The migration tool holds the lifecycle lock, copies data/upper/vendor.upper/metadata and configuration to independent inodes, preserves metadata/xattrs, and compares source and backup file SHA-256 lists. Backups remain under `/data/rootvmos/maintenance/userns_migration_v1/ID_REVISION` and are never overwritten. Instance IDs, revisions, ROM bindings, Root/Google settings and file bytes are retained; ownership preparation occurs on first mapped boot.
+The migration tool holds the lifecycle lock, copies data/upper/vendor.upper/metadata and configuration to independent inodes, preserves metadata/xattrs, and compares source and backup file SHA-256 lists. Backups remain under `/data/irisbox/maintenance/userns_migration_v1/ID_REVISION` and are never overwritten. Instance IDs, revisions, ROM bindings, Root/Google settings and file bytes are retained; ownership preparation occurs on first mapped boot.
 
 **Source rollback, engine rollback and data rollback are separate operations.** After mapped boot, Host ownership has changed. An old APK or Git checkout cannot safely reuse those trees as if migration never happened. Stop and verify the instance, retain any new data, and restore the matching verified tree/config snapshot. Never recursively chown Host `/data` or shared image lower directories. Arbitrary interruption between metadata operations is not guaranteed to resume losslessly; preserve evidence and recover from the verified copy when uncertain.
 

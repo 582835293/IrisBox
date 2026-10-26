@@ -4,8 +4,8 @@
 # 不复制Host更新/账号，载荷校验通过不代表联网、登录或设备认证通过。
 # Optional shared, immutable Google system layer. Android owns all processes/data.
 set -eu
-BB=/data/rootvmos/host/bin/busybox
-BASE=/data/rootvmos/runtime
+BB=/data/irisbox/host/bin/busybox
+BASE=/data/irisbox/runtime
 MODULE=$BASE/google/a13_arm64
 LAYER=
 MANIFEST_SHA=e4dc70eaa3278db0e669391fce60949d7610f70b970d42cad390796172872258

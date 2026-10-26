@@ -5,13 +5,13 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 import os
 ADB=['adb']+(['-s',os.environ['IRISBOX_SERIAL']] if os.environ.get('IRISBOX_SERIAL') else [])
-BASE='/data/rootvmos/runtime'
+BASE='/data/irisbox/runtime'
 def adb(*args,timeout=30):return subprocess.check_output(ADB+list(args),timeout=timeout).decode('utf-8','replace')
 def shell(script,timeout=30):
     # The device's debug su wrapper can return adb status0 after a failed child.
     # Read an explicit shell EXIT marker; never infer success from transport alone.
-    marker='__ROOTVMOS_EXIT_'+secrets.token_hex(12)+'__'
-    trap="trap 'ROOTVMOS_SHELL_RC=$?; printf \"\\n"+marker+"=%s\\n\" \"$ROOTVMOS_SHELL_RC\"' EXIT\n"
+    marker='__IRISBOX_EXIT_'+secrets.token_hex(12)+'__'
+    trap="trap 'IRISBOX_SHELL_RC=$?; printf \"\\n"+marker+"=%s\\n\" \"$IRISBOX_SHELL_RC\"' EXIT\n"
     p=subprocess.run(ADB+['exec-out','/system/xbin/su','0','/system/bin/sh','-c','set -eu\n'+trap+script+'\n'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,timeout=timeout)
     output=p.stdout.decode('utf-8','replace')
     found=re.search(r'\n'+marker+r'=(\d+)\r?\n?$',output)
@@ -73,5 +73,5 @@ def main():
             print(json.dumps({'count':state.get('count'),'catalogError':state.get('catalogError'),'instances':rows},ensure_ascii=False))
     elif args.action=='install':print(adb('install','-r',str(ROOT/('out/IrisBox-'+ET.parse(ROOT/'app/viewer/AndroidManifest.xml').getroot().get('{http://schemas.android.com/apk/res/android}versionName')+'.apk')),timeout=120))
     elif args.action=='preflight':print(shell((ROOT/'app/viewer/assets/preflight.sh').read_text(encoding='utf-8'),timeout=30))
-    elif args.action=='progress':print(shell('cat /data/user/0/com.rootvmos.viewer/shared_prefs/setup.xml'))
+    elif args.action=='progress':print(shell('cat /data/user/0/com.irisbox.viewer/shared_prefs/setup.xml'))
 if __name__=='__main__':main()

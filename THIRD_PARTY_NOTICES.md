@@ -1,6 +1,6 @@
 # Third-party notices / 第三方组件
 
-IrisBox / 虹膜空间 is an independent integration. Components keep their upstream licenses; no blanket relicensing of AOSP, the kernel, firmware or Magisk is intended. Project-specific source currently has no blanket license grant. VMOS, Android, Raspberry Pi and other names identify their respective products or comparison targets, not endorsement.
+IrisBox / 虹膜空间 is an independent integration. Components keep their upstream licenses; no blanket relicensing of AOSP, the kernel, firmware or Magisk is intended. Project-specific source currently has no blanket license grant. Android, Raspberry Pi and other third-party names identify their respective products, not endorsement.
 
 | Component | Source / license and supplied materials |
 |---|---|
@@ -16,3 +16,5 @@ IrisBox / 虹膜空间 is an independent integration. Components keep their upst
 `IrisBox-guest-root-sources.zip` contains the Magisk/BusyBox inputs, licenses and adaptation materials. `IrisBox-upstream-sources.zip` additionally contains the pinned kernel source. Both include SHA-256 indexes; distribution links are listed in Downloads. Magisk submodule repositories are archived at the v30.7 gitlink commits. Kitchen patches/config and native-constant/APK adaptation metadata are supplied; building the modified Manager requires your own signing key and upstream Android build dependencies. Dependency retrieval and build instructions remain in the upstream source. This preview does not claim bit-for-bit reproduction of upstream signed artifacts.
 
 宿主 Magisk 由用户自行安装，不放入宿主刷机镜像。实例 Root 保留既有适配组件，其许可证、修改说明与源码来源随发行提供。镜像及组件来源不能替代逐组件许可；网盘镜像与 GitHub 附件适用同样要求。
+
+The matched AOSP vold storage adapter is rebuilt from `system/vold/Utils.cpp` with Apache-2.0 notices retained. The exact patch, hashes, isolated build recipe and quota limitations are supplied under `reference/patches/vold-userns.patch`, `reference/storage-build.json` and `engine/native/storage/`. No proprietary Google/game APK is included.

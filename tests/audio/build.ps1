@@ -10,5 +10,5 @@ if($LASTEXITCODE -ne 0){throw 'Audio bridge javac failed'}
 $taskClasses=@(Get-ChildItem "$taskBuild\classes" -Filter '*.class' -Recurse|Select-Object -ExpandProperty FullName)
 & "$JdkDir\bin\java.exe" -cp "$taskTools\lib\d8.jar" com.android.tools.r8.D8 --min-api 29 --lib $taskAndroid --output "$taskBuild\dex" $taskClasses
 if($LASTEXITCODE -ne 0){throw 'Audio bridge D8 failed'}
-& "$JdkDir\bin\jar.exe" cf "$taskRoot\out\RootVMOS-Audio.jar" -C "$taskBuild\dex" classes.dex
+& "$JdkDir\bin\jar.exe" cf "$taskRoot\out\IrisBox-Audio.jar" -C "$taskBuild\dex" classes.dex
 if($LASTEXITCODE -ne 0){throw 'Audio bridge jar failed'}

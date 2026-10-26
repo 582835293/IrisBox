@@ -1,6 +1,6 @@
 /* Test-only DAC fixtures. No real Host secrets are exposed to the Guest. */
 #define main irisbox_launcher_main_for_test
-#include "../../engine/native/userns/rootvmos_userns.c"
+#include "../../engine/native/userns/irisbox_userns.c"
 #undef main
 
 int main(int argc, char **argv) {
@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
     unsigned base = profile(id), foreign = profile(other);
     if (base == foreign) return 3;
     int data = data_dir(id, base); char name[96];
-    snprintf(name, sizeof(name), "rootvmos_userns_test_%s", argv[6]);
+    snprintf(name, sizeof(name), "irisbox_userns_test_%s", argv[6]);
     if (!strcmp(argv[1], "create")) {
         if (mkdirat(data, name, 0700)) die("exclusive test directory");
         int dir = private_dir(data, name, base);

@@ -13,3 +13,5 @@ Magisk组件内保留原LICENSE、adaptation.json、apk_assets.patch和摘要。
 本轮将当前producer C++源码及直接编译脚本提取至`engine/native/buffer`，修复后在用户已有AOSP13环境的独立临时目录重编；摘要见`producer-build.json`。新增Java音频桥和Host监督脚本为本项目实现，不从旧实例提取运行数据。
 
 0.1.3另参考旧项目2026-10-20的User namespace实现，输入摘要见`userns-provenance.json`。本项目改为独立UID范围，适配0700产品目录、私有BusyBox、独有音频桥和既有维护事务。闹钟JNI复用已核验的固定产物，并附AOSP源码位置与补丁；没有修改旧工程或宿主系统库，也没有声称重编整个AOSP。
+
+0.1.5/e25新增映射实例存储适配：在匹配AOSP的独立临时目录仅重编vold Utils并使用只读依赖重链接；补丁、源码/二进制摘要和复编脚本分别见`reference/patches/vold-userns.patch`、`reference/storage-build.json`和`engine/native/storage/`。只跳过该内核不允许容器设置的项目配额标签/继承，保留目录/属主/ACL检查。相机框架恢复仅用于返回零设备，物理provider保持禁用。

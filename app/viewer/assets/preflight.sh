@@ -1,6 +1,6 @@
 # 只读宿主检查；不 setenforce、不修改宿主分区/网络/旧项目。
 [ "$(id -u)" = 0 ] || { echo 'ROOT_FAIL：请允许 Magisk 授权'; exit 4; }
-BB=/data/rootvmos/host/bin/busybox
+BB=/data/irisbox/host/bin/busybox
 [ -x "$BB" ] || { echo 'BUSYBOX_MISSING：此宿主缺少运行时所需 BusyBox'; exit 4; }
 for NS in user pid mnt net ipc uts cgroup; do
     [ "$(readlink /proc/$$/ns/$NS)" = "$(readlink /proc/1/ns/$NS)" ] || { echo "NAMESPACE_FAIL：$NS 必须为宿主空间"; exit 4; }

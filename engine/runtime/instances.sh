@@ -7,7 +7,7 @@ set -eu
 ACTION=${1:-list}
 ID=${2:-7}
 case "$ACTION" in create) ID=7 ;; esac
-. /data/rootvmos/runtime/common.sh "$ID"
+. /data/irisbox/runtime/common.sh "$ID"
 host_only || exit 3
 C=$BASE/config/instances_v1
 RECORD=$C/$ID.record
@@ -126,7 +126,7 @@ create)
     if [ "$GOOGLE" = 1 ]; then cp "$COMPAT/google/component.id" "$BASE/instances/$NEXT/google.core.enabled"; fi
     printf '%s\n' "$ROM_ID" > "$BASE/config/rom_v1/$NEXT.id"
     write_record "$NEXT"
-    "$BASE/rootvmos_userns" enable "$NEXT" >/dev/null
+    "$BASE/irisbox_userns" enable "$NEXT" >/dev/null
     "$BB" rm -f "$BASE/instances/$NEXT/userns.pending"
     echo INSTANCE_CREATED=$NEXT
     ;;
@@ -176,7 +176,7 @@ reset|delete)
     if [ "$ACTION" = reset ]; then
         : > "$RUN/userns.pending"
         write_record "$ID"
-        "$BASE/rootvmos_userns" enable "$ID" >/dev/null
+        "$BASE/irisbox_userns" enable "$ID" >/dev/null
         "$BB" rm -f "$RUN/userns.pending"
         "$BB" rm -f "$PENDING"
         echo INSTANCE_RESET=$ID

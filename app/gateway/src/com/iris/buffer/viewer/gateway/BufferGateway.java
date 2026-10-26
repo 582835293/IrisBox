@@ -1,4 +1,4 @@
-package com.rootvmos.buffer.viewer.gateway;
+package com.irisbox.buffer.viewer.gateway;
 
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
@@ -17,7 +17,7 @@ import java.util.concurrent.*;
  */
 public final class BufferGateway {
     private static final int MAX_CONTROLLED_SECONDS=900;
-    private static final Path BASE=Paths.get("/data/rootvmos/runtime");
+    private static final Path BASE=Paths.get("/data/irisbox/runtime");
     private static String read(Path p,int limit)throws IOException {
         if(Files.size(p)>limit)throw new IOException("State exceeds limit");
         return new String(Files.readAllBytes(p),StandardCharsets.UTF_8).trim();
@@ -42,7 +42,7 @@ public final class BufferGateway {
             if(Files.readSymbolicLink(proc.resolve("ns/"+ns)).equals(Files.readSymbolicLink(Paths.get("/proc/1/ns/"+ns))))throw new IOException("Shared Host namespace");
         if(!read(proc.resolve("mountinfo"),262144).contains("upperdir="+instance+"/upper,"))throw new IOException("Wrong Guest mount");
         String cg=read(proc.resolve("cgroup"),16384);
-        if(!cg.contains("0::/rootvmos_"+id+"/managed")||!cg.contains(":memory:/rootvmos_"+id+"/managed"))throw new IOException("Wrong Guest groups");
+        if(!cg.contains("0::/irisbox_"+id+"/managed")||!cg.contains(":memory:/irisbox_"+id+"/managed"))throw new IOException("Wrong Guest groups");
         return ident[0]+":"+ident[1];
     }
     private static String line(InputStream in,int max)throws IOException {
@@ -61,13 +61,13 @@ public final class BufferGateway {
     private static FileDescriptor[] connectMapped(int id,String expected,int width,int height,
                                                   ScheduledExecutorService timer)throws Exception {
         String[] identity=expected.split(":");
-        String name="rootvmos_userns_bridge_"+java.util.UUID.randomUUID().toString().replace("-","");
+        String name="irisbox_userns_bridge_"+java.util.UUID.randomUUID().toString().replace("-","");
         LocalServerSocket control=new LocalServerSocket(name);
         Process helper=null;
         ScheduledFuture<?> expiry=timer.schedule(()->{try{control.close();}catch(IOException ignored){}},6,TimeUnit.SECONDS);
         FileDescriptor[] pair=null;
         try {
-            helper=new ProcessBuilder(BASE.resolve("rootvmos_userns").toString(),"bridge",Integer.toString(id),
+            helper=new ProcessBuilder(BASE.resolve("irisbox_userns").toString(),"bridge",Integer.toString(id),
                     identity[0],identity[1],name,Integer.toString(width),Integer.toString(height))
                     .redirectOutput(ProcessBuilder.Redirect.INHERIT).redirectError(ProcessBuilder.Redirect.INHERIT).start();
             try(LocalSocket connection=control.accept()) {
@@ -94,7 +94,7 @@ public final class BufferGateway {
         if(args.length!=8)throw new IllegalArgumentException("Expected eight gateway arguments");
         int id=Integer.parseInt(args[0]),uid=Integer.parseInt(args[4]),seconds=Integer.parseInt(args[5]);
         int width=Integer.parseInt(args[6]),height=Integer.parseInt(args[7]);String expected=args[1],name=args[2];
-        if((id<1007||id>1134)||!expected.matches("[0-9]+:[0-9]+")||!name.matches("rootvmos_viewer_[a-zA-Z0-9_]{1,60}")||
+        if((id<1007||id>1134)||!expected.matches("[0-9]+:[0-9]+")||!name.matches("irisbox_viewer_[a-zA-Z0-9_]{1,60}")||
             uid<10000||seconds<0||seconds>MAX_CONTROLLED_SECONDS||width<960||width>1920||height<540||height>1080||width*9!=height*16)throw new IllegalArgumentException("Invalid gateway arguments");
         if(Os.getuid()!=0)throw new IllegalStateException("Host root required");
         for(String ns:new String[]{"pid","mnt","net","ipc","uts","cgroup"})
@@ -121,7 +121,7 @@ public final class BufferGateway {
             int peerPid=app.getPeerCredentials().getPid();
             if(app.getPeerCredentials().getUid()!=uid||peerPid<=1)throw new IOException("Wrong APK UID/PID");
             String peerTick=tick(peerPid);
-            if(!read(Paths.get("/proc",Integer.toString(peerPid),"cmdline"),4096).equals("com.rootvmos.viewer:display"))throw new IOException("Dedicated display process required");
+            if(!read(Paths.get("/proc",Integer.toString(peerPid),"cmdline"),4096).equals("com.irisbox.viewer:display"))throw new IOException("Dedicated display process required");
             // Android gives ordinary apps a storage mount namespace. It is a
             // legitimate Host app, not a Guest: do not require Host init's mnt.
             for(String ns:new String[]{"pid","net","ipc","uts","cgroup"})

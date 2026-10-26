@@ -11,12 +11,12 @@ $taskClasses=@(Get-ChildItem "$taskBuild\classes" -Filter '*.class' -Recurse|Sel
 & "$JdkDir\bin\java.exe" -cp "$taskTools\lib\d8.jar" com.android.tools.r8.D8 --min-api 29 --lib $taskAndroid --output "$taskBuild\dex" $taskClasses
 if($LASTEXITCODE -ne 0){throw 'Probe D8 failed'}
 $taskManifest="$PSScriptRoot\AndroidManifest.xml"
-$taskOutput="$taskRoot\out\RootVMOS-Probe.apk"
+$taskOutput="$taskRoot\out\IrisBox-Probe.apk"
 if($NoInternet){
-    $taskText=[IO.File]::ReadAllText($taskManifest).Replace('package="com.rootvmos.probe"','package="com.rootvmos.noinet"').Replace('android:name=".ProbeActivity"','android:name="com.rootvmos.probe.ProbeActivity"').Replace('<uses-permission android:name="android.permission.INTERNET" />','').Replace('RootVMOS验收','RootVMOS无网络权限验收')
+    $taskText=[IO.File]::ReadAllText($taskManifest).Replace('package="com.irisbox.probe"','package="com.irisbox.noinet"').Replace('android:name=".ProbeActivity"','android:name="com.irisbox.probe.ProbeActivity"').Replace('<uses-permission android:name="android.permission.INTERNET" />','').Replace('IrisBox验收','IrisBox无网络权限验收')
     $taskManifest="$taskBuild\AndroidManifest.xml"
     [IO.File]::WriteAllText($taskManifest,$taskText,[Text.UTF8Encoding]::new($false))
-    $taskOutput="$taskRoot\out\RootVMOS-NoInternet.apk"
+    $taskOutput="$taskRoot\out\IrisBox-NoInternet.apk"
 }
 & "$taskTools\aapt2.exe" link -I $taskAndroid --manifest $taskManifest -o "$taskBuild\base.apk"
 if($LASTEXITCODE -ne 0){throw 'Probe APK failed'}

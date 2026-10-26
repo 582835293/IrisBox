@@ -1,4 +1,4 @@
-package com.rootvmos.audio;
+package com.irisbox.audio;
 import android.content.Context;
 import android.media.*;
 import android.net.*;
@@ -48,13 +48,13 @@ public final class AudioBridge {
         System.exit(exitCode);
     }
     static void run(String[] args)throws Exception{
-        System.err.println("ROOTVMOS_AUDIO_START "+(args.length>0?args[0]:"invalid"));
+        System.err.println("IRISBOX_AUDIO_START "+(args.length>0?args[0]:"invalid"));
         if(args.length!=6)throw new IllegalArgumentException("guest|host socket tokenFile stats seconds session");
         String mode=args[0],socket=args[1],status=args[3];int seconds=Integer.parseInt(args[4]);expected=args[5];
         if(seconds<0||seconds>86400||!expected.matches("[1-9][0-9]*:[1-9][0-9]*"))throw new IllegalArgumentException();
         Context ctx=context();
-        System.err.println("ROOTVMOS_AUDIO_CONTEXT_READY");
-        try{if(mode.equals("guest"))capture(ctx,socket,readToken(args[2]),status,seconds);else if(mode.equals("host-mapped"))play(Integer.parseInt(socket),status,seconds);else throw new IllegalArgumentException();}catch(IOException disconnected){System.err.println("ROOTVMOS_AUDIO_DISCONNECTED "+disconnected.getClass().getSimpleName());}
+        System.err.println("IRISBOX_AUDIO_CONTEXT_READY");
+        try{if(mode.equals("guest"))capture(ctx,socket,readToken(args[2]),status,seconds);else if(mode.equals("host-mapped"))play(Integer.parseInt(socket),status,seconds);else throw new IllegalArgumentException();}catch(IOException disconnected){System.err.println("IRISBOX_AUDIO_DISCONNECTED "+disconnected.getClass().getSimpleName());}
     }
     static void capture(Context ctx,String path,String token,String status,int seconds)throws Exception{
         Class<?> ruleClass=Class.forName("android.media.audiopolicy.AudioMixingRule");
@@ -74,7 +74,7 @@ public final class AudioBridge {
         Class<?> policyClass=Class.forName("android.media.audiopolicy.AudioPolicy");
         AudioManager manager=(AudioManager)ctx.getSystemService(Context.AUDIO_SERVICE);
         int result=(Integer)manager.getClass().getMethod("registerAudioPolicy",policyClass).invoke(manager,policy);
-        System.err.println("ROOTVMOS_AUDIO_POLICY "+result);
+        System.err.println("IRISBOX_AUDIO_POLICY "+result);
         if(result!=0)throw new IllegalStateException("policy="+result);
         AudioRecord record=null;
         LocalSocket bind=new LocalSocket();
@@ -117,14 +117,14 @@ public final class AudioBridge {
     }
     static InputStream mappedAudio(int id)throws Exception{
         if(id<1007||id>1134||Os.getuid()!=0)throw new SecurityException("Host audio identity");
-        String name="rootvmos_audio_bridge_"+UUID.randomUUID().toString().replace("-","");
+        String name="irisbox_audio_bridge_"+UUID.randomUUID().toString().replace("-","");
         String[] identity=expected.split(":");
         LocalServerSocket server=new LocalServerSocket(name);
         ScheduledExecutorService timer=Executors.newSingleThreadScheduledExecutor();
         java.lang.Process helper=null;FileDescriptor received=null;
         timer.schedule(()->{try{server.close();}catch(IOException ignored){}},6,TimeUnit.SECONDS);
         try{
-            helper=new ProcessBuilder("/data/rootvmos/runtime/rootvmos_userns","audio-bridge",Integer.toString(id),identity[0],identity[1],name)
+            helper=new ProcessBuilder("/data/irisbox/runtime/irisbox_userns","audio-bridge",Integer.toString(id),identity[0],identity[1],name)
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT).redirectError(ProcessBuilder.Redirect.INHERIT).start();
             try(LocalSocket connection=server.accept()){
                 connection.setSoTimeout(3000);

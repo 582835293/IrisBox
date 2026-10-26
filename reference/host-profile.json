@@ -30,7 +30,7 @@
   "kernelBuildManifest": "https://github.com/raspberry-vanilla/android_kernel_manifest/tree/android-13.0",
   "kernelBuildCommand": "BUILD_CONFIG=common/build.config.rpi4 build/build.sh",
   "hostMagisk": "user-installed; not in clean flash image",
-  "busybox": "APK verified payload at /data/rootvmos/host/bin/busybox; no system partition installation",
+  "busybox": "APK verified payload at /data/irisbox/host/bin/busybox; no system partition installation",
   "selinux": "Permissive required; App does not change policy",
   "staticImagePartitionsVerified": true,
   "freshUserdata": true,

@@ -1,4 +1,4 @@
-package com.rootvmos.viewer;
+package com.irisbox.viewer;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 /** 仅在工作线程调用。使用标准 Magisk 授权，不修改 Magisk 数据库。 */
 final class RootShell {
-    static final String HOME = "/data/rootvmos", BASE = HOME + "/runtime";
+    static final String HOME = "/data/irisbox", BASE = HOME + "/runtime";
     private static String su;
     static synchronized String magisk() throws Exception {
         if (su != null) return su;
@@ -16,10 +16,10 @@ final class RootShell {
                 if (version.contains("MAGISKSU")) return su = p;
             } catch (IOException ignored) {}
         }
-        throw new IOException(I18n.s(R.string.ui_b81c17cb6353));
+        throw new IOException(I18n.s(R.string.ui_72166f0ac194));
     }
     static String run(String script, int timeout) throws Exception {
-        return process(new String[]{magisk(), "--mount-master", "-c", "/system/bin/sh"}, "set -eu\n[ ! -e /data/rootvmos/engine-upgrade.pending ] || { echo '引擎维护尚未完成，请按维护文档恢复'; exit 4; }\n" + script + "\n", timeout);
+        return process(new String[]{magisk(), "--mount-master", "-c", "/system/bin/sh"}, "set -eu\n[ ! -e /data/irisbox/engine-upgrade.pending ] || { echo '引擎维护尚未完成，请按维护文档恢复'; exit 4; }\n" + script + "\n", timeout);
     }
     static String quote(String s) { return "'" + s.replace("'", "'\\''") + "'"; }
     private static String process(String[] args, String script, int seconds) throws Exception {
@@ -35,7 +35,7 @@ final class RootShell {
                     if (out.size() < 262144) out.write(bytes, 0, Math.min(n, 262144 - out.size()));
                 }
             } catch (IOException ignored) {}
-        }, "rootvmos-su-output"); reader.setDaemon(true); reader.start();
+        }, "irisbox-su-output"); reader.setDaemon(true); reader.start();
         try {
             try (OutputStream in = p.getOutputStream()) { in.write(script.getBytes(StandardCharsets.UTF_8)); }
             if (!p.waitFor(seconds, TimeUnit.SECONDS)) throw new IOException(I18n.s(R.string.ui_c90dc17c7d0f));

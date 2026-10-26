@@ -1,4 +1,4 @@
-package com.rootvmos.viewer;
+package com.irisbox.viewer;
 
 import org.json.*;
 import java.io.*;
@@ -29,7 +29,7 @@ final class PackageArchive {
         if (!dest.isDirectory() || dest.list().length != 0) throw new IOException("暂存目录必须为空");
         try (ZipInputStream zip = new ZipInputStream(new BufferedInputStream(input, 1048576))) {
             ZipEntry first = zip.getNextEntry();
-            if (first == null || !first.getName().equals(manifestName)) throw new IOException("文件不是有效的 RootVMOS 包；首项必须是 " + manifestName);
+            if (first == null || !first.getName().equals(manifestName)) throw new IOException("文件不是有效的 虹膜空间 包；首项必须是 " + manifestName);
             ByteArrayOutputStream header = new ByteArrayOutputStream(); byte[] b = new byte[1048576]; int n;
             while ((n = zip.read(b)) != -1) { if (header.size() + n > 131072) throw new IOException("包清单过大"); header.write(b, 0, n); }
             JSONObject manifest = new JSONObject(new String(header.toByteArray(), StandardCharsets.UTF_8));

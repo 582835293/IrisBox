@@ -4,7 +4,7 @@
 # Mount this project's independent images once, read-only, for both Guests.
 # The active Host /system and /vendor are never used as ROM material.
 set -eu
-. /data/rootvmos/runtime/common.sh "${1:-7}"
+. /data/irisbox/runtime/common.sh "${1:-7}"
 host_only || exit 3
 for NAME in system vendor; do
     IMAGE=$ROM/$NAME.img

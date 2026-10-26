@@ -6,11 +6,13 @@ IrisBox (**虹膜空间**) runs multiple Android userspaces inside a rooted Rasp
 
 This preview supports one matched **Raspberry Vanilla AOSP 13 / ARM64 / Raspberry Pi 4** host profile. Instances share the host Linux kernel, with separate namespaces, Binder devices, overlays and app data. Root access alone does not make other devices or arbitrary Android ROMs compatible.
 
+Existing 0.1.4/e21 users must first follow the stopped-state [0.1.5 namespace migration and recovery](docs/en/namespace-migration.md). The new package needs its own normal host root grant.
+
 ## Get started
 
 1. Read the [host and installation guide](docs/en/installation.md). The host needs the matched build, kernel capabilities, Wi-Fi and an already configured Permissive environment.
 2. Install **host Magisk yourself**, following its upstream installation instructions and the board's boot layout. IrisBox never installs or patches host Magisk.
-3. Install `IrisBox-0.1.4.apk`. Open it and choose **Authorize and check**, then **Install engine**.
+3. Install `IrisBox-0.1.5.apk`. Open it and choose **Authorize and check**, then **Install engine**.
 4. Choose **Import ROM**, select `IrisBox-rpi4-a13-aosp.irisrom`, then **Manage instances → New instance → Start → Enter**.
 5. Use **EN / 中文** to choose System default, English or 简体中文. This changes the host App UI only; each guest keeps its own Android language and data.
 
@@ -32,7 +34,7 @@ The public ROM contains AOSP and compatibility files, **without Google apps or a
 
 The published 0.1.3 test was blocked by a Play Protect certification warning. On October 24, the 0.1.4 test restored the catalog and actually installed Open Sudoku and Google Calculator from Play; **device certification still has not passed**. See the [current results](docs/en/validation.md). Each guest needs its own custom-ROM registration where applicable; registration does not establish device certification.
 
-Version 0.1.4/e21 adds **Orientation → Follow app / Landscape / Portrait** to the fullscreen toolbar, with live changes and saved per-instance selections. English/Chinese menus, rotated input and persistence across Guest restart passed device tests. Existing 0.1.3 users need the stopped-state engine maintenance upgrade described in [building and recovery](docs/en/building.md).
+Version **0.1.5/e25** completes the Iris package/storage migration and fixes mapped-guest external storage and startup camera-count queries. It retains live **Orientation → Follow app / Landscape / Portrait** and persistent **System default / English / 简体中文** settings. YouTube playback and two simultaneous instances passed; Angry Birds 2 gameplay remains unpassed. See [current validation](docs/en/validation.md) and [migration/recovery](docs/en/namespace-migration.md).
 
 ## Device screenshots
 
@@ -40,14 +42,19 @@ Version 0.1.4/e21 adds **Orientation → Follow app / Landscape / Portrait** to 
 |---|---|---|
 | ![Actual Play installation](docs/images/play-download.png) | ![Installed calculator with Open button](docs/images/play-installed.png) | ![Actual game puzzle board](docs/images/game-running.png) |
 
-![Instance list with a live preview](docs/images/instance-previews.png)
+![Two simultaneously running instances](docs/images/dual-instances.png)
 
-Real device captures, cropped and privacy-redacted with owner permission; no AI redraw. The game image shows a puzzle board. The owner separately confirmed WeChat and QQ QR login/gameplay. In this list capture, instance 1 is stopped and instance 2 has a live preview. Screenshots do not establish Google device certification. [Image details](docs/images/README.md).
+| Clash of Clans tutorial village | YouTube video playback |
+|---|---|
+| ![Clash village and tutorial](docs/images/clash-village.png) | ![YouTube playback](docs/images/youtube-playback.png) |
+
+Real device captures, cropped and privacy-redacted with owner permission; no AI redraw. The game image shows a puzzle board. The owner separately confirmed WeChat and QQ QR login/gameplay. The newer list capture shows both instances running, capped at 768/2048 MiB; it does not establish simultaneous heavy-game support. Clash shows a tutorial village and actual interaction, not a long-term battle test. YouTube shows actual video playback. Screenshots do not establish Google device certification. [Image details](docs/images/README.md).
 
 ## Documentation
 
 | English | 简体中文 |
 |---|---|
+| [0.1.5 namespace migration and recovery](docs/en/namespace-migration.md) | [Iris命名迁移与恢复](docs/11_Iris命名迁移.md) |
 | [Installation and clean host image](docs/en/installation.md) | [安装与使用](docs/01_安装与使用.md)、[发布与刷机](docs/08_国际化与发布.md) |
 | [Architecture and isolation boundaries](docs/en/architecture.md) | [技术架构](docs/02_技术架构.md) |
 | [ROM format](docs/en/rom-format.md) | [ROM 规范](docs/03_ROM规范.md) |
@@ -64,7 +71,7 @@ Version 0.1.3 requires a distinct User namespace per instance. Guest root maps t
 
 The clean flash image has new, empty userdata and unmodified factory boot/system/vendor partitions. Static checks are recorded; **a fresh USB-disk flash and first boot have not been tested**. Existing-host validation does not establish a complete installation on a host that never ran the previous project. Other kernels/devices, Enforcing SELinux, camera/microphone, protected video, Play Integrity and arbitrary third-party Root modules are not covered.
 
-This is an independent project. VMOS is mentioned only as a user-experience comparison; there is no affiliation. Internal names such as `com.rootvmos.viewer`, `/data/rootvmos` and `.irisrom` are retained to preserve upgrades and protocol compatibility.
+This is an independent IrisBox project. Version 0.1.5 uses `com.irisbox.viewer` and `/data/irisbox`; existing installations require the documented stopped-state namespace migration. The `.irisrom` format is unchanged.
 
 See [third-party notices](THIRD_PARTY_NOTICES.md) and [source provenance](reference/NOTICE.md). Publishing this repository does not relicense third-party components; project-specific code currently has no blanket license grant. Signing keys, user data, accounts, raw device logs and screenshots are excluded.
 

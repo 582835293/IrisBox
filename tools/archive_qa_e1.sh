@@ -1,10 +1,10 @@
 #!/system/bin/sh
 # 仅保留本轮第一次QA安装，非用户升级器。无Guest成功启动、无挂载才允许归档。
 set -eu
-BASE=/data/rootvmos/runtime
-BACKUP=/data/rootvmos/qa-e1-20261015
+BASE=/data/irisbox/runtime
+BACKUP=/data/irisbox/qa-e1-20261015
 BB=/system/bin/busybox
-[ "$($BB readlink -f "$BASE")" = /data/rootvmos/runtime ] && [ ! -L /data/rootvmos ] || exit 3
+[ "$($BB readlink -f "$BASE")" = /data/irisbox/runtime ] && [ ! -L /data/irisbox ] || exit 3
 [ "$(cat "$BASE/engine.version")" = 0.1.0-e1 ] || exit 3
 [ ! -e "$BACKUP" ] && [ ! -L "$BACKUP" ] || exit 3
 sh "$BASE/display/buffer_viewer/manager.sh" stop

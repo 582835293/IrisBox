@@ -20,4 +20,4 @@ try{ & "$taskTools\aapt.exe" add "$taskBuild\base.apk" classes.dex }finally{Pop-
 if($LASTEXITCODE -ne 0){throw 'Test signing failed'}
 adb -s DEVICE_SERIAL install -r "$taskBuild\tests.apk"
 if($LASTEXITCODE -ne 0){throw 'Test install failed'}
-adb -s DEVICE_SERIAL shell am instrument -w com.rootvmos.tests/com.rootvmos.viewer.ArchiveTests
+adb -s DEVICE_SERIAL shell am instrument -w com.irisbox.tests/com.irisbox.viewer.ArchiveTests

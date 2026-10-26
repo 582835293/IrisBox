@@ -1,5 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.rootvmos.tests" android:versionCode="1" android:versionName="1">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.irisbox.tests" android:versionCode="1" android:versionName="1">
   <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="33" />
-  <application android:label="RootVMOS Archive Tests" android:allowBackup="false" />
-  <instrumentation android:name="com.rootvmos.viewer.ArchiveTests" android:targetPackage="com.rootvmos.tests" />
+  <application android:label="IrisBox Archive Tests" android:allowBackup="false" />
+  <instrumentation android:name="com.irisbox.viewer.ArchiveTests" android:targetPackage="com.irisbox.tests" />
 </manifest>

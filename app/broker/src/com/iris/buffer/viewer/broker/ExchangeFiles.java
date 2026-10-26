@@ -1,4 +1,4 @@
-package com.rootvmos.buffer.viewer.broker;
+package com.irisbox.buffer.viewer.broker;
 
 import android.os.SystemClock;
 import android.system.Os;
@@ -11,7 +11,7 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import com.rootvmos.buffer.viewer.broker.ExchangeProtocol.Failure;
+import com.irisbox.buffer.viewer.broker.ExchangeProtocol.Failure;
 
 /** Host文件中间层：HTTP流 ↔ ctl exec启动的一次性Guest MediaProvider客户端。
  * Job绑定id/session与期限，Helper用有界块队列排空管道，不把整文件读入内存。
@@ -25,7 +25,7 @@ final class ExchangeFiles implements AutoCloseable {
         boolean busy(int id);
         boolean stopping(int id);
     }
-    private static final String BASE="/data/rootvmos/runtime", BB="/data/rootvmos/host/bin/busybox";
+    private static final String BASE="/data/irisbox/runtime", BB="/data/irisbox/host/bin/busybox";
     private static final Path DIRECTORY=Paths.get(BASE,"display/buffer_viewer");
     private final State state;
     private final Object lock=new Object();

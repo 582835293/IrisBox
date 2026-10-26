@@ -23,7 +23,7 @@
 #ifndef SO_NETNS_COOKIE
 #define SO_NETNS_COOKIE 71
 #endif
-#define BASE "/data/rootvmos/runtime"
+#define BASE "/data/irisbox/runtime"
 #define PINS "/sys/fs/bpf/iris_inet_v1"
 #define HOST_MAP "/sys/fs/bpf/netd_shared/map_netd_uid_permission_map"
 #define STOCK_PROG "/sys/fs/bpf/netd_shared/prog_netd_cgroupsock_inet_create"
@@ -244,7 +244,7 @@ static int domain(uint64_t c, uint32_t *id) {
     return bpf(BPF_MAP_LOOKUP_ELEM, &a);
 }
 static void guest_path(char *path, size_t size, unsigned id, uint64_t c) {
-    if (id < 1007 || id > 1134 || !c) { errno = EINVAL; fail("RootVMOS Guest record"); }
+    if (id < 1007 || id > 1134 || !c) { errno = EINVAL; fail("IrisBox Guest record"); }
     snprintf(path, size, PINS "/guest_%u_%llu", id, (unsigned long long)c);
 }
 /* 建表后先输出cookie/map ID/pin并flush，供network失败账本回收，再插域映射。

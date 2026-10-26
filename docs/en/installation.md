@@ -10,7 +10,7 @@ Raspberry Pi 4, ARM64, roughly 4 GiB RAM, with this exact matched AOSP 13 finger
 Raspberry/aosp_rpi4/rpi4:13/TQ3A.230901.001/eng.lijiaq.20260916.141216:userdebug/test-keys
 ```
 
-The kernel needs User/Mount/PID/Network/IPC/UTS/Cgroup namespaces, BinderFS, OverlayFS/ext4, hybrid Android cgroups, BPF socket permission support and the matched GPU stack. User namespace creation is mandatory in 0.1.3, with no Host-UID0 fallback. Connect host Wi-Fi. The preview requires an already configured Permissive environment and host MagiskSU. The App checks capabilities; it does not change SELinux policy or flash partitions. Its verified BusyBox is installed under `/data/rootvmos/host/bin`, so a globally installed BusyBox is unnecessary.
+The kernel needs User/Mount/PID/Network/IPC/UTS/Cgroup namespaces, BinderFS, OverlayFS/ext4, hybrid Android cgroups, BPF socket permission support and the matched GPU stack. User namespace creation is mandatory in 0.1.3, with no Host-UID0 fallback. Connect host Wi-Fi. The preview requires an already configured Permissive environment and host MagiskSU. The App checks capabilities; it does not change SELinux policy or flash partitions. Its verified BusyBox is installed under `/data/irisbox/host/bin`, so a globally installed BusyBox is unnecessary.
 
 ## App workflow
 
