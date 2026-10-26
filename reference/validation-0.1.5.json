@@ -4,7 +4,7 @@
   "engine": "0.1.5-e25",
   "name": {
     "en": "IrisBox",
-    "zh": "虹膜空间"
+    "zh": "铏硅啘绌洪棿"
   },
   "package": "com.irisbox.viewer",
   "deviceRoot": "/data/irisbox",
@@ -58,7 +58,8 @@
     "independentAudio": true,
     "externalStorageReadWrite": true,
     "newQaGuestRootViaNormalUi": true,
-    "languageRestartPersistence": true
+    "languageRestartPersistence": true,
+    "angryBirds2RootOffComparison": "Inconclusive: Host memory guard stopped instance; original Magisk restored"
   },
   "limitations": {
     "googleDeviceCertificationPassed": false,
@@ -66,13 +67,14 @@
     "physicalCameraExposed": false,
     "freshHostFlashBootTested": false,
     "hostMagiskIncluded": false,
-    "hostRebootTestedThisEngine": false
+    "hostRebootTestedThisEngine": false,
+    "hostSwapEnabledDuringTests": false
   },
   "evidence": "Raw images, account comparisons, logs, receipts and backups stay private; selected deterministic crops in docs/images",
   "sources": [
-    "docs/06_验收记录.md",
+    "docs/06_楠屾敹璁板綍.md",
     "docs/en/validation.md",
-    "docs/11_Iris命名迁移.md",
+    "docs/11_Iris鍛藉悕杩佺Щ.md",
     "engine/native/storage/README.md"
   ]
 }

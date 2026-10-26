@@ -16,11 +16,12 @@ def engine(apk):
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--apply',action='store_true');parser.add_argument('--recover',action='store_true');parser.add_argument('--from-apk',type=Path,required=True,help='Exact APK matching the installed engine; cross-namespace upgrades require migrate_namespace.py');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--apply',action='store_true');parser.add_argument('--recover',action='store_true');parser.add_argument('--from-apk',type=Path,help='Required for upgrade: exact APK matching the installed engine; cross-namespace upgrades require migrate_namespace.py');args=parser.parse_args()
     if args.recover:
         stage=shell('cat /data/irisbox/engine-upgrade.pending').strip()
         assert re.fullmatch(r'/data/irisbox/\.upgrade-[a-f0-9]{32}',stage)
         print(shell('test ! -L '+stage+'\nsh '+stage+'/recover.sh',timeout=180));return
+    if args.from_apk is None:parser.error('--from-apk is required unless --recover is selected')
     old,old_raw=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.1.5.apk')
     with zipfile.ZipFile(io.BytesIO(old_raw)) as archive:
         old_base=re.search(r'^BASE=(/data/[a-z0-9_]+/runtime)$',archive.read('common.sh').decode(),re.M)
