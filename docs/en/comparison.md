@@ -41,3 +41,11 @@ Boot a ROM which actually omits optional components, with new userdata. Persiste
 ## 0.1.3: follow the upstream identity isolation work
 
 The previous local Iris project integrated User namespaces on 2026-10-20, after the e13 extraction checkpoint. This port follows its complete ownership/ACL/capability, metacopy, cgroup, network, display, Magisk and alarm adaptations. IrisBox additionally needs a private pre-pivot alias for its 0700 Host data root and a mapped PCM connector. Its persistent UID range is disjoint. See [the migration guide](userns.md).
+
+## 0.1.5: real applications expose isolation dependencies
+
+UID/GID maps alone do not establish usable Android storage. Trace an ordinary getExternalFilesDir request through StorageManager, vold PrepareAppDirFromRoot/SetQuotaProjectId and the kernel fileattr check. A populated project-ID map still cannot override the matched kernel's prohibition on noninitial-namespace quota changes. The adapter handles only that unsupported tagging operation, retaining ownership/ACL failures and mapped credentials. Test first directory creation plus write/read, rather than treating map existence as success; see engine/native/storage/README.md.
+
+Physical-camera isolation also needs a functioning framework contract. YouTube queried camera count during startup; removing cameraserver blocked a worker and the main thread until ANR. Retaining the framework service with physical providers disabled returns zero devices. Following the actual ANR lock owner explains the failure better than increasing timeouts or patching YouTube.
+
+Finally, changing a package identity changes its UID and authorization. Validate exclusive ownership before revoking a retired UID, request normal grants for new packages, and check absolute controller paths, display pointers, audio RC, JNI names and generated binaries. Stopped full snapshots and transaction rollback are part of the migration design.

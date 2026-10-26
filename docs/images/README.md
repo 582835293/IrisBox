@@ -13,7 +13,7 @@ These are real device captures published with the owner's explicit permission. O
 
 ## 2026-10-26 新增图片
 
-- `clash-village.png`：实例2《部落冲突》18.647.5的新手村庄与教程对话；实际通过虹膜空间全屏窗口点击推进。未包含年龄页面、账号或玩家标识；不代表部落战、支付或长期对战测试通过。
+- `clash-village.png`：实例2《部落冲突》18.647.5的新手村庄与教程对话；最终e25正常重连后，通过虹膜空间全屏窗口点击，将欢迎对话推进到下一句。未包含年龄页面、账号或玩家标识；不代表部落战、支付或长期对战测试通过。
 - `youtube-playback.png`：YouTube 21.42.243 播放 Blender 官方《Big Buck Bunny》的原始视频区域，确定性裁去导航、账号及推荐区。素材归 Blender Foundation，原片和授权信息见 [官方视频](https://www.youtube.com/watch?v=aqz-KE-bpKQ)。
 - `dual-instances.png`：0.1.5/e25 两个原实例同时运行，内存上限分别768/2048MiB；两张实时缩略图、桌面状态及原计数8/1可见。仅裁去宿主系统栏。最终e25已重新执行隔离、输入、网络、文件与音频回归；截图后两个预览序列继续增加。
 
