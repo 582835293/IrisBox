@@ -18,3 +18,7 @@ These are real device captures published with the owner's explicit permission. O
 - `dual-instances.png`：0.1.5/e25 两个原实例同时运行，内存上限分别768/2048MiB；两张实时缩略图、桌面状态及原计数8/1可见。仅裁去宿主系统栏。最终e25已重新执行隔离、输入、网络、文件与音频回归；截图后两个预览序列继续增加。
 
 New captures show an interactive Clash of Clans tutorial village, the cropped player area of Blender's official Big Buck Bunny on YouTube, and two simultaneously running instances. The village is not a battle/payment test. Dual-instance capture uses final e25; both preview sequences continued advancing after capture. Only deterministic cropping/re-encoding was applied; age/account screens and original evidence remain private.
+
+- `angry-offline.png`：Angry Birds 2重建获准的首次运行数据后进入Main场景，但更新提示离线；这是未通过项目的实际画面，不作为游玩成功证明。无账号、年龄或玩家标识，只有PNG重新编码。
+
+`angry-offline.png` records the unresolved official-update offline prompt, not successful gameplay; no account/age/player identifier is present.

@@ -120,3 +120,5 @@ Final e25 dual-instance regression repeated namespace/DAC checks, real fullscree
 The renamed ordinary QA app needed its own Guest Magisk grant. Enabling only com.irisbox.probe through the normal Superuser UI made its ordinary UID10104 su return Guest UID0 while strict Host mapping remained unprivileged. No grant row was inserted directly. Language selection persisted across App restart; Chinese was restored after testing.
 
 The 0.1.5 preview is public. Server digests/sizes matched the APK, SHA256SUMS and final manifest; unchanged large resources reuse real verified v0.1.4 URLs. A normal Clash idle timeout occurred during publication work. After the original Reload game flow and cancellation of cloud-village overwrite, actual Viewer input advanced the welcome dialogue to the next line. The published Clash capture now shows that final e25 test, not the idle-disconnect dialog.
+
+![Angry Birds 2 update remains offline; gameplay has not passed](../images/angry-offline.png)
