@@ -1,5 +1,8 @@
 # Building and maintenance
 
+Current **0.1.6/e27** adds App host-swap settings. Already mapped 0.1.5/e25 data needs no repeated UID or namespace migration: normally stop all new guests, retain the exact previous APK, run `python tools/upgrade_engine.py --from-apk out/IrisBox-0.1.5.apk --apply`, then install the same-signed 0.1.6 APK. Automatic swap restoration passed a real host reboot; fresh flashing retains its separate unverified boundary. See [swap/recovery](low-memory.md).
+
+
 Current version: **0.1.5/e25**. Existing 0.1.4/e21 installations require the stopped-state [Iris namespace migration](namespace-migration.md). Historical upgrade examples below do not replace this procedure.
 
 [中文](../04_构建与维护.md)

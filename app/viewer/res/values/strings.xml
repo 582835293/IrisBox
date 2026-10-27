@@ -69,7 +69,15 @@
     <string name="ui_d96fc7526625" formatted="false">"Cannot create working folder"</string>
     <string name="ui_97d351c230ee" formatted="false">"Cannot create staging folder"</string>
     <string name="ui_5e1466abc843" formatted="false">"Cannot clean staging file"</string>
+    <string name="ui_5a0bfda7e17d" formatted="false">"Swap file receipt missing. Operation stopped."</string>
+    <string name="ui_8f1bf0307305" formatted="false">"Unsafe swap path. Operation stopped."</string>
+    <string name="ui_4b9bba4e6a12" formatted="false">"Swap file identity check failed. Existing files were retained for maintenance."</string>
     <string name="ui_6bac12d05195" formatted="false">"Exchange folder: Downloads / IrisExchange. Files go only to this instance; confirm APK installation inside it."</string>
+    <string name="ui_eb02f52661da" formatted="false">"Swap space"</string>
+    <string name="ui_e6c9e933d09c" formatted="false">"Swap operation failed. Check host root authorization and engine version."</string>
+    <string name="ui_d2f7ea0129c0" formatted="false">"All instances share swap; it does not add physical RAM. Boot restore enables swap without starting guests. Disabled files are retained; using different sizes can consume additional disk space."</string>
+    <string name="ui_f075297f2ddb" formatted="false">"Swap settings applied"</string>
+    <string name="ui_f87312a2da37" formatted="false">"Invalid swap settings. Existing files were retained for maintenance."</string>
     <string name="ui_9a15c8d8f000" formatted="false">"Showing only this instance\'s exchange folder"</string>
     <string name="ui_c2013c9c102f" formatted="false">"Transfer cancelled"</string>
     <string name="ui_d423be219c7c" formatted="false">"Transfer incomplete: "</string>
@@ -83,6 +91,7 @@
     <string name="ui_9e3667cb5ffd" formatted="false">"Allow apps to request root (Magisk)"</string>
     <string name="ui_7403656d2fd1" formatted="false">"Authorize root and check the host, then install the engine and import a ROM."</string>
     <string name="ui_6c14bd7f6f9e" formatted="false">"Close"</string>
+    <string name="ui_99183a8a2dd4" formatted="false">"Off"</string>
     <string name="ui_d014ab77038c" formatted="false">"Memory"</string>
     <string name="ui_01ab180f0a34" formatted="false">"Memory limit (GiB)"</string>
     <string name="ui_ccdfdd38867f" formatted="false">"Memory limit: unavailable"</string>
@@ -100,6 +109,7 @@
     <string name="ui_b1b8c89c34e7" formatted="false">"Deleting removes this instance and all its data."</string>
     <string name="ui_6e73a5ffa5cc" formatted="false">"Delete instance"</string>
     <string name="ui_bd82e40e45a0" formatted="false">"Refresh"</string>
+    <string name="ui_7cc7f07a2c03" formatted="false">"Refresh status"</string>
     <string name="ui_0e7a97389d3f" formatted="false">"Package file count exceeds the limit"</string>
     <string name="ui_0377600969cb" formatted="false">"Unsupported package format or compatibility profile"</string>
     <string name="ui_1b47c364b953" formatted="false">"Invalid file in package manifest: "</string>
@@ -110,6 +120,7 @@
     <string name="ui_4d0b4688c787" formatted="false">"Cancel"</string>
     <string name="ui_965b34119adf" formatted="false">"Cancel transfer"</string>
     <string name="ui_a43c7b66fb3a" formatted="false">"Another transfer is running. Retry shortly."</string>
+    <string name="ui_c860f4f36361" formatted="false">"Not enough free RAM to disable swap safely. Free host memory first."</string>
     <string name="ui_ebd26da42171" formatted="false">"Start"</string>
     <string name="ui_b28f7fc03b17" formatted="false">"This startup log is retained from the first line. Scroll to read or long-press to copy it."</string>
     <string name="ui_abaa5827dc73" formatted="false">"The actual log for this startup will appear here."</string>
@@ -128,6 +139,7 @@
     <string name="ui_fc03a16921a8" formatted="false">"The instance changed. Return to the list and select it again."</string>
     <string name="ui_428cbfb8a4e1" formatted="false">"Instance home"</string>
     <string name="ui_e1216a93fd24" formatted="false">"Instance is displayed fullscreen"</string>
+    <string name="ui_d0ae4b97d606" formatted="false">"An instance is starting. Try again shortly."</string>
     <string name="ui_91b40ea9119e" formatted="false">"Instance number"</string>
     <string name="ui_c01087274984" formatted="false">"Instance identity changed; refusing the file"</string>
     <string name="ui_e4377db610c0" formatted="false">"Invalid instance identity"</string>
@@ -157,13 +169,18 @@
     <string name="ui_4bd157a9d214" formatted="false">"Memory limit submitted. Waiting for confirmation."</string>
     <string name="ui_87016bfffbd7" formatted="false">"Resolution submitted. Waiting for confirmation."</string>
     <string name="ui_ad3b13c31706" formatted="false">"Left the files page; transfer cancelled"</string>
+    <string name="ui_84223ea001cf" formatted="false">"Configured: %d MiB   Active: %d MiB   Used: %d MiB\nHost available RAM: %d MiB   Free disk: %d MiB   Allocated files: %d MiB"</string>
+    <string name="ui_10df0753a8bf" formatted="false">"Apply swap settings"</string>
     <string name="ui_4a3c8724af26" formatted="false">"Apps request Root through Magisk and still require your approval inside the instance. Authorizations, modules and Zygisk settings are separate for each instance.\nInstall module ZIPs on the Magisk Modules page; enable Zygisk in Magisk settings. Then return to IrisBox, stop and start this instance.\nIf a module prevents booting, stop the instance and enable Rescue boot. This disables modules and Zygisk while preserving apps, accounts and module files for repair. Disable rescue after repair, then re-enable components as needed.\nTurning Root off preserves records. Resetting data clears them. Flashing upgrades and global kernel/SELinux changes are unsupported."</string>
     <string name="ui_a1174bf6c57c" formatted="false">"Apps request root from Magisk; you still authorize each app inside the instance. Authorizations, modules and Zygisk settings are independent.\nInstall module ZIP files in Magisk and enable Zygisk in its settings. Then return to IrisBox and stop and start this instance.\nIf a module prevents startup, stop the instance and enable rescue startup. It disables modules and Zygisk while preserving apps, accounts and module files so you can repair them in Magisk. Disable rescue afterwards.\nTurning root off preserves records; resetting data erases them. Firmware flashing and global kernel/SELinux changes are unsupported.\n"</string>
     <string name="ui_7ae34f47b8bb" formatted="false">"Enable app root (Magisk; authorize each app separately)"</string>
+    <string name="ui_9709c11361d5" formatted="false">"The boot script name is already in use. It was not overwritten."</string>
+    <string name="ui_3f0e5b6bbb81" formatted="false">"Unsafe boot script path. Operation stopped."</string>
     <string name="ui_e49153879bdd" formatted="false">"Engine installation and ROM import"</string>
     <string name="ui_005bf385d786" formatted="false">"Engine installed. Select and import a ROM package."</string>
     <string name="ui_a28d875aa888" formatted="false">"Engine installed. You can import a ROM."</string>
     <string name="ui_7974c4e8615f" formatted="false">"Engine version mismatch"</string>
+    <string name="ui_a7f69fc8a455" formatted="false">"Engine maintenance is incomplete. Recover it first."</string>
     <string name="ui_dd0fb9f395bc" formatted="false">"Engine: "</string>
     <string name="ui_f82f850f42fc" formatted="false">"Engine: not installed"</string>
     <string name="ui_ba5758a6244b" formatted="false">"Duplicate, unsafe or undeclared archive file: "</string>
@@ -200,6 +217,9 @@
     <string name="ui_83ff48e09334" formatted="false">"Each instance has its own apps, accounts and files.\nDefault: 960×540, OpenGL, 1.25 GiB memory limit (1.5 GiB with Google).\nOn a 4 GB Raspberry Pi, available memory and app workloads determine how many instances can run together."</string>
     <string name="ui_866b439f84cb" formatted="false">"Could not change orientation. Try again shortly."</string>
     <string name="ui_8c9d5291cf02" formatted="false">"Cannot write to the selected location"</string>
+    <string name="ui_2aa912951df3" formatted="false">"Unable to allocate swap. Check free disk space."</string>
+    <string name="ui_89d23c1e22d4" formatted="false">"Unable to initialize swap. Check storage support."</string>
+    <string name="ui_f2ec2d34506d" formatted="false">"Unable to enable swap. Check kernel and storage support."</string>
     <string name="ui_63bda37a9075" formatted="false">"Cannot open selected file"</string>
     <string name="ui_a6112556325f" formatted="false">"Cannot obtain host root. Check Magisk and reconnect."</string>
     <string name="ui_42edfd06d964" formatted="false">"Cannot verify the target instance"</string>
@@ -217,7 +237,9 @@
     <string name="ui_9807d3930434" formatted="false">"Not started.\n\n"</string>
     <string name="ui_f5064e36fb9d" formatted="false">"Not completed: "</string>
     <string name="ui_72166f0ac194" formatted="false">"MagiskSU not found. Install Magisk on the host and authorize IrisBox."</string>
+    <string name="ui_f53ca2c4b26c" formatted="false">"No swap status received. Refresh to check."</string>
     <string name="ui_831cdf82e2aa" formatted="false">"Unknown setup action"</string>
+    <string name="ui_848901754aec" formatted="false">"Unable to disable swap. Refresh to check the actual state."</string>
     <string name="ui_b2ba9634d9cf" formatted="false">"Stopped"</string>
     <string name="ui_f2f3e9803ccb" formatted="false">"Disconnected"</string>
     <string name="ui_7fd47e102e12" formatted="false">"Current"</string>
@@ -255,6 +277,8 @@
     <string name="ui_50f106ba30fc" formatted="false">"Requesting host root. Allow IrisBox in Magisk on first use…"</string>
     <string name="ui_84cb10f62524" formatted="false">"Checking instance and exchange folder"</string>
     <string name="ui_73685fac59f8" formatted="false">"Waiting for the previous transfer to finish; keeping the current folder view…"</string>
+    <string name="ui_7b6a27847cd3" formatted="false">"Applying swap settings. Please wait…"</string>
+    <string name="ui_9c659f12d004" formatted="false">"Reading swap status…"</string>
     <string name="ui_bd6948a6f441" formatted="false">"Loading the full history. Wait before copying."</string>
     <string name="ui_5a510839d8b1" formatted="false">"Loading instances"</string>
     <string name="ui_98bcb8fa5647" formatted="false">"Loading instances…"</string>
@@ -274,11 +298,13 @@
     <string name="ui_56f4916f8177" formatted="false">"Select a preview to enter. Storage limits the number of instances; memory and performance limit how many can run together."</string>
     <string name="ui_c490e74b8ded" formatted="false">"Status temporarily unavailable"</string>
     <string name="ui_910383278517" formatted="false">"Transfer cancelled by user"</string>
+    <string name="ui_429ac124aac3" formatted="false">"Swap uses disk to relieve memory pressure and may slow down apps. Stop all IrisBox instances before resizing or disabling it."</string>
     <string name="ui_33819f63ed13" formatted="false">"Invalid frame position"</string>
     <string name="ui_b9e4148e0282" formatted="false">"This folder is empty. Select Import file to begin."</string>
     <string name="ui_16ff9253f805" formatted="false">"Folder refresh cancelled"</string>
     <string name="ui_3c06abe11651" formatted="false">"Confirm deletion"</string>
     <string name="ui_30a6079ce340" formatted="false">"Confirm reset"</string>
+    <string name="ui_fec9a1b14a61" formatted="false">"Not enough disk space. At least 2 GiB of headroom is required."</string>
     <string name="ui_d5cf29ae57e3" formatted="false">"Portrait"</string>
     <string name="ui_f495347d6acf" formatted="false">"Page "</string>
     <string name="ui_81d95e0dc5fe" formatted="false">"Waiting for Magisk authorization and checking the host…"</string>
@@ -301,6 +327,7 @@
     <string name="ui_7debf9cb0372" formatted="false">"Settings"</string>
     <string name="ui_28c63e19176b" formatted="false">"Open an instance from the list"</string>
     <string name="ui_664be1b554d0" formatted="false">"Allow IrisBox in the host Magisk prompt. Connecting…"</string>
+    <string name="ui_5755deb61f71" formatted="false">"Stop all IrisBox instances before changing swap."</string>
     <string name="ui_e9813c6d4b9f" formatted="false">"Install the engine and import a compatible ROM first.\n"</string>
     <string name="ui_f82e3b292bba" formatted="false">"Request sent. Processing…"</string>
     <string name="ui_4216aa6e21bd" formatted="false">"Request incomplete ("</string>
@@ -318,6 +345,7 @@
     <string name="ui_594249700590" formatted="false">"Running"</string>
     <string name="ui_37a78c8dc0a6" formatted="false">"Running memory limit: "</string>
     <string name="ui_da31dfc47974" formatted="false">"Running resolution: "</string>
+    <string name="ui_11d024154013" formatted="false">"Back"</string>
     <string name="ui_53505b1fcd1a" formatted="false">"Back to list"</string>
     <string name="ui_5abb2c0afb2b" formatted="false">"Back to preview"</string>
     <string name="ui_9e3a5417b05e" formatted="false">"This is the actual rendering size. Higher resolution uses more graphics resources and memory.\nUse 960×540 when diagnosing slow rendering. Legacy mode still renders at 1080p and scales the display.\nStop the instance before saving; changes apply at next startup."</string>
@@ -326,6 +354,7 @@
     <string name="ui_2c23c90e1f3a" formatted="false">"Connection ended. Reopen the instance."</string>
     <string name="ui_b8f44104e192" formatted="false">"Connection timed out. Check Magisk authorization and select Reconnect."</string>
     <string name="ui_bd76d510bf82" formatted="false">"Invalid configuration. Select Restore default first."</string>
+    <string name="ui_633cbf0c15d0" formatted="false">"Restore after reboot (host Magisk)"</string>
     <string name="ui_bac95e1e52fe" formatted="false">"Reconnect"</string>
     <string name="ui_3d81345303ab" formatted="false">"Reset"</string>
     <string name="ui_13357ab34dca" formatted="false">"Reset creates fresh Android data while keeping the instance, resolution, memory limit, root option and Google component selection."</string>

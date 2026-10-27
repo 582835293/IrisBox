@@ -68,8 +68,14 @@ def main():
           'hostCameraExposed':False,'guestProjectDiskQuotaEnforced':False,
           'appLanguageChoices':['system','en','zh-CN'],'languagePersistenceTested':True,
           'clashTutorialInteractionTested':True,'clashLongTermBattlesTested':False,
-          'youtubePlaybackTested':True,'angryBirds2GameplayTested':False,
-          'dualInstanceTested':True,'dualHeavyGamesTested':False,'artifacts':artifacts}
+          'youtubePlaybackTested':True,'angryBirds2GameplayTested':True,
+          'angryBirds2TestConditions':{'guestMiB':2048,'hostSwapMiB':2048,'guestRoot':'magisk','scope':'Tutorial slingshot, Red ability and completion score 203332'},
+          'hostSwapSizeChoicesMiB':[0,1024,2048,4096],'hostSwapSettingsTested':True,
+          'hostSwapAutoRestoreRebootTested':True,'hostSwapOffRemovesOwnedHookTested':True,
+          'hostRebootTestedThisEngine':True,'alreadyMapped015NeedsDataMigration':False,
+          'dualInstanceTested':True,'dualHeavyGamesTested':True,
+          'dualGamesConditions':{'guestMemoryMiB':[1024,2048],'hostSwapMiB':2048,'games':['Clash of Clans','Angry Birds 2'],'scope':'Short tutorial interaction and live previews; game idle reconnect observed'},
+          'dualHeavyGamesLongRunTested':False,'artifacts':artifacts}
     (release/'release-manifest.json').write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf8')
     (release/'SHA256SUMS').write_text(''.join(row['sha256']+'  '+row['file']+'\n' for row in artifacts),encoding='ascii')
     (release/'上传说明.txt').write_text(

@@ -1,0 +1,82 @@
+{
+  "date": "2026-10-27",
+  "app": "0.1.6",
+  "engine": "0.1.6-e27",
+  "package": "com.irisbox.viewer",
+  "name": {
+    "en": "IrisBox",
+    "zh": "虹膜空间"
+  },
+  "apkSha256": "2806b9db48c0e99cd76762adf35d58a0450fc892ff9aaa2cd9af6dc3ec74d053",
+  "inputAudits": {
+    "engine": 53,
+    "rom": 116,
+    "guestRoot": 11,
+    "privateGoogleFiles": 54,
+    "localeEntries": 372
+  },
+  "independentPublicBuild": {
+    "nonBrowserPayloadsMatched": 52,
+    "unsignedBrowserEntriesMatched": 3,
+    "privateGooglePayloadsExcluded": true
+  },
+  "hostSwap": {
+    "sizeChoicesMiB": [
+      0,
+      1024,
+      2048,
+      4096
+    ],
+    "realUiSizeTestsPassed": true,
+    "finalMiB": 2048,
+    "autoRestore": true,
+    "realHostRebootRestorePassed": true,
+    "offAfterAutoRemovesOwnedHookPassed": true,
+    "sameFileReEnablePassed": true,
+    "foreignHookAndSymlinkRejected": true,
+    "invalidParametersRejected": true,
+    "runningGuestsRejectChanges": true,
+    "hostGoogleSuspended": false,
+    "memoryGuardReduced": false,
+    "swappinessChanged": false
+  },
+  "dualGames": {
+    "basicInteractionPassed": true,
+    "games": [
+      "com.supercell.clashofclans",
+      "com.rovio.baba"
+    ],
+    "guestMemoryMiB": [
+      1024,
+      2048
+    ],
+    "hostSwapMiB": 2048,
+    "clashScope": "Tutorial village and real Viewer dialogue interaction; normal idle reload observed",
+    "secondGuestGameSetup": "Existing on-device Play-installed APKs passed to the other guest PackageManager; no account/data clone; not a second Play download",
+    "angryScope": "Two tutorial rooms, actual slingshot/Red ability, completion score 203332",
+    "sampleCount": 24,
+    "sampleSpanSeconds": 146.8,
+    "minHostAvailableKiB": 809104,
+    "oomKills": 0,
+    "bothLivePreviewSequencesAdvanced": true,
+    "longTermBattlesTested": false,
+    "frameRateGuaranteed": false
+  },
+  "data": {
+    "instanceIdsAndRevisionsRetained": true,
+    "googleAccountFingerprintRetained": true,
+    "oldProjectStoppedAndConfigRetained": true,
+    "hostUid0Fallback": false,
+    "gsfIdRetained": true,
+    "bothQaCountersRetained": true,
+    "bothUserNamespacesVerifiedAfterFinalRestart": true,
+    "staleSessionRejected": true
+  },
+  "limitations": {
+    "googleDeviceCertificationPassed": false,
+    "freshHostFlashBootTested": false,
+    "physicalCameraExposed": false,
+    "guestProjectDiskQuotaEnforced": false
+  },
+  "evidence": "Original captures, accounts, receipts and logs remain private. Selected deterministic crops in docs/images."
+}

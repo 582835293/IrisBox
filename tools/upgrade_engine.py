@@ -22,11 +22,11 @@ def main():
         assert re.fullmatch(r'/data/irisbox/\.upgrade-[a-f0-9]{32}',stage)
         print(shell('test ! -L '+stage+'\nsh '+stage+'/recover.sh',timeout=180));return
     if args.from_apk is None:parser.error('--from-apk is required unless --recover is selected')
-    old,old_raw=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.1.5.apk')
+    old,old_raw=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.1.6.apk')
     with zipfile.ZipFile(io.BytesIO(old_raw)) as archive:
         old_base=re.search(r'^BASE=(/data/[a-z0-9_]+/runtime)$',archive.read('common.sh').decode(),re.M)
     assert old_base and old_base[1]==BASE,'Use migrate_namespace.py for a different package/storage namespace'
-    assert old['version'] in ('0.1.5-e22','0.1.5-e23','0.1.5-e24') and new['version']=='0.1.5-e25'
+    assert old['version'] in ('0.1.5-e25','0.1.6-e26') and new['version']=='0.1.6-e27'
     current=json.loads(shell('cat '+BASE+'/engine.json'))
     assert current==old,'Installed engine is not the supplied known baseline'
     with API() as api:

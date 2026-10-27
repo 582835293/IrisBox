@@ -216,6 +216,7 @@ public final class ListActivity extends Activity {
         reconnect.setOnClickListener(v -> { rootAttempted = false; connectManager(); });
         heading.addView(reconnect);
         Button language=new Button(this);language.setText("EN / 中文");language.setOnClickListener(v->I18n.choose(this));heading.addView(language);
+        Button swap=new Button(this);swap.setText(I18n.known("交换空间"));swap.setOnClickListener(v->startActivity(new Intent(this,HostSwapActivity.class)));heading.addView(swap);
         Button roms = new Button(this);
         roms.setText(I18n.s(R.string.ui_624266d31bd4));
         roms.setOnClickListener(v -> startActivity(new Intent(this, SetupActivity.class)));

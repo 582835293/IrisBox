@@ -124,3 +124,24 @@ The 0.1.5 preview is public. Server digests/sizes matched the APK, SHA256SUMS an
 ![Angry Birds 2 update remains offline; gameplay has not passed](../images/angry-offline.png)
 
 A Root-off control run verified su/magiskd absent and retained account identity, but the Host fell below 512 MiB available. The watchdog normally stopped that checked session at 410 seconds; OOM-kill remained zero. This is inconclusive about Root compatibility, not a passed control. Original Magisk and the 2048-MiB desktop were restored. No swap, reduced guard, boot configuration change or Host Google suspension was applied; temporary 2-GiB swap awaits explicit owner choice. The maintenance --recover option now works independently, while upgrades still require the exact baseline APK.
+
+
+## October 27: 0.1.6/e27 swap settings and two games
+
+The home/list Swap space page supports Off / 1 / 2 / 4 GiB, actual usage/RAM/disk status and optional host-Magisk reboot restoration. Final version: 0.1.6, code 120, e27. Normally stop all IrisBox guests before resizing/disabling. Host Google, swappiness, guest limits and the 512-MiB host guard were unchanged.
+
+Real UI tests covered 1 GiB→4 GiB→Off→2 GiB with auto restore. A real host reboot restored 2 GiB without opening the App or a computer enabling it. The final APK also passed auto-enabled→Off: swap stopped and only its own boot hook was removed. Re-enabling reused the same file/inode without reformatting. Invalid size/flags, symlinks, a foreign same-name hook and running-guest changes were rejected. Owned test fixtures and inactive capacity-test files were cleaned up.
+
+The first e26 attempt safely rejected configuration because Android mksh marks extra descriptors close-on-exec; no swap file was created. e27 explicitly passes the lock FD and passed device tests. Guest startup and swap changes share locking; it was released after both guests became ready rather than inherited by long-lived children. An independent public-source full build matched 52 non-browser payloads and 3 unsigned browser entries; audits passed 53/116/11/54 inputs and 372 locale entries. Final APK replacement retained both live guest sessions.
+
+| Test | Actual result and boundary |
+|---|---|
+| Conditions | One 4-GB Pi, 2-GiB host swap; guest 1 at 1024 MiB without Google/Root, guest 2 at 2048 MiB with retained Google/Magisk. Not two 2-GB guests or two high-frame-rate fullscreen windows. |
+| Clash of Clans 18.647.5 | The other guest installed the 5 existing on-device, Play-downloaded official APKs through its PackageManager. No account/save clone or claimed second Play download. Village loaded; real Viewer input advanced tutorial dialogue. Idle disconnection occurred; the original Reload Game flow recovered it. Final dual capture is after reconnect. Long battles, clan wars and payments untested. |
+| Angry Birds 2 26.7.1 | While Clash ran, actual slingshot hits, target destruction, the second room and Red’s ability completed the tutorial at 203,332 points. The tutorial rejects off-guide aim with a red cross; green alignment launched normally. This was not a broken input channel. |
+| Observation | 24 samples over about 146.8s kept both guests ready; minimum Host MemAvailable 809104 KiB (about 790.1 MiB), both OOM-kill counters zero. Both preview sequences advanced. This is not a long-run, all-level or frame-rate guarantee. |
+| Retention/isolation | Account fingerprint, guest revisions and both User namespace identities rechecked; no Host-UID0 fallback. After host reboot, the previous project remained stopped with scripts/config/registry retained. |
+
+Earlier YouTube playback, real Play downloads, Xiangqi QR play, languages and orientation retain their original version/date scope. Google device certification has not passed acceptance; certification values, Google APKs and fingerprints were not overridden. See [swap/recovery](low-memory.md) for resume, boot restoration and uninstall.
+
+![Actual simultaneously running games](../images/dual-games.png)

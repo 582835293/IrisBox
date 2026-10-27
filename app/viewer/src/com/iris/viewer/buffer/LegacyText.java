@@ -71,7 +71,15 @@ final class LegacyText {
         IDS.put("不能创建工作目录", R.string.ui_d96fc7526625);
         IDS.put("不能创建暂存目录", R.string.ui_97d351c230ee);
         IDS.put("不能清理暂存文件", R.string.ui_5e1466abc843);
+        IDS.put("交换文件缺少维护记录，已停止操作", R.string.ui_5a0bfda7e17d);
+        IDS.put("交换文件路径不安全，已停止操作", R.string.ui_8f1bf0307305);
+        IDS.put("交换文件身份校验失败，保留现场等待维护", R.string.ui_4b9bba4e6a12);
         IDS.put("交换目录：下载 / IrisExchange。文件只传给当前实例；APK安装需在实例内确认。", R.string.ui_6bac12d05195);
+        IDS.put("交换空间", R.string.ui_eb02f52661da);
+        IDS.put("交换空间操作失败，请确认宿主Root授权及引擎版本", R.string.ui_e6c9e933d09c);
+        IDS.put("交换空间由所有实例共享，不会增加物理内存。开机恢复仅启用交换空间，不会启动实例。关闭后文件保留；切换大小可能占用额外磁盘。", R.string.ui_d2f7ea0129c0);
+        IDS.put("交换空间设置已应用", R.string.ui_f075297f2ddb);
+        IDS.put("交换空间设置损坏，保留现场等待维护", R.string.ui_f87312a2da37);
         IDS.put("仅显示本实例的交换目录", R.string.ui_9a15c8d8f000);
         IDS.put("传输已取消", R.string.ui_c2013c9c102f);
         IDS.put("传输未完成：", R.string.ui_d423be219c7c);
@@ -85,6 +93,7 @@ final class LegacyText {
         IDS.put("允许应用请求 Root（Magisk）", R.string.ui_9e3667cb5ffd);
         IDS.put("先授权并检查宿主，然后安装引擎、导入 ROM。", R.string.ui_7403656d2fd1);
         IDS.put("关闭", R.string.ui_6c14bd7f6f9e);
+        IDS.put("关闭交换空间", R.string.ui_99183a8a2dd4);
         IDS.put("内存", R.string.ui_d014ab77038c);
         IDS.put("内存上限（GiB）", R.string.ui_01ab180f0a34);
         IDS.put("内存上限：暂不可用", R.string.ui_ccdfdd38867f);
@@ -102,6 +111,7 @@ final class LegacyText {
         IDS.put("删除后，实例卡片和所有数据都会移除。", R.string.ui_b1b8c89c34e7);
         IDS.put("删除实例", R.string.ui_6e73a5ffa5cc);
         IDS.put("刷新列表", R.string.ui_bd82e40e45a0);
+        IDS.put("刷新状态", R.string.ui_7cc7f07a2c03);
         IDS.put("包文件数超出范围", R.string.ui_0e7a97389d3f);
         IDS.put("包格式或适配版本不支持", R.string.ui_0377600969cb);
         IDS.put("包清单包含非法文件：", R.string.ui_1b47c364b953);
@@ -112,6 +122,7 @@ final class LegacyText {
         IDS.put("取消", R.string.ui_4d0b4688c787);
         IDS.put("取消传输", R.string.ui_965b34119adf);
         IDS.put("另一项传输正在进行，请稍后重试", R.string.ui_a43c7b66fb3a);
+        IDS.put("可用内存不足以安全停用交换空间，请先释放宿主内存", R.string.ui_c860f4f36361);
         IDS.put("启动", R.string.ui_ebd26da42171);
         IDS.put("启动后从第一行保留本次日志，可滚动查看，长按复制全文。", R.string.ui_b28f7fc03b17);
         IDS.put("启动后这里会显示本次启动的实际日志。", R.string.ui_abaa5827dc73);
@@ -130,6 +141,7 @@ final class LegacyText {
         IDS.put("实例已变化，请返回列表重新选择", R.string.ui_fc03a16921a8);
         IDS.put("实例桌面", R.string.ui_428cbfb8a4e1);
         IDS.put("实例正在全屏显示", R.string.ui_e1216a93fd24);
+        IDS.put("实例正在启动，请稍后重试", R.string.ui_d0ae4b97d606);
         IDS.put("实例编号", R.string.ui_91b40ea9119e);
         IDS.put("实例身份已变化，拒绝接收文件", R.string.ui_c01087274984);
         IDS.put("实例身份无效", R.string.ui_e4377db610c0);
@@ -159,13 +171,18 @@ final class LegacyText {
         IDS.put("已提交内存设置，等待保存结果", R.string.ui_4bd157a9d214);
         IDS.put("已提交分辨率设置，等待保存结果", R.string.ui_87016bfffbd7);
         IDS.put("已离开文件页面，传输已取消", R.string.ui_ad3b13c31706);
+        IDS.put("已设置：%d MiB　已启用：%d MiB　已用：%d MiB\n宿主可用内存：%d MiB　磁盘可用：%d MiB　文件占用：%d MiB", R.string.ui_84223ea001cf);
+        IDS.put("应用交换空间设置", R.string.ui_10df0753a8bf);
         IDS.put("开启后，应用向 Magisk 请求 Root，仍需你在实例内点击允许。授权、模块和 Zygisk 设置各实例独立。\n模块 ZIP 在 Magisk 的模块页面安装；Zygisk 在 Magisk 设置里开启。改动后请返回 Iris，停止再启动此实例。\n装模块后无法开机：停止实例，勾选救援启动。它会禁用所有模块和 Zygisk，保留应用、账号和模块文件，方便进入 Magisk 修复。修复后取消救援，再按需启用模块和 Zygisk。\n关闭 Root 会保留记录；重置数据会清除记录。刷机升级和全局内核／SELinux 修改不受支持。", R.string.ui_4a3c8724af26);
         IDS.put("开启后，应用向 Magisk 请求 Root，仍需你在实例内点击允许。授权、模块和 Zygisk 设置各实例独立。\n模块 ZIP 在 Magisk 的模块页面安装；Zygisk 在 Magisk 设置里开启。改动后请返回 Iris，停止再启动此实例。\n装模块后无法开机：停止实例，勾选救援启动。它会禁用所有模块和 Zygisk，保留应用、账号和模块文件，方便进入 Magisk 修复。修复后取消救援，再按需启用模块和 Zygisk。\n关闭 Root 会保留记录；重置数据会清除记录。刷机升级和全局内核／SELinux 修改不受支持。\n", R.string.ui_a1174bf6c57c);
         IDS.put("开启应用 Root（Magisk，应用需单独授权）", R.string.ui_7ae34f47b8bb);
+        IDS.put("开机脚本名称已被其他内容占用，未覆盖", R.string.ui_9709c11361d5);
+        IDS.put("开机脚本路径不安全，已停止操作", R.string.ui_3f0e5b6bbb81);
         IDS.put("引擎安装与 ROM 导入", R.string.ui_e49153879bdd);
         IDS.put("引擎安装成功。请选择并导入 ROM 包。", R.string.ui_005bf385d786);
         IDS.put("引擎已安装，可导入 ROM", R.string.ui_a28d875aa888);
         IDS.put("引擎版本不匹配", R.string.ui_7974c4e8615f);
+        IDS.put("引擎维护尚未完成，请先恢复维护", R.string.ui_a7f69fc8a455);
         IDS.put("引擎：", R.string.ui_dd0fb9f395bc);
         IDS.put("引擎：未安装", R.string.ui_f82f850f42fc);
         IDS.put("归档有重复、越界或未声明文件：", R.string.ui_ba5758a6244b);
@@ -202,6 +219,9 @@ final class LegacyText {
         IDS.put("新实例有独立的应用、账号和文件。\n默认 960×540、内存上限 1.25 GiB、OpenGL 游戏兼容环境。\n可以创建多个实例；4 GB 树莓派同时运行的数量取决于实际内存和应用负载。", R.string.ui_83ff48e09334);
         IDS.put("方向切换失败，请稍后重试", R.string.ui_866b439f84cb);
         IDS.put("无法写入选择的位置", R.string.ui_8c9d5291cf02);
+        IDS.put("无法分配交换文件，请检查存储空间", R.string.ui_2aa912951df3);
+        IDS.put("无法初始化交换文件，请检查存储支持", R.string.ui_89d23c1e22d4);
+        IDS.put("无法启用交换空间，请检查内核和存储支持", R.string.ui_f2ec2d34506d);
         IDS.put("无法打开所选文件", R.string.ui_63bda37a9075);
         IDS.put("无法申请宿主 root，请检查 Magisk 后重新连接。", R.string.ui_a6112556325f);
         IDS.put("无法确认目标实例", R.string.ui_42edfd06d964);
@@ -219,7 +239,9 @@ final class LegacyText {
         IDS.put("未启动。\n\n", R.string.ui_9807d3930434);
         IDS.put("未完成：", R.string.ui_f5064e36fb9d);
         IDS.put("未找到 MagiskSU。请先在宿主安装 Magisk，并允许 虹膜空间 获取 root。", R.string.ui_72166f0ac194);
+        IDS.put("未收到交换空间状态，请刷新检查", R.string.ui_f53ca2c4b26c);
         IDS.put("未知配置操作", R.string.ui_831cdf82e2aa);
+        IDS.put("未能停用交换空间，请刷新查看实际状态", R.string.ui_848901754aec);
         IDS.put("未运行", R.string.ui_b2ba9634d9cf);
         IDS.put("未连接", R.string.ui_f2f3e9803ccb);
         IDS.put("本次", R.string.ui_7fd47e102e12);
@@ -257,6 +279,8 @@ final class LegacyText {
         IDS.put("正在申请宿主 root；首次请允许 Magisk 的 虹膜空间 授权…", R.string.ui_50f106ba30fc);
         IDS.put("正在确认实例和交换目录", R.string.ui_84cb10f62524);
         IDS.put("正在等待上一项传输收尾，暂时保留当前目录…", R.string.ui_73685fac59f8);
+        IDS.put("正在设置交换空间，请等待完成…", R.string.ui_7b6a27847cd3);
+        IDS.put("正在读取交换空间状态…", R.string.ui_9c659f12d004);
         IDS.put("正在读取完整历史，请稍后再复制", R.string.ui_bd6948a6f441);
         IDS.put("正在读取实例列表", R.string.ui_5a510839d8b1);
         IDS.put("正在读取实例列表…", R.string.ui_98bcb8fa5647);
@@ -276,11 +300,13 @@ final class LegacyText {
         IDS.put("点击画面进入；新增数量受存储空间限制，同时运行数量受内存和性能限制。", R.string.ui_56f4916f8177);
         IDS.put("状态暂不可用", R.string.ui_c490e74b8ded);
         IDS.put("用户已取消传输", R.string.ui_910383278517);
+        IDS.put("用磁盘缓解内存不足，速度可能变慢。更改大小或关闭前，请先停止所有虹膜空间实例。", R.string.ui_429ac124aac3);
         IDS.put("画面位置无效", R.string.ui_33819f63ed13);
         IDS.put("目录中还没有文件，点击“导入文件”开始。", R.string.ui_b9e4148e0282);
         IDS.put("目录刷新已取消", R.string.ui_16ff9253f805);
         IDS.put("确认删除", R.string.ui_3c06abe11651);
         IDS.put("确认重置", R.string.ui_30a6079ce340);
+        IDS.put("磁盘空间不足，需要保留至少2GB余量", R.string.ui_fec9a1b14a61);
         IDS.put("竖屏", R.string.ui_d5cf29ae57e3);
         IDS.put("第 ", R.string.ui_f495347d6acf);
         IDS.put("等待 Magisk 授权并检查宿主…", R.string.ui_81d95e0dc5fe);
@@ -303,6 +329,7 @@ final class LegacyText {
         IDS.put("设置", R.string.ui_7debf9cb0372);
         IDS.put("请从实例列表进入", R.string.ui_28c63e19176b);
         IDS.put("请允许宿主 Magisk 的 虹膜空间 授权，正在连接…", R.string.ui_664be1b554d0);
+        IDS.put("请先停止所有虹膜空间实例，再更改交换空间", R.string.ui_5755deb61f71);
         IDS.put("请先安装引擎并导入适配 ROM。\n", R.string.ui_e9813c6d4b9f);
         IDS.put("请求已发出，正在处理…", R.string.ui_f82e3b292bba);
         IDS.put("请求未完成（", R.string.ui_4216aa6e21bd);
@@ -320,6 +347,7 @@ final class LegacyText {
         IDS.put("运行中", R.string.ui_594249700590);
         IDS.put("运行内存上限：", R.string.ui_37a78c8dc0a6);
         IDS.put("运行分辨率：", R.string.ui_da31dfc47974);
+        IDS.put("返回", R.string.ui_11d024154013);
         IDS.put("返回列表", R.string.ui_53505b1fcd1a);
         IDS.put("返回预览", R.string.ui_5abb2c0afb2b);
         IDS.put("这是实例实际绘制的画面大小。分辨率越高，画面越清晰，图形和内存开销也越大。\n排查卡顿建议选 960×540；旧版兼容仍绘制 1080p，只把显示画面缩小。\n停止后保存，下次启动生效。", R.string.ui_9e3a5417b05e);
@@ -328,6 +356,7 @@ final class LegacyText {
         IDS.put("连接已结束，请重新进入实例", R.string.ui_2c23c90e1f3a);
         IDS.put("连接超时。请确认 Magisk 授权，再点重新连接。", R.string.ui_b8f44104e192);
         IDS.put("配置异常，请先点“恢复默认”", R.string.ui_bd76d510bf82);
+        IDS.put("重启后自动恢复（宿主Magisk）", R.string.ui_633cbf0c15d0);
         IDS.put("重新连接", R.string.ui_bac95e1e52fe);
         IDS.put("重置", R.string.ui_3d81345303ab);
         IDS.put("重置后，保留实例卡片、分辨率、内存上限、Root 选项和 Google 组件配置，恢复全新 Android 数据。", R.string.ui_13357ab34dca);

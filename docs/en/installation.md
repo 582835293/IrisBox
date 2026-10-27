@@ -43,3 +43,6 @@ The factory fstab is explicitly pinned to `/dev/block/sda2`, `sda3` and `sda4`. 
 The original factory userdata was only about 4.6 GiB, too small for compressed ROM plus staging and installation. The release image therefore keeps the original boot/system/vendor partitions but enlarges the newly formatted empty userdata to **12 GiB**, preserving filesystem feature flags. Total raw image size is **15,436,087,296 bytes**; its initial import no longer depends on partition expansion. Physical first boot remains untested.
 
 For this preview, connect only the intended USB boot disk and ensure it enumerates as sda. Multiple disks or mixed SD/USB boot require a separate adapted fstab and validation.
+
+
+Version 0.1.6 adds **Swap space** on the home/list page: Off / 1 / 2 / 4 GiB and optional reboot restoration. Normally stop all IrisBox guests before resizing or disabling. See [swap, touch input and recovery](low-memory.md).

@@ -40,6 +40,15 @@ public final class SetupService extends Service {
                     Uri source = Uri.parse(uri == null ? "" : uri);
                     if (!"content".equals(source.getScheme())) throw new java.io.IOException(I18n.s(R.string.ui_fca4b0aaeb83));
                     message(this, EngineInstaller.importRom(this, source, this::progress));
+                } else if ("swap".equals(action)) {
+                    progress(I18n.known("正在设置交换空间，请等待完成…"));
+                    try {
+                        HostSwap.run("configure",intent.getIntExtra("mib",-1),intent.getBooleanExtra("automatic",false));
+                        getSharedPreferences("swap",0).edit().putString("result","OK").apply();
+                        message(this,I18n.known("交换空间设置已应用"));
+                    } catch(Exception failure) {
+                        getSharedPreferences("swap",0).edit().putString("result",failure.getMessage()).apply();throw failure;
+                    }
                 } else throw new java.io.IOException(I18n.s(R.string.ui_831cdf82e2aa));
             } catch (Exception failure) {
                 message(this, I18n.s(R.string.ui_f5064e36fb9d) + I18n.diagnostic(failure.getMessage()) + I18n.s(R.string.ui_7f293b95fed9));

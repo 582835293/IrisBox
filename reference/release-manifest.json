@@ -1,12 +1,12 @@
 {
   "product": "IrisBox",
   "chineseName": "虹膜空间",
-  "release": "v0.1.5-preview",
+  "release": "v0.1.6-preview",
   "repository": "https://github.com/582835293/IrisBox",
   "package": "com.irisbox.viewer",
-  "versionName": "0.1.5",
-  "versionCode": 119,
-  "engineVersion": "0.1.5-e25",
+  "versionName": "0.1.6",
+  "versionCode": 120,
+  "engineVersion": "0.1.6-e27",
   "publicRomGoogleIncluded": false,
   "hostMagiskIncluded": false,
   "freshCardFlashTested": false,
@@ -27,16 +27,46 @@
   "clashTutorialInteractionTested": true,
   "clashLongTermBattlesTested": false,
   "youtubePlaybackTested": true,
-  "angryBirds2GameplayTested": false,
+  "angryBirds2GameplayTested": true,
+  "angryBirds2TestConditions": {
+    "guestMiB": 2048,
+    "hostSwapMiB": 2048,
+    "guestRoot": "magisk",
+    "scope": "Tutorial slingshot, Red ability and completion score 203332"
+  },
+  "hostSwapSizeChoicesMiB": [
+    0,
+    1024,
+    2048,
+    4096
+  ],
+  "hostSwapSettingsTested": true,
+  "hostSwapAutoRestoreRebootTested": true,
+  "hostSwapOffRemovesOwnedHookTested": true,
+  "hostRebootTestedThisEngine": true,
+  "alreadyMapped015NeedsDataMigration": false,
   "dualInstanceTested": true,
-  "dualHeavyGamesTested": false,
+  "dualHeavyGamesTested": true,
+  "dualGamesConditions": {
+    "guestMemoryMiB": [
+      1024,
+      2048
+    ],
+    "hostSwapMiB": 2048,
+    "games": [
+      "Clash of Clans",
+      "Angry Birds 2"
+    ],
+    "scope": "Short tutorial interaction and live previews; game idle reconnect observed"
+  },
+  "dualHeavyGamesLongRunTested": false,
   "artifacts": [
     {
-      "file": "IrisBox-0.1.5.apk",
-      "bytes": 17961713,
-      "sha256": "10157a8059bfc12d75b64f7d3e8180ab98dac627565e10b6f7dfe3dd0e305b1a",
-      "distribution": "github-release",
-      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.5-preview/IrisBox-0.1.5.apk"
+      "file": "IrisBox-0.1.6.apk",
+      "bytes": 17974001,
+      "sha256": "2806b9db48c0e99cd76762adf35d58a0450fc892ff9aaa2cd9af6dc3ec74d053",
+      "distribution": "release-page",
+      "downloadUrl": null
     },
     {
       "file": "IrisBox-rpi4-a13-aosp.irisrom",

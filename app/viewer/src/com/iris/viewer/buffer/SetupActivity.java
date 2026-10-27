@@ -35,7 +35,9 @@ public final class SetupActivity extends Activity {
         LinearLayout layout = new LinearLayout(this); layout.setOrientation(1); layout.setPadding(28,16,28,16); layout.setBackgroundColor(Color.rgb(20,24,30));
         TextView title = label(I18n.s(R.string.ui_1e14f55edbd2), 25); layout.addView(title);
         layout.addView(label(I18n.s(R.string.ui_735e5a8789a6),16));
-        language=new Button(this);language.setText("EN / 中文");language.setOnClickListener(v->I18n.choose(this));layout.addView(language);
+        LinearLayout settings=new LinearLayout(this);layout.addView(settings);
+        language=new Button(this);language.setText("EN / 中文");language.setOnClickListener(v->I18n.choose(this));settings.addView(language,new LinearLayout.LayoutParams(0,-2,1));
+        button(settings,I18n.known("交换空间"),()->startActivity(new Intent(this,HostSwapActivity.class)));
         LinearLayout row = new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL); layout.addView(row);
         check = button(row,I18n.s(R.string.ui_719fc1bb80cb), () -> inspect());
         install = button(row,I18n.s(R.string.ui_5f6b5ee42ec1), () -> task("install",null));

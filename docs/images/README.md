@@ -22,3 +22,12 @@ New captures show an interactive Clash of Clans tutorial village, the cropped pl
 - `angry-offline.png`：Angry Birds 2重建获准的首次运行数据后进入Main场景，但更新提示离线；这是未通过项目的实际画面，不作为游玩成功证明。无账号、年龄或玩家标识，只有PNG重新编码。
 
 `angry-offline.png` records the unresolved official-update offline prompt, not successful gameplay; no account/age/player identifier is present.
+
+
+## 2026-10-27：0.1.6/e27 交换空间与双游戏
+
+- `swap-settings-zh.png`、`swap-settings-en.png`：真实App的2GiB/重启自动恢复设置，确定性裁去宿主系统栏及导航区域；没有账号或设备标识。
+- `angry-gameplay.png`：e27双游戏期间的Red技能与实际目标破坏；`angry-tutorial.png`为第一段99,792分后进入第二段的画面。此前e25单实例条件也通过，当前公开文件更新为e27真实验收。
+- `dual-games.png`：同一宿主同时运行的两实例，左侧1024MiB部落冲突新手村庄，右侧2048MiB愤怒的小鸟2教程结算203,332分；宿主2GiB交换空间。仅裁去宿主系统栏和底部导航，没有拼接两次单独运行的图片。部落冲突曾因空闲断线，原提示保留私有记录；公开双开图是按原有Reload Game重连后拍摄。
+
+The new EN/ZH swap settings and dual-game captures are actual 0.1.6/e27 device frames. Only deterministic cropping/RGB PNG re-encoding was used. The paired list is one real simultaneous capture, not a composite of separate runs. Clash’s normal idle-disconnect evidence stays private; the published pair follows its original reload flow. Angry Birds 2 shows real target destruction, then a second tutorial room at 99,792 and a final 203,332 result. No age, account, player identifier or personal avatar is present. This does not establish long-term battles, stable frame rates or device certification. Game/Google APKs are not distributed.

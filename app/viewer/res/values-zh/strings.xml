@@ -69,7 +69,15 @@
     <string name="ui_d96fc7526625" formatted="false">"不能创建工作目录"</string>
     <string name="ui_97d351c230ee" formatted="false">"不能创建暂存目录"</string>
     <string name="ui_5e1466abc843" formatted="false">"不能清理暂存文件"</string>
+    <string name="ui_5a0bfda7e17d" formatted="false">"交换文件缺少维护记录，已停止操作"</string>
+    <string name="ui_8f1bf0307305" formatted="false">"交换文件路径不安全，已停止操作"</string>
+    <string name="ui_4b9bba4e6a12" formatted="false">"交换文件身份校验失败，保留现场等待维护"</string>
     <string name="ui_6bac12d05195" formatted="false">"交换目录：下载 / IrisExchange。文件只传给当前实例；APK安装需在实例内确认。"</string>
+    <string name="ui_eb02f52661da" formatted="false">"交换空间"</string>
+    <string name="ui_e6c9e933d09c" formatted="false">"交换空间操作失败，请确认宿主Root授权及引擎版本"</string>
+    <string name="ui_d2f7ea0129c0" formatted="false">"交换空间由所有实例共享，不会增加物理内存。开机恢复仅启用交换空间，不会启动实例。关闭后文件保留；切换大小可能占用额外磁盘。"</string>
+    <string name="ui_f075297f2ddb" formatted="false">"交换空间设置已应用"</string>
+    <string name="ui_f87312a2da37" formatted="false">"交换空间设置损坏，保留现场等待维护"</string>
     <string name="ui_9a15c8d8f000" formatted="false">"仅显示本实例的交换目录"</string>
     <string name="ui_c2013c9c102f" formatted="false">"传输已取消"</string>
     <string name="ui_d423be219c7c" formatted="false">"传输未完成："</string>
@@ -83,6 +91,7 @@
     <string name="ui_9e3667cb5ffd" formatted="false">"允许应用请求 Root（Magisk）"</string>
     <string name="ui_7403656d2fd1" formatted="false">"先授权并检查宿主，然后安装引擎、导入 ROM。"</string>
     <string name="ui_6c14bd7f6f9e" formatted="false">"关闭"</string>
+    <string name="ui_99183a8a2dd4" formatted="false">"关闭交换空间"</string>
     <string name="ui_d014ab77038c" formatted="false">"内存"</string>
     <string name="ui_01ab180f0a34" formatted="false">"内存上限（GiB）"</string>
     <string name="ui_ccdfdd38867f" formatted="false">"内存上限：暂不可用"</string>
@@ -100,6 +109,7 @@
     <string name="ui_b1b8c89c34e7" formatted="false">"删除后，实例卡片和所有数据都会移除。"</string>
     <string name="ui_6e73a5ffa5cc" formatted="false">"删除实例"</string>
     <string name="ui_bd82e40e45a0" formatted="false">"刷新列表"</string>
+    <string name="ui_7cc7f07a2c03" formatted="false">"刷新状态"</string>
     <string name="ui_0e7a97389d3f" formatted="false">"包文件数超出范围"</string>
     <string name="ui_0377600969cb" formatted="false">"包格式或适配版本不支持"</string>
     <string name="ui_1b47c364b953" formatted="false">"包清单包含非法文件："</string>
@@ -110,6 +120,7 @@
     <string name="ui_4d0b4688c787" formatted="false">"取消"</string>
     <string name="ui_965b34119adf" formatted="false">"取消传输"</string>
     <string name="ui_a43c7b66fb3a" formatted="false">"另一项传输正在进行，请稍后重试"</string>
+    <string name="ui_c860f4f36361" formatted="false">"可用内存不足以安全停用交换空间，请先释放宿主内存"</string>
     <string name="ui_ebd26da42171" formatted="false">"启动"</string>
     <string name="ui_b28f7fc03b17" formatted="false">"启动后从第一行保留本次日志，可滚动查看，长按复制全文。"</string>
     <string name="ui_abaa5827dc73" formatted="false">"启动后这里会显示本次启动的实际日志。"</string>
@@ -128,6 +139,7 @@
     <string name="ui_fc03a16921a8" formatted="false">"实例已变化，请返回列表重新选择"</string>
     <string name="ui_428cbfb8a4e1" formatted="false">"实例桌面"</string>
     <string name="ui_e1216a93fd24" formatted="false">"实例正在全屏显示"</string>
+    <string name="ui_d0ae4b97d606" formatted="false">"实例正在启动，请稍后重试"</string>
     <string name="ui_91b40ea9119e" formatted="false">"实例编号"</string>
     <string name="ui_c01087274984" formatted="false">"实例身份已变化，拒绝接收文件"</string>
     <string name="ui_e4377db610c0" formatted="false">"实例身份无效"</string>
@@ -157,13 +169,18 @@
     <string name="ui_4bd157a9d214" formatted="false">"已提交内存设置，等待保存结果"</string>
     <string name="ui_87016bfffbd7" formatted="false">"已提交分辨率设置，等待保存结果"</string>
     <string name="ui_ad3b13c31706" formatted="false">"已离开文件页面，传输已取消"</string>
+    <string name="ui_84223ea001cf" formatted="false">"已设置：%d MiB　已启用：%d MiB　已用：%d MiB\n宿主可用内存：%d MiB　磁盘可用：%d MiB　文件占用：%d MiB"</string>
+    <string name="ui_10df0753a8bf" formatted="false">"应用交换空间设置"</string>
     <string name="ui_4a3c8724af26" formatted="false">"开启后，应用向 Magisk 请求 Root，仍需你在实例内点击允许。授权、模块和 Zygisk 设置各实例独立。\n模块 ZIP 在 Magisk 的模块页面安装；Zygisk 在 Magisk 设置里开启。改动后请返回虹膜空间，停止再启动此实例。\n装模块后无法开机：停止实例，勾选救援启动。它会禁用所有模块和 Zygisk，保留应用、账号和模块文件，方便进入 Magisk 修复。修复后取消救援，再按需启用模块和 Zygisk。\n关闭 Root 会保留记录；重置数据会清除记录。刷机升级和全局内核／SELinux 修改不受支持。"</string>
     <string name="ui_a1174bf6c57c" formatted="false">"开启后，应用向 Magisk 请求 Root，仍需你在实例内点击允许。授权、模块和 Zygisk 设置各实例独立。\n模块 ZIP 在 Magisk 的模块页面安装；Zygisk 在 Magisk 设置里开启。改动后请返回虹膜空间，停止再启动此实例。\n装模块后无法开机：停止实例，勾选救援启动。它会禁用所有模块和 Zygisk，保留应用、账号和模块文件，方便进入 Magisk 修复。修复后取消救援，再按需启用模块和 Zygisk。\n关闭 Root 会保留记录；重置数据会清除记录。刷机升级和全局内核／SELinux 修改不受支持。\n"</string>
     <string name="ui_7ae34f47b8bb" formatted="false">"开启应用 Root（Magisk，应用需单独授权）"</string>
+    <string name="ui_9709c11361d5" formatted="false">"开机脚本名称已被其他内容占用，未覆盖"</string>
+    <string name="ui_3f0e5b6bbb81" formatted="false">"开机脚本路径不安全，已停止操作"</string>
     <string name="ui_e49153879bdd" formatted="false">"引擎安装与 ROM 导入"</string>
     <string name="ui_005bf385d786" formatted="false">"引擎安装成功。请选择并导入 ROM 包。"</string>
     <string name="ui_a28d875aa888" formatted="false">"引擎已安装，可导入 ROM"</string>
     <string name="ui_7974c4e8615f" formatted="false">"引擎版本不匹配"</string>
+    <string name="ui_a7f69fc8a455" formatted="false">"引擎维护尚未完成，请先恢复维护"</string>
     <string name="ui_dd0fb9f395bc" formatted="false">"引擎："</string>
     <string name="ui_f82f850f42fc" formatted="false">"引擎：未安装"</string>
     <string name="ui_ba5758a6244b" formatted="false">"归档有重复、越界或未声明文件："</string>
@@ -200,6 +217,9 @@
     <string name="ui_83ff48e09334" formatted="false">"新实例有独立的应用、账号和文件。\n默认 960×540、内存上限 1.25 GiB、OpenGL 游戏兼容环境。\n可以创建多个实例；4 GB 树莓派同时运行的数量取决于实际内存和应用负载。"</string>
     <string name="ui_866b439f84cb" formatted="false">"方向切换失败，请稍后重试"</string>
     <string name="ui_8c9d5291cf02" formatted="false">"无法写入选择的位置"</string>
+    <string name="ui_2aa912951df3" formatted="false">"无法分配交换文件，请检查存储空间"</string>
+    <string name="ui_89d23c1e22d4" formatted="false">"无法初始化交换文件，请检查存储支持"</string>
+    <string name="ui_f2ec2d34506d" formatted="false">"无法启用交换空间，请检查内核和存储支持"</string>
     <string name="ui_63bda37a9075" formatted="false">"无法打开所选文件"</string>
     <string name="ui_a6112556325f" formatted="false">"无法申请宿主 root，请检查 Magisk 后重新连接。"</string>
     <string name="ui_42edfd06d964" formatted="false">"无法确认目标实例"</string>
@@ -217,7 +237,9 @@
     <string name="ui_9807d3930434" formatted="false">"未启动。\n\n"</string>
     <string name="ui_f5064e36fb9d" formatted="false">"未完成："</string>
     <string name="ui_72166f0ac194" formatted="false">"未找到 MagiskSU。请先在宿主安装 Magisk，并允许 虹膜空间 获取 root。"</string>
+    <string name="ui_f53ca2c4b26c" formatted="false">"未收到交换空间状态，请刷新检查"</string>
     <string name="ui_831cdf82e2aa" formatted="false">"未知配置操作"</string>
+    <string name="ui_848901754aec" formatted="false">"未能停用交换空间，请刷新查看实际状态"</string>
     <string name="ui_b2ba9634d9cf" formatted="false">"未运行"</string>
     <string name="ui_f2f3e9803ccb" formatted="false">"未连接"</string>
     <string name="ui_7fd47e102e12" formatted="false">"本次"</string>
@@ -255,6 +277,8 @@
     <string name="ui_50f106ba30fc" formatted="false">"正在申请宿主 root；首次请允许 Magisk 的 虹膜空间 授权…"</string>
     <string name="ui_84cb10f62524" formatted="false">"正在确认实例和交换目录"</string>
     <string name="ui_73685fac59f8" formatted="false">"正在等待上一项传输收尾，暂时保留当前目录…"</string>
+    <string name="ui_7b6a27847cd3" formatted="false">"正在设置交换空间，请等待完成…"</string>
+    <string name="ui_9c659f12d004" formatted="false">"正在读取交换空间状态…"</string>
     <string name="ui_bd6948a6f441" formatted="false">"正在读取完整历史，请稍后再复制"</string>
     <string name="ui_5a510839d8b1" formatted="false">"正在读取实例列表"</string>
     <string name="ui_98bcb8fa5647" formatted="false">"正在读取实例列表…"</string>
@@ -274,11 +298,13 @@
     <string name="ui_56f4916f8177" formatted="false">"点击画面进入；新增数量受存储空间限制，同时运行数量受内存和性能限制。"</string>
     <string name="ui_c490e74b8ded" formatted="false">"状态暂不可用"</string>
     <string name="ui_910383278517" formatted="false">"用户已取消传输"</string>
+    <string name="ui_429ac124aac3" formatted="false">"用磁盘缓解内存不足，速度可能变慢。更改大小或关闭前，请先停止所有虹膜空间实例。"</string>
     <string name="ui_33819f63ed13" formatted="false">"画面位置无效"</string>
     <string name="ui_b9e4148e0282" formatted="false">"目录中还没有文件，点击“导入文件”开始。"</string>
     <string name="ui_16ff9253f805" formatted="false">"目录刷新已取消"</string>
     <string name="ui_3c06abe11651" formatted="false">"确认删除"</string>
     <string name="ui_30a6079ce340" formatted="false">"确认重置"</string>
+    <string name="ui_fec9a1b14a61" formatted="false">"磁盘空间不足，需要保留至少2GB余量"</string>
     <string name="ui_d5cf29ae57e3" formatted="false">"竖屏"</string>
     <string name="ui_f495347d6acf" formatted="false">"第 "</string>
     <string name="ui_81d95e0dc5fe" formatted="false">"等待 Magisk 授权并检查宿主…"</string>
@@ -301,6 +327,7 @@
     <string name="ui_7debf9cb0372" formatted="false">"设置"</string>
     <string name="ui_28c63e19176b" formatted="false">"请从实例列表进入"</string>
     <string name="ui_664be1b554d0" formatted="false">"请允许宿主 Magisk 的 虹膜空间 授权，正在连接…"</string>
+    <string name="ui_5755deb61f71" formatted="false">"请先停止所有虹膜空间实例，再更改交换空间"</string>
     <string name="ui_e9813c6d4b9f" formatted="false">"请先安装引擎并导入适配 ROM。\n"</string>
     <string name="ui_f82e3b292bba" formatted="false">"请求已发出，正在处理…"</string>
     <string name="ui_4216aa6e21bd" formatted="false">"请求未完成（"</string>
@@ -318,6 +345,7 @@
     <string name="ui_594249700590" formatted="false">"运行中"</string>
     <string name="ui_37a78c8dc0a6" formatted="false">"运行内存上限："</string>
     <string name="ui_da31dfc47974" formatted="false">"运行分辨率："</string>
+    <string name="ui_11d024154013" formatted="false">"返回"</string>
     <string name="ui_53505b1fcd1a" formatted="false">"返回列表"</string>
     <string name="ui_5abb2c0afb2b" formatted="false">"返回预览"</string>
     <string name="ui_9e3a5417b05e" formatted="false">"这是实例实际绘制的画面大小。分辨率越高，画面越清晰，图形和内存开销也越大。\n排查卡顿建议选 960×540；旧版兼容仍绘制 1080p，只把显示画面缩小。\n停止后保存，下次启动生效。"</string>
@@ -326,6 +354,7 @@
     <string name="ui_2c23c90e1f3a" formatted="false">"连接已结束，请重新进入实例"</string>
     <string name="ui_b8f44104e192" formatted="false">"连接超时。请确认 Magisk 授权，再点重新连接。"</string>
     <string name="ui_bd76d510bf82" formatted="false">"配置异常，请先点“恢复默认”"</string>
+    <string name="ui_633cbf0c15d0" formatted="false">"重启后自动恢复（宿主Magisk）"</string>
     <string name="ui_bac95e1e52fe" formatted="false">"重新连接"</string>
     <string name="ui_3d81345303ab" formatted="false">"重置"</string>
     <string name="ui_13357ab34dca" formatted="false">"重置后，保留实例卡片、分辨率、内存上限、Root 选项和 Google 组件配置，恢复全新 Android 数据。"</string>

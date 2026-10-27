@@ -21,6 +21,14 @@ shift || true
 # 环境安全自检：必须在宿主环境（Host 6大Namespace与Root权限）下执行
 host_only || exit 3
 
+# Shared only during start; host swap reconfiguration takes the exclusive side.
+# FD8 is explicitly closed in every long-lived child below.
+if [ "$ACTION" = start ]; then
+    [ ! -L /data/irisbox/host/swap-start.lock ] || exit 3
+    exec 8> /data/irisbox/host/swap-start.lock
+    "$BB" timeout -s TERM 10 "$BB" flock -s 8 8>&8 || { echo 'Host swap is being configured; retry shortly' >&2; exit 4; }
+fi
+
 # start 操作前的前置防呆校验
 if [ "$ACTION" = start ]; then
     # 实例必须已在 config 中完成注册（存在 record 记录）
@@ -63,6 +71,7 @@ esac
 close_child_lock() {
     case "$CTL_LOCK_FD" in ''|*[!0-9]*) return 3 ;; esac
     eval "exec $CTL_LOCK_FD>&-"
+    exec 8>&-
     unset IRIS_CTL_LOCKED
 }
 

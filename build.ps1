@@ -49,5 +49,6 @@ if($LASTEXITCODE -ne 0){throw 'Engine packaging failed'}
 }
 & "$taskRoot\app\viewer\build.ps1" -SdkDir $SdkDir -JdkDir $JdkDir -NdkVersion $NdkVersion
 if($LASTEXITCODE -ne 0){throw 'APK build failed'}
-Copy-Item -LiteralPath "$taskRoot\app\viewer\build\IrisBufferViewer.apk" -Destination "$taskRoot\out\IrisBox-0.1.5.apk"
-Get-FileHash -Algorithm SHA256 -LiteralPath "$taskRoot\out\IrisBox-0.1.5.apk"
+$taskAppVersion=([xml](Get-Content -LiteralPath "$taskRoot\app\viewer\AndroidManifest.xml" -Raw)).manifest.versionName
+Copy-Item -LiteralPath "$taskRoot\app\viewer\build\IrisBufferViewer.apk" -Destination "$taskRoot\out\IrisBox-$taskAppVersion.apk"
+Get-FileHash -Algorithm SHA256 -LiteralPath "$taskRoot\out\IrisBox-$taskAppVersion.apk"

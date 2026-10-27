@@ -49,3 +49,10 @@ UID/GID maps alone do not establish usable Android storage. Trace an ordinary ge
 Physical-camera isolation also needs a functioning framework contract. YouTube queried camera count during startup; removing cameraserver blocked a worker and the main thread until ANR. Retaining the framework service with physical providers disabled returns zero devices. Following the actual ANR lock owner explains the failure better than increasing timeouts or patching YouTube.
 
 Finally, changing a package identity changes its UID and authorization. Validate exclusive ownership before revoking a retired UID, request normal grants for new packages, and check absolute controller paths, display pointers, audio RC, JNI names and generated binaries. Stopped full snapshots and transaction rollback are part of the migration design.
+
+
+### Host resource management in 0.1.6
+
+Host swap is a global resource; ROMs and guest Root must not supply paths to its controller. The App uses fixed capacities, its own directory, file-identity receipts, an owned Magisk boot hook and shared startup locking. Android mksh marks extra FDs close-on-exec: test inheritance on the device and close it in long-lived children. e26 safely rejected the first attempt; e27 explicitly inherits the lock FD.
+
+An unfired bird alone did not establish a memory/input defect. A held-input native frame showed real slingshot movement and a red tutorial cross; green alignment launched normally. Correlate events, native frames, both sessions, live-preview sequences and OOM counters to distinguish tutorial gates, idle disconnects and runtime failures. A short dual-game test does not establish long-run stability or frame rate.
