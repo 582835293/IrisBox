@@ -65,8 +65,8 @@
       "file": "IrisBox-0.1.6.apk",
       "bytes": 17974001,
       "sha256": "2806b9db48c0e99cd76762adf35d58a0450fc892ff9aaa2cd9af6dc3ec74d053",
-      "distribution": "release-page",
-      "downloadUrl": null
+      "distribution": "github-release",
+      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.6-preview/IrisBox-0.1.6.apk"
     },
     {
       "file": "IrisBox-rpi4-a13-aosp.irisrom",
