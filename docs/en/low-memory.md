@@ -1,41 +1,56 @@
-# Swap settings, low memory and game touch input
+# Host Swap Settings, Low Memory & Game Touch Input (`v0.1.6+`)
 
-[简体中文](../12_低内存与临时交换空间.md)
+**English** · [简体中文](../12_低内存与临时交换空间.md) · [Validation Report](validation.md) · [Back to README](../../README.md)
 
-Version 0.1.6 adds host swap settings. Host Android, Google services, graphics and all guests share the Pi's physical RAM. A 2048-MiB guest setting is a ceiling, not additional RAM. Swap writes temporarily inactive memory pages to disk, relieving pressure at the cost of latency and storage writes. It is not physical RAM or a guarantee that all games or two heavy games will work.
+---
 
-## Set it in the App
+## 1. Overview & Physical RAM Boundaries
 
-1. Normally stop all IrisBox guests. Do not reset guests, reimport their ROM or clear Google/game data.
-2. Choose **Swap space** on the home or instance-list page. Select **Off**, **1 GiB**, **2 GiB** or **4 GiB**. This is shared host swap, separate from each guest's RAM ceiling.
-3. Select **Restore after reboot (host Magisk)** if wanted, then **Apply swap settings**. Wait and check Configured/Active capacity. Status also shows used swap, available host RAM, free disk and allocated files. Use **Refresh status** to reread actual values.
-4. Start a guest and wait for Desktop ready. Use **Input: Touch** in the fullscreen toolbar for Unity controls and the slingshot. Mouse mode may not activate those controls. A short drag was tested.
+On a 4 GB Raspberry Pi 4, host Android, Google services, graphics buffers, and all IrisBox instances share ~3.69 GiB of physical RAM. A `2048 MiB` instance setting is a **memory ceiling**, not dedicated or newly created RAM.
 
-**Off** safely disables this project's swap and removes its own boot hook without deleting guest data. Running guests, unsafe file ownership, insufficient disk or unsafe memory reclaim cause rejection with a reason. The operation does not stop guests, suspend host Google or lower memory guards.
+**Version `0.1.6 / e27`** introduces App-managed **shared host swap**: inactive memory pages are written to disk to relieve physical RAM pressure during heavy single-instance or dual-instance workloads, trading storage writes and latency for stability. **Swap is not physical RAM and does not guarantee that every game or prolonged dual-game session will run smoothly.**
 
-## Reboot, recovery and uninstall
+---
 
-Automatic restore requires the user's normally installed, working host Magisk. Enabling it installs the project's own `/data/adb/service.d/irisbox-swap.sh`, which only enables the saved, verified swap file; it does not start guests. No fstab or system partition is changed. An unrelated same-name boot script is rejected rather than overwritten. With automatic restore unchecked, reboot deactivates swap; apply the setting again in the App.
+## 2. Configuring Host Swap & Game Touch Mode in the App
 
-After host reboot, check Active capacity before starting guests. Memory pressure does not establish damaged game data. If restore fails, retain the error and check host root, kernel and storage support. Private receipts live under `/data/irisbox/host/swap/`; boot results are in its `boot.log`. Keep original records private. Pending engine maintenance prevents boot restore; recover the transaction using the [maintenance guide](building.md).
+1. **Stop All IrisBox Instances First**:
+   Normally stop all running IrisBox instances before changing swap size or turning swap off (do not reset instances, re-import ROMs, or clear Google/game data).
+2. **Select Swap Capacity & Optional Boot Restoration**:
+   - Open **Swap space** from the home screen or instance list and choose **Off**, **1 GiB**, **2 GiB**, or **4 GiB** (shared across the host, separate from per-instance memory ceilings).
+   - Check **Restore after reboot (host Magisk)** if you want swap re-enabled automatically on boot, then tap **Apply swap settings**.
+   - Once complete, verify the **Configured**, **Active**, and **Used** swap values alongside **Host MemAvailable**, **Free disk**, and **Allocated files** (use **Refresh status** at any time).
+3. **Launch Instances & Enable Touch Emulation for Games**:
+   - Start your instance and wait for **Desktop ready** before entering.
+   - **Unity / Slingshot Controls**: In the fullscreen top toolbar, switch the pointer toggle to **Input: touch** (`Touch emulation`). Standard mouse pointer mode may not activate Unity buttons or pull the slingshot in games like *Angry Birds 2*.
 
-Disabled files are retained and reused when selecting the same size, avoiding repeated allocation. Different sizes can leave multiple files; Allocated files reports their total. The three sizes total at most 7 GiB, excluding interrupted temporary allocations. Creation also requires 2 GiB disk headroom. Never delete active swap. Cleanup requires prior deactivation and ownership checks.
+> [!NOTE]
+> **Safe Deactivation & Guard Rejections**: Selecting **Off** safely deactivates this project's swap file and removes its own boot script without touching instance data. If any instance is still running, file ownership is invalid, free disk headroom is below **2 GiB**, or physical RAM cannot safely reclaim swapped pages while keeping **512 MiB physical headroom**, the controller rejects the change with an explicit reason rather than force-stopping instances or lowering memory guards.
 
-Uninstalling only the APK leaves retained data and boot settings. Before complete removal, normally disable swap and automatic restore in the App, then follow the project's maintenance procedure. Do not delete other projects or disable their swap.
+---
 
-## Ownership and guards
+## 3. Reboot Restoration, File Reuse & Clean Uninstall
 
-Files have fixed paths under `/data/irisbox/host/swap/`, root ownership, mode0600 and a mode0700 directory. Size, device/inode identity, link count and receipts are checked. No file path comes from ROM or UI input. Only registered files are controlled; other swap is untouched. Shared/exclusive locking serializes guest startup against swap reconfiguration. Disabling swap preserves 512 MiB of physical headroom.
+- **Automatic Boot Restoration (Requires User-Installed Host Magisk)**:
+  Enabling auto-restore installs `/data/adb/service.d/irisbox-swap.sh`, which activates only the verified, saved swap file during host boot (it never auto-starts instances, never modifies `fstab` or `/system`, and refuses to overwrite any foreign same-name script). If auto-restore is unchecked, swap stays inactive after a host reboot until re-applied in the App.
+- **Swap File Retention & Fast Reuse**:
+  Deactivated swap files are kept under `/data/irisbox/host/swap/` so re-selecting the same size reuses the existing file and inode without rewriting gigabytes to disk. Switching across all three sizes (`1` / `2` / `4 GiB`) can retain up to **7 GiB** total on disk (reported under **Allocated files**). Never delete an active swap file manually.
+- **Clean Uninstall**:
+  Uninstalling the APK alone leaves `/data/irisbox` and boot settings intact. Before complete removal, set **Swap space** to **Off** and uncheck automatic restore in the App, then follow the [Building and Maintenance Guide](building.md).
 
-Host/guest swappiness, guest ceilings and low-memory guards are unchanged. Admission still checks physical MemAvailable rather than treating swap capacity as RAM. Increasing swap does not permit arbitrary guest memory budgets.
+---
 
-## Actual game conditions
+## 4. Ownership Guards & Startup Serialization
 
-On October 27, 2026, an explicitly authorized 2-GiB temporary swap file let a 2048-MiB guest run Angry Birds 2 26.7.1's tutorial: a bird launched, targets broke, score reached 93,382 and the next room appeared with guest Root off. After restoring original Magisk, another launch scored 102,356 and Red's ability interaction worked. The earlier Root-off run without swap was stopped by the host guard; these runs do not isolate Root as the cause.
+- **Strict Path & Ownership Checks**: Swap files use fixed paths under `/data/irisbox/host/swap/` (`0700` directory, `0600` file, `root:root` owner) and verify byte size, device/inode identity, link count, and private receipts (`boot.log` stays private; boot restore is skipped if `engine-upgrade.pending` is present). No file path is ever accepted from ROM packages or UI text input.
+- **Shared Startup Lock & Physical Admission Guard**: Swap reconfiguration and guest startup share an exclusive/shared file lock so swap cannot be resized mid-boot. Host/guest `swappiness`, instance ceilings, and the 512 MiB host guard remain unchanged—startup admission still checks physical `MemAvailable` rather than treating disk swap as physical RAM.
 
-Successful play had about 1.2–1.3 GiB host MemAvailable, about 1.1 GiB swap used and zero guest OOM-kills. Startup and some actions still required waiting. That manual setup was then turned into the App feature above. See [validation](validation.md) for current capacity, boot-restore and dual-game results. Screenshots establish the observed interaction, not long-term progress, payments, all levels or stable frame rates.
+---
 
-Actual Play downloads and device certification remain separate results; see [Google recovery](google-recovery.md).
+## 5. Reproducing the *Angry Birds 2* & Dual-Game Test
 
+On October 27, 2026, enabling **2 GiB host swap** allowed a `2048 MiB` guest to run *Angry Birds 2* (`26.7.1`) through its tutorial with real slingshot launches, target destruction, and Red's ability (scoring `93,382` with Guest Root off, `102,356` after restoring Guest Magisk, and **`203,332` tutorial completion** while running alongside *Clash of Clans* with ~1.2–1.3 GiB host `MemAvailable`, ~1.1 GiB swap used, and zero guest OOM-kills):
 
-To reproduce the dual test, start 2048-MiB guest 2 first and wait for ready, then 1024-MiB guest 1; launch games only after both desktops are ready. A heavy game opened first can make admission reject the second guest. Keep the physical-memory guard. In the Angry Birds 2 tutorial, adjust a red-cross aim to the green guide before release; an off-guide rejection does not establish broken touch input.
+1. **Recommended Dual-Game Startup Order**: With **2 GiB host swap** active, **start the `2048 MiB` instance 2 first and wait for `Desktop ready`, then start the `1024 MiB` instance 1**. Open the games only after both desktops are ready (launching a heavy game before starting the second instance can reduce physical `MemAvailable` enough for admission control to reject the second boot).
+2. **Tutorial Aiming Tip**: In the *Angry Birds 2* tutorial, aiming away from the guided trajectory displays a **red cross** and refuses release—align with the **green guide line** under **Input: touch** to launch normally.
+3. **Scope Boundary**: These results establish short tutorial interaction only, not long-term battles, payments, all levels, stable frame rates, or Google Play Protect device certification (see [Google Play Recovery](google-recovery.md)).

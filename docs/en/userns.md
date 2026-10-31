@@ -1,41 +1,62 @@
-# User namespaces and migration
+# User Namespaces and Data Migration (`v0.1.3+`)
 
-[中文](../09_User_namespace隔离与迁移.md)
+**English** · [简体中文](../09_User_namespace隔离与迁移.md) · [Back to README](../../README.md)
 
-IrisBox 0.1.2/e13 did not isolate user identities. Version 0.1.3 requires a distinct User namespace for every instance. Missing, damaged or revision-mismatched mappings fail closed; there is no Host-UID0 fallback.
+---
 
-Each instance maps 100,000 UID/GIDs for Android user0. IrisBox reserves `[2000000000,2012800000)`, disjoint from the previous Iris project's `[1100000000,2000000000)`. Guest UID0 becomes Host BASE; system becomes BASE+1000. Initial Host UID0 is not mapped. Root-owned, private `config/userns_v1/ID.map` records bind the range to the data revision. Allocation is locked and committed atomically; reset retains its range and updates the revision, while deletion never recycles a range.
+## 1. Identity Isolation Model & UID/GID Ranges
 
-## Startup and compatibility
+IrisBox `0.1.2 / e13` did not isolate user identities. Starting in **`0.1.3 / e17`**, every instance is required to run inside a **distinct User namespace**. Missing, corrupted, or `revision`-mismatched mapping records fail closed with **no Host-UID0 fallback**.
 
-The native Host supervisor creates the User/PID/net/IPC/UTS/cgroup namespaces and holds the child on a pipe. Trusted Host preparation sets up ROM overlays, RC, devices and networking without executing Guest programs. Only the child enters delegated resource groups. Read-only shared images keep their original ownership; private overlays use `metacopy=on,index=off`, with bounded no-follow FD traversal for ownership, named POSIX ACLs and scoped file capabilities. System/vendor views are sealed read-only and nosuid before release.
+| Property | Design Specification |
+| :--- | :--- |
+| **Per-Instance Range** | Maps **`100,000` contiguous UIDs/GIDs** covering Android `user 0`. |
+| **Host Reserved Pool** | IrisBox reserves **`[2000000000, 2012800000)`**, strictly disjoint from the previous reference project's `[1100000000, 2000000000)`. Initial Host `UID 0` is never mapped. |
+| **Identity Translation** | Guest `UID 0 (root)` → Host `BASE`; Guest `UID 1000 (system)` → Host `BASE + 1000`; ordinary apps → Host `BASE + App_UID` (e.g., `2000000000` for instance 1, `2000100000` for instance 2). |
+| **Persistence & Lifecycle** | Root-owned `config/userns_v1/ID.map` binds the allocated range to the instance's userdata `revision`. **Reset** retains the range and advances `revision`; **Delete** permanently retires the range so it is never recycled. |
 
-The released child switches to mapped root, creates its own mount/cgroup namespaces, pivots root, closes inherited FDs and runs the adapted Android init second stage. Parent pidfd/PDEATHSIG checks protect supervisor death. Exec entry opens validated handles, enters User first, switches identity, enters the remaining namespaces and closes Host FDs. Verification checks PID:start_tick, init's four UID/GID fields, mapping records and all six namespace owners through NS_GET_USERNS.
+---
 
-The Host data root remains mode 0700. Only inside the already-private preparer/child mount namespace, the prepared root is temporarily bound over `/mnt` as an accessible pivot entry. No Host-visible directory or weaker permission is introduced. After pivot, Guest `/mnt` remains its own tmpfs.
+## 2. Startup Sequence & Filesystem Metadata Mapping
 
-Display and input use a credential-dropped connector and authenticated FD handoff; fullscreen still uses shared buffers. IrisBox's separate audio bridge also connects as mapped root before passing its PCM FD to Host AudioTrack. The network helper derives private-map ownership from verified kernel maps, preserves the shared dispatcher and never restores policy or removes previous-project entries. Magisk creates its own Guest-owned `/sbin` mount while retaining its existing per-instance authorization and module data.
+1. **Host Supervisor & Pipe Hold**: The native host supervisor (`irisbox_userns`) stays outside delegated cgroups, creates the `User` / `PID` / `Net` / `IPC` / `UTS` / `Cgroup` namespaces, and holds the child process on a synchronization pipe before any Guest code executes.
+2. **Trusted Host Preparation & `metacopy=on` Overlays**:
+   - The host writes `uid_map` / `gid_map` and places only the child into delegated resource groups.
+   - Read-only shared `system.img` and `vendor.img` retain their original ownership; private overlays mount with `metacopy=on,index=off`, using bounded no-follow FD traversal to map ownership, named POSIX ACLs, and scoped file capabilities (`v2`/`v3`) without copying full ROM images. System and vendor views are sealed `ro,nosuid` before release.
+3. **Private `/mnt` Pivot Alias (Preserving Mode `0700` Host Root)**:
+   The host data root (`/data/irisbox`) remains strictly `0700`. Only inside the already-private preparer/child mount namespace is the prepared guest root temporarily bind-mounted over `/mnt` as a traversable `pivot_root` entry—no host-visible directory or weaker permission is introduced, and post-pivot Guest `/mnt` remains its own `tmpfs`.
+4. **Release & `NS_GET_USERNS` Verification**:
+   The child switches to mapped `root`, creates its own `mount` / `cgroup` namespaces, pivots root, closes inherited FDs (`>= 3`), and launches the adapted Android `init second_stage`. Parent `pidfd` / `PDEATHSIG` guards prevent orphan races, and `verify` confirms `PID:start_tick`, init's four UID/GID fields, and all six non-user namespace owners via `NS_GET_USERNS`.
 
-Android compatibility includes delegated vmpressure handling, a CgroupEventControl alias, zero realtime priority, and non-waking alarm-clock fallback only after EPERM in mapped guests. Physical Bluetooth remains on the Host; Viewer forwards input. The fixed JNI library is copied only into private Guest overlays, never Host system. Its source patch and SHA-256 are recorded in `reference/patches/userns-alarm.patch` and `reference/userns-provenance.json`. The complete local build recompiles the launcher, entry helper, INET helper, audio, Gateway, Broker and APK; it is not a full AOSP rebuild.
+---
 
-## Existing e13 installations
+## 3. Subsystem Adaptations
 
-New instances receive mappings through the ordinary App creation flow. Stop existing IrisBox instances before maintenance:
+- **Display, Input & Audio Connectors**: Display/input and the 48 kHz PCM audio bridge use credential-dropped connector helpers that authenticate with the host controller, drop supplementary groups, switch to mapped `BASE` UID, and clear capabilities before connecting to Guest sockets and handing verified FDs to `BufferGateway` or host `AudioTrack`.
+- **Network BPF Maps & Guest Magisk**: The network helper derives private BPF map ownership (`BASE + 1000`) directly from verified kernel `uid_map`/`gid_map` entries while preserving the shared dispatcher. Guest Magisk mounts its own Guest-owned `/sbin` `tmpfs` and retains its per-instance authorization database and modules.
+- **System Services & Alarm JNI**: Includes delegated `vmpressure` handling, a `CgroupEventControl` alias, zero `RTPRIO` hard limit, and non-waking alarm fallback on `EPERM` via the verified `libalarm_jni.so` prebuilt (SHA-256 `e4a50b33128b0d92380e5f24bd46890be388e2b9a001a8908cab7c24e9e9a7ae`, patch in `reference/patches/userns-alarm.patch`, provenance in `reference/userns-provenance.json`). Physical Bluetooth remains on the host.
+
+---
+
+## 4. Stopped-State Migration for Existing `0.1.2 / e13` Installations
+
+New instances receive mappings automatically upon creation. Existing `0.1.2 / e13` userdata must be backed up and migrated while stopped:
 
 ```powershell
 python tools/upgrade_engine.py --from-apk out/IrisBox-0.1.2.apk --apply
 python tools/device.py install
-# Open the new App normally; keep the instances stopped.
+# Open the new App normally and confirm all instances remain stopped, then:
 python tools/migrate_userns.py
 python tools/migrate_userns.py --apply
 ```
 
-The migration tool holds the lifecycle lock, copies data/upper/vendor.upper/metadata and configuration to independent inodes, preserves metadata/xattrs, and compares source and backup file SHA-256 lists. Backups remain under `/data/irisbox/maintenance/userns_migration_v1/ID_REVISION` and are never overwritten. Instance IDs, revisions, ROM bindings, Root/Google settings and file bytes are retained; ownership preparation occurs on first mapped boot.
+- **Independent Inode Backups**: `migrate_userns.py` holds the lifecycle lock, copies `data`, `upper`, `vendor.upper`, `metadata`, and config to independent inodes under `/data/irisbox/maintenance/userns_migration_v1/ID_REVISION`, preserves modes/xattrs/SELinux labels, and verifies per-file SHA-256 digests.
+- **Rollback Discipline**: **Source rollback, engine rollback, and userdata rollback are three separate operations.** Once a guest boots with mapped ownership, an older APK/engine cannot directly reuse those trees, and you must **never** recursively `chown` host `/data` or shared lower images. Always stop the instance, preserve new state, and restore from the matching verified snapshot under `/data/irisbox/maintenance/userns_migration_v1/ID_REVISION`.
 
-**Source rollback, engine rollback and data rollback are separate operations.** After mapped boot, Host ownership has changed. An old APK or Git checkout cannot safely reuse those trees as if migration never happened. Stop and verify the instance, retain any new data, and restore the matching verified tree/config snapshot. Never recursively chown Host `/data` or shared image lower directories. Arbitrary interruption between metadata operations is not guaranteed to resume losslessly; preserve evidence and recover from the verified copy when uncertain.
+---
 
-## Validation and limits
+## 5. Validation & Security Scope
 
-`tests/userns_regression.py` verifies actual mappings, namespace ownership and stale-tick rejection. Disposable dummy files test that Guest root can read its own 0600 file and is denied Host-UID0 and foreign-range files. Real Host secrets are never used. Results and retained failures are recorded in the [validation report](validation.md).
+`tests/userns_regression.py` validates live kernel mappings, `NS_GET_USERNS` ownership, stale-tick rejection, and disposable `0600` file access boundaries (confirming Guest `root` can read its own domain's `0600` file but is denied Host `UID 0` and foreign-instance `0600` files). See the [Validation Report](validation.md).
 
-This removes the shared-root-identity defect. The kernel and GPU driver remain shared, the tested Host remains Permissive, and this is not certification of a hostile-code security sandbox. Time namespaces, Android guest multi-user, arbitrary ROMs/modules and Enforcing are outside the validated scope. Upstream references: [User namespaces](https://man7.org/linux/man-pages/man7/user_namespaces.7.html), [BinderFS](https://docs.kernel.org/admin-guide/binderfs.html).
+While User namespaces eliminate shared Host-`UID 0` identity, instances still share the Linux 5.15 kernel and V3D GPU driver on a Permissive host; this is **not** a certified security sandbox against hostile code. Upstream references: [Linux User Namespaces (man7)](https://man7.org/linux/man-pages/man7/user_namespaces.7.html) · [Kernel BinderFS](https://docs.kernel.org/admin-guide/binderfs.html).

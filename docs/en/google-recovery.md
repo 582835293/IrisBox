@@ -1,37 +1,58 @@
-# Recovering Google Play access and checking certification
+# Recovering Google Play Access & Device Certification Guide
 
-[中文](../10_Google商店恢复与认证说明.md) · [Validation](validation.md)
+**English** · [简体中文](../10_Google商店恢复与认证说明.md) · [Validation Report](validation.md) · [Back to README](../../README.md)
 
-## Downloads and certification are different results
+---
 
-Google's custom-ROM registration provides a path to use Google apps. Device certification also concerns compatibility results recognized by Google. A guest can therefore download from Play while About still says **Device is not certified**. See Google's [certification guidance](https://support.google.com/googleplay/answer/7165974?hl=en) and [custom-ROM registration guidance](https://www.google.com/android/uncertified/warningauto).
+## 1. Play Store Downloads vs. Device Certification
 
-On October 24, 2026, the owner's registration list matched the retained guest GSF ID. Play actually installed Open Sudoku. After Play-services data was rebuilt, the current version restored and the Guest restarted, Play also installed and opened Google Calculator. **The certification requirement has not passed.** Neither check-in success, malware scanning nor a successful download establishes certification or Play Integrity. There is no evidence that this guest merely needs an unspecified manual review.
+Google's **custom-ROM registration** provides a supported path for uncertified builds to sign in and use Google apps, whereas **Play Protect device certification** reflects manufacturer compatibility certification recognized by Google. Consequently, a guest can download and install apps from Google Play while `Settings → About` still displays **`Device is not certified`**.
 
-## User recovery steps
+| Verification Item | October 24, 2026 Result | Scope & Notes |
+| :--- | :---: | :--- |
+| **Guest GSF ID Registration** | **Matched** | Privately verified against the owner's registration list (host or legacy guest registrations do not apply to a new guest). |
+| **Account Retention & Play Downloads** | **Passed** | Restored the Play catalog and installed **Open Sudoku**; after rebuilding GMS service data and restarting, installed and opened **Google Calculator** (`installer=com.android.vending`) without re-login. |
+| **`Settings → About → Play Protect certification`** | **Not Passed** | Still displays `Device is not certified`. Successful downloads do not establish device certification or Play Integrity. |
 
-Perform these steps in the selected **Guest's Android settings**. The tested retained instance is number 2, internal ID 1010; other installations can have different IDs.
+*Official References: [Play Protect Certification Guidance](https://support.google.com/googleplay/answer/7165974?hl=en) · [Custom-ROM Registration Page](https://www.google.com/android/uncertified/warningauto) · [Play Services Troubleshooting](https://support.google.com/googleplay/answer/9037938?hl=en).*
 
-1. After a Host reboot, open IrisBox, grant normal Host root authorization, enter the manager, start the guest and wait for Desktop ready. This guest uses 2048 MiB. If admission rejects startup, normally stop unused instances while retaining memory protection. Resetting guest data is not a memory fix.
-2. Check Guest connectivity and automatic date/time. Open Play. No cleanup is needed if downloads already work.
-3. If Play cannot open/download, normally force stop the Guest Store under Settings → Apps → See all apps. Under Storage & cache, choose **Clear cache**. Clear only Play-services cache as well, then reopen Play. Cache and persistent storage/data are different operations.
-4. If registration is missing, privately check this Guest's own GSF ID on Google's registration page. The owner handles login/CAPTCHA. Host/legacy guest registration does not register this guest; do not repeatedly clear GSF to generate new IDs.
-5. If still blocked, ask the maintainer for a normal check-in and diagnostics as below. A normal Guest stop/start may be tested. Record actual results; no fixed waiting period guarantees certification.
-6. In Play, install and open a free app. Separately inspect avatar → Settings → About → Play Protect certification. Landscape account menus may need scrolling to reveal Settings.
+---
 
-The first successful recovery used **GMS/Store cache-only clearing → Google's normal check-in → reopen Play → actual download**. This combination worked in the recorded run; it does not identify one action as the unique cause or guarantee future recovery.
+## 2. User Recovery Steps (Inside the Guest)
 
-## Maintainer cache-only refresh
+Perform these steps inside the target **Guest's Android Settings** (tested on retained instance 2, internal ID `1010`):
 
-Use the matched development tools from the repository root. Public-source tools accept `IRISBOX_SERIAL` for your ADB device. Run `python tools/device.py state` first and check the intended instance. This PowerShell example selects instance 2 through helpers that validate PID:start_tick and enter the selected Guest:
+1. **Start the Target Guest with Sufficient Memory**:
+   After a host reboot, open IrisBox, grant normal host root, enter the manager, start the guest (configured at `2048 MiB` or `1536 MiB`), and wait for **Desktop ready**. If memory admission rejects startup, stop unused instances first—never reset userdata to resolve low memory.
+2. **Verify Network & Date/Time**:
+   Check Guest network connectivity and automatic date/time, then open Google Play. No cleanup is needed if the catalog and downloads already work.
+3. **Clear Cache Only (Recommended First Step)**:
+   If Play fails to load or download:
+   - Open Guest **Settings → Apps → See all apps**.
+   - Force-stop **Google Play Store** and **Google Play services**, then open **Storage & cache** for each and tap **Clear cache**.
+   - **Important**: Clearing temporary cache is distinct from clearing storage/data. Do not clear GSF or persistent account data during routine recovery.
+4. **Verify GSF ID Registration**:
+   If prompted as uncertified/unregistered, check this specific Guest's GSF ID on Google's [custom-ROM registration page](https://www.google.com/android/uncertified/) (keep the ID private and do not repeatedly clear GSF to generate new IDs).
+5. **Verify Downloads & Inspect Certification**:
+   Install and open a free app from Play, then separately inspect `Avatar → Settings → About → Play Protect certification` (scroll the account dialog in landscape mode if `Settings` is below the fold).
+
+> [!NOTE]
+> **Proven Recovery Sequence**: The first successful catalog and download recovery on October 24, 2026 used **`GMS & Store cache-only clear → standard Google check-in → reopen Play → actual app download`**.
+
+---
+
+## 3. Maintainer Cache-Only Refresh & Check-In Command
+
+Run from the repository root with `IRISBOX_SERIAL` set to your ADB device. This script verifies `PID:start_tick` for instance 2 before clearing only temporary GMS/Store caches and broadcasting a normal check-in (retaining GSF, persistent GMS data, accounts, and game saves):
 
 ```powershell
-$env:PATH="$env:LOCALAPPDATA\Android\Sdk\platform-tools;"+$env:PATH
-$env:IRISBOX_SERIAL='YOUR_DEVICE_SERIAL'
+$env:PATH = "$env:LOCALAPPDATA\Android\Sdk\platform-tools;" + $env:PATH
+$env:IRISBOX_SERIAL = 'YOUR_DEVICE_SERIAL'
 @'
 import sys
 sys.path.insert(0, 'tools')
 from regression import target, guest
+
 r = target(2)
 assert r['ready'] and not r['busy']
 print('Target instance:', r['number'], 'internal ID:', r['id'])
@@ -40,29 +61,19 @@ am force-stop com.android.vending
 am force-stop com.google.android.gms
 pm clear --user 0 --cache-only com.google.android.gms
 pm clear --user 0 --cache-only com.android.vending
-am broadcast -a android.provider.Telephony.SECRET_CODE -d android_secret_code://2432546 -n com.google.android.gms/.checkin.CheckinServiceSecretCodeReceiver
+am broadcast -a android.provider.Telephony.SECRET_CODE \
+  -d android_secret_code://2432546 \
+  -n com.google.android.gms/.checkin.CheckinServiceSecretCodeReceiver
 ''', timeout=60))
 '@ | python -
 ```
 
-Run those operations through the verified **Guest** helper. Broadcast result=0 means reception, not completed check-in or certification. Keep raw logs under `validation/private`, inspect the real completion/result and verify a Play download. Logs can contain private identities. This sequence retains GSF, persistent GMS data, system accounts and game data.
+---
 
-## Additional tests performed in this run
+## 4. Additional Certification Diagnostics & Private Backups
 
-These tests did not establish certification and are not required for routine recovery:
+To investigate whether `About` could show `Device is certified`, the following extra tests were executed on October 24, 2026 (none changed the uncertified status, and they are **not** required for routine store recovery):
 
-- Temporarily disable Guest Root and restart; verify su/magiskd absent. Google's repair still failed. Original Magisk and ordinary-app authorization were subsequently restored.
-- After a separate backup, reinitialize only Store data. GSF/account/game data remained. Fresh Store setup included its existing service terms; Certification status unavailable was not counted as a pass.
-- With the owner's **separate explicit authorization**, uninstall GMS updates to factory 22.46.19/224619045, rebuilding service data. Restore all 11 original backed-up APKs through Android's PackageInstaller, returning to 26.39.33/263933029 while retaining fresh state rather than restoring old CE/DE.
-
-After original Root was restored, the Guest booted in about 59 seconds. GSF ID, keyed account comparison, revision and game preference-file SHA-256 values stayed unchanged. No re-login was needed to install/open Google Calculator 9.3 from Play, with installer com.android.vending. About had still shown Device is not certified; no certification success is claimed.
-
-Google's [Play-services troubleshooting guidance](https://support.google.com/googleplay/answer/9037938?hl=en) explains that clearing service data can remove saved information and require reauthentication. Account records alone do not prove valid authorization. Data rebuilding therefore requires backups, authorization and real download validation; it is not an automatic startup repair.
-
-## Backups and current state
-
-The developer's private `validation/private/google-orientation-20261024/` indexes include `google-backup.json`, `store-data-refresh-backup.json` and `gms-current-version-restored.json`. Verified backups are in separate Host-private directories under `/data/irisbox/maintenance/`, with 0700 directories/0600 files and SHA-256 checks. They are absent from public source.
-
-They include GMS/Store CE/DE state, original APKs and a consistent GSF SQLite reference. They are not a complete AccountManager/Keystore/Guest snapshot. Clearing data can invalidate keys; extracting old tar files cannot guarantee authorization recovery. Restoration needs version/consistency analysis and may require owner re-login. Keep the currently validated fresh state rather than automatically overwriting it with old archives.
-
-Instance 2 is at 2048 MiB, original Magisk restored, orientation Follow app, Google account and game data retained. Instance 1 is stopped. Legacy source/config/data remain unchanged and the legacy project is not restarted. Version 0.1.4/e21 passed English/Chinese orientation and restart-persistence tests; see Downloads for release status and resources. Device certification remains an unmet acceptance requirement.
+- **Temporary Guest Root Disablement**: Stopped the guest, disabled Guest Root (`su`/`magiskd` confirmed absent), restarted, and ran Google's `Fix device issue`—it still failed. Original Magisk and app grants were restored afterward.
+- **Store-Only Data Reinitialization**: Backed up and cleared only Play Store data while keeping GSF, accounts, and games; after accepting Store terms, certification remained unpassed.
+- **Explicitly Authorized GMS Data Rebuild**: With the owner's separate authorization and full private backups (`/data/irisbox/maintenance/`, indexed under git-ignored `validation/private/google-orientation-20261024/`), uninstalled GMS updates to factory `22.46.19 (224619045)` to rebuild service state, then reinstalled all **11 backed-up original split APKs (`235,572,891 bytes`)** via `PackageInstaller` to restore `26.39.33 (263933029)` with fresh service state. After restoring Guest Magisk and rebooting (~59s), GSF ID, keyed account identity, and game `shared_prefs` SHA-256 digests matched, and Play installed **Google Calculator 9.3** without re-login—while `About` still reported `Device is not certified`.

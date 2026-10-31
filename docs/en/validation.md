@@ -1,147 +1,106 @@
-# Validation and remaining work
+# Validation Report and Known Boundaries (`v0.1.0` – `v0.1.6`)
 
-[中文 records](../07_登录后回归与修复.md) · [Release-specific record](../08_国际化与发布.md)
+**English** · [简体中文验收记录](../06_验收记录.md) · [登录后回归](../07_登录后回归与修复.md) · [Back to README](../../README.md)
 
-The retained test setup has an ordinary instance 1 (768 MiB, Root/Google off) and user-created instance 2 (1536 MiB, Magisk on, Google signed in). Testing preserves their data revisions and compares account identity through a private keyed digest; account names, credentials and raw screens are not published.
+> [!IMPORTANT]
+> **Validation & Reporting Principles**
+> - This report strictly separates **verified on-device results**, **retained intermediate failures and fixes**, and **unverified or unmet boundaries**.
+> - All device tests ran on the matched **Raspberry Pi 4 (AOSP 13 / ARM64 / ~4 GiB RAM)** host.
+> - The previous reference project (`Project Iris V3.0`) was stopped normally with explicit owner authorization on 2026-10-15 and remains read-only with its configuration and data intact. Raw logs, private keyed account HMACs, and uncropped captures remain in git-ignored `validation/private/`.
 
-The previous 0.1.1/e9 acceptance covered real host reboot/recovery, retained Google login, ordinary-UID HTTPS/DNS/GPU checks, denied network for an App without INTERNET, guest Root approval, file isolation, H.264 encoding and playback, playback PCM and audio-helper recovery, preview stress, and unchanged old-project files. See the dated Chinese historical records for details.
+---
 
-The 0.1.2 release adds EN/ZH resources and locale selection, the IrisBox / 虹膜空间 name and a verified project-private host BusyBox. Host/guest tool paths are explicitly separated across pivot_root, resolution, fullscreen, preview and file exchange. Release-specific measured results are recorded alongside the downloadable artifact hashes after regression.
+## Contents
 
-The clean host image is **statically validated only**: original factory static partitions match, userdata is newly formatted and contains only filesystem initialization entries, filesystem checks pass and the composed partition/XZ hashes match. The active Pi disk was not flashed or exported. First boot on a spare USB disk, expansion, first host Magisk installation and dispatcher creation on a host with no previous project remain unverified.
+1. [2026-10-27: `v0.1.6 / e27` Host Swap Settings & Simultaneous Heavy Games (Latest)](#1-2026-10-27-v016--e27-host-swap-settings--simultaneous-heavy-games-latest)
+2. [2026-10-26–27: `v0.1.5 / e25` Iris Namespace Migration, Storage/Camera Fixes & App Compatibility](#2-2026-10-2627-v015--e25-iris-namespace-migration-storagecamera-fixes--app-compatibility)
+3. [2026-10-24: `v0.1.4 / e18–e21` In-Guest Downloads, Xiangqi QR Play, Live Orientation & Play Recovery](#3-2026-10-24-v014--e18e21-in-guest-downloads-xiangqi-qr-play-live-orientation--play-recovery)
+4. [2026-10-21: `v0.1.3 / e17` User Namespace Identity Isolation Regression](#4-2026-10-21-v013--e17-user-namespace-identity-isolation-regression)
+5. [2026-10-15: `v0.1.0 / e2` – `v0.1.2 / e13` Initial Delivery, Post-Login Media & Localization](#5-2026-10-15-v010--e2--v012--e13-initial-delivery-post-login-media--localization)
 
-Other hardware/kernel/ROM profiles, Enforcing SELinux, cameras/microphones, protected video/DRM, Play Integrity, arbitrary modules, account synchronization under multiple workloads, physical speaker listening and long-duration stress are not claimed. Tests on this permissive shared-kernel setup do not establish hostile-workload isolation. Maintenance rollback was exercised on normal failures; abrupt power loss was not injected.
+---
 
-## Final 0.1.2 / e13 results — 2026-10-15
+## 1. 2026-10-27: `v0.1.6 / e27` Host Swap Settings & Simultaneous Heavy Games (Latest)
 
-The public AOSP ROM was imported through the App's normal file picker and verified. A new 1024 MiB AOSP+Root test instance reached its desktop in 64,128 ms without Google packages; ordinary-UID networking, GPU, audio and 640×360 H.264 encoding/playback passed. Only that owned temporary instance was deleted afterward.
+### Host Swap Controller & Reboot Restoration
+- **Feature Scope**: Added the **Swap space** screen (`Off` / `1 GiB` / `2 GiB` / `4 GiB`), live capacity/RAM/disk status reporting, and optional host-Magisk reboot restoration (`0.1.6`, `versionCode 120`, engine `e27`).
+- **On-Device State Transitions**:
+  - Exercised `1 GiB → 4 GiB → Off → 2 GiB (with auto-restore)` through the real App UI.
+  - **Real Host Reboot**: Rebooted the Raspberry Pi 4 and verified that **2 GiB swap restored automatically on boot** without opening the App or running computer commands.
+  - **Safe Deactivation & Inode Reuse**: Verified `Auto-enabled → Off` deactivates swap and removes only `/data/adb/service.d/irisbox-swap.sh`; re-enabling the same size reuses the existing file and inode without reformatting. Invalid sizes/flags, symlinks, foreign same-name boot hooks, and active-guest changes were all rejected.
+  - **`e26 → e27` Lock FD Fix**: Candidate `e26` safely rejected configuration because Android `mksh` marks extra file descriptors `close-on-exec`; `e27` explicitly passes the lock FD and closes it in long-lived children.
+- **Build & Audit**: Independent public-source full build matched **52 non-browser payloads** and **3 unsigned browser entries**; `53 / 116 / 11 / 54` input digests and **372 locale entries** passed. Updating the final APK preserved both running guest sessions.
 
-Original instance 2 reached the desktop in 56,902 ms and instance 1 in 61,813 ms. Their original ROM bindings and data revisions remained unchanged. The Google account baseline matched; the ordinary test App still obtained uid 0 through its retained Magisk approval. Actual fullscreen visual inspection confirmed the signed-in Play Store catalog. An ordinary UID without INTERNET received SecurityException for HTTPS, the Google endpoint and DNS.
+### Dual Heavy-Game Validation & Boundaries
 
-Final dual-instance media, separate 51-byte file roundtrips, ten JPEG captures per instance and bearer rejection checks passed. Audio recovered from an injected helper termination in 11.36 seconds with the main guest session unchanged. App reopening and manager restoration preserved sessions, data and active audio. Guest crash buffers were clear; both cgroup OOM-kill counts were zero.
+![Actual simultaneously running games](../images/dual-games.png)
 
-All 334 locale resource keys/references and 11 archive-safety cases passed. Audits matched 11 Root files, 116 ROM compatibility files and 44 engine payloads; the private Google input audit matched 54 files. The sanitized public source fully rebuilt with identical engine file hashes. Fifty-two previous-project local source inputs and the old device configuration/scripts/registry remained unchanged; the old guests remain stopped. The global host BusyBox remained unchanged.
+| Dimension | Measured Result & Explicit Boundary |
+| :--- | :--- |
+| **Test Configuration** | Single 4 GB Raspberry Pi 4 with **2 GiB host swap**; Guest 1 at `1024 MiB` (no Google/Root), Guest 2 at `2048 MiB` (retained Google/Magisk). Not a claim of two 2 GB guests or dual high-fps fullscreen windows. |
+| **Clash of Clans `18.647.5`** | Guest 1 installed the 5 on-device, Play-downloaded official split APKs via its `PackageManager` (no cloned account/save or claimed second Play download). Village rendered and real Viewer clicks advanced tutorial dialogue; after a normal idle disconnect, the built-in `Reload Game` flow reconnected prior to the final dual capture. **Long battles, clan wars, and payments are untested.** |
+| **Angry Birds 2 `26.7.1`** | Running simultaneously alongside Clash of Clans, real slingshot launches, target destruction, second-room progression, and Red's ability completed the tutorial at **203,332 points** (off-guide angles show a red tutorial cross; aligning with the green guide under `Input: touch` launched normally). |
+| **Continuous Observation** | 24 samples over `~146.8s` kept both guests ready; minimum host `MemAvailable` was `809,104 KiB` (`~790.1 MiB`), both `OOM-kill` counters stayed `0`, and both preview sequences advanced. Not a long-run, all-level, or frame-rate guarantee. |
+| **Retention & Isolation** | Account fingerprint, guest `revision`s, and both User namespace identities passed re-verification with no Host-UID0 fallback; the legacy project remained stopped and unchanged across host reboot. |
 
-GitHub hosts the final APK and small guest Root/BusyBox source kit with metadata/checksums. Large ROM, clean host image and full upstream/kernel sources are prepared for owner-provided Drive mirrors; download pages explicitly mark missing links. No accounts, private keys or raw screens/logs are published. Clean host flashing remains untested.
+---
 
-## 0.1.3 / e17 User namespace results — 2026-10-21
+## 2. 2026-10-26–27: `v0.1.5 / e25` Iris Namespace Migration, Storage/Camera Fixes & App Compatibility
 
-Both retained instances now run with separate User namespaces: guest root 0 maps to Host 2000000000/2000100000, with 100000 UID/GID values per domain and no Host UID 0 mapping. Tests verified the owning User namespace of all six other namespaces, all four init UID/GID fields, stale-tick rejection, and denial of dummy Host-root/foreign-domain 0600 files. These checks do not establish a complete hostile-code sandbox on the shared kernel/GPU and Permissive host.
+### Package & Directory Namespace Migration
+- Migrated host package to `com.irisbox.viewer`, runtime root to `/data/irisbox`, bundled browser/QA apps to `com.irisbox.*`, and native helpers/services/sockets/cgroups to Iris names while keeping port `19762`, instance IDs, `revision`s, and UID/GID ranges (`2000000000+`).
+- Independent stopped-state per-file SHA-256 backups preceded migration. An initial short-variable collision rolled back cleanly with userdata intact; dedicated transaction variables and retirement of the stopped display pointer succeeded on retry.
 
-Before migration, independent stopped-state backups of each private tree/config passed per-file SHA-256 comparison. IDs, ROM bindings, revisions, counters 8/1 and the private keyed Google-account comparison remained unchanged. Original memory limits stayed 768/1536 MiB. First mapped boots took 174,836/78,097 ms; later starts took 100,613/67,905 ms. A new public AOSP+Root QA instance booted in 86,483 ms, passed media/network tests without Google, then alone was reset/deleted; its UID range remained reserved.
+### Two Compatibility Defects Found & Fixed
+1. **YouTube Startup Camera Query ANR (`e24`)**: Replacing framework `cameraserver` with `true` caused YouTube to hang waiting for camera count until ANR. Restoring the stock framework `cameraserver` while keeping physical camera providers disabled properly returns `0` cameras and allows YouTube playback.
+2. **Mapped-Guest External Storage Project Quotas (`e25`)**: The matched Linux 5.15 kernel forbids non-initial User namespaces from modifying ext4 project quota flags even when `projid_map` is populated. The `e25` matched `vold` adapter (`engine/native/storage/`) skips **only** project-quota tagging/inheritance for strictly verified IrisBox mapped guests while preserving directory, ownership, mode, ACL, and FUSE checks. Ordinary-app external directory creation and read/write now pass (**boundary: per-app project disk quotas are not enforced on this profile**).
 
-Both instances passed actual fullscreen FD handoff, mixed-case keyboard input, swipe, return/re-entry, ordinary-UID HTTPS/DNS/GPU/PCM, 640×360 H.264 encode/render/playback, retained Magisk approval, separate 51-byte file roundtrips and ten JPEG previews each. Apps without INTERNET were denied HTTPS, the Google endpoint and DNS. Missing/invalid bearer requests returned 403. Targeted audio-helper termination recovered in 21.44 seconds without restarting the main guest. App reopen and manager restoration preserved sessions and audio; checked crash buffers were clear and OOM-kill counts were zero.
+### `v0.1.5 / e25` App Results & *Angry Birds 2* Pre-Swap Baseline
 
-EN/ZH pages and all 335 resources/references passed; guest locales/sessions stayed unchanged. The production Android archive tests passed 11/11 cases. Input audits matched 54 private Google, 11 Root, 116 ROM compatibility and 49 engine files. A separate full build of the sanitized public snapshot produced identical hashes for all 49 engine payloads. The old project's current-run script/config/registry/identity baseline, Host boot/socket policy and global BusyBox stayed unchanged; old guests were stopped with explicit user authorization.
-
-Candidate failures are retained in the Chinese record: Root staging order (e14), private 0700 path traversal (e15), and BusyBox BRE differences (e16) were fixed in the tested e17 engine. Extra Guest UiAutomator instrumentation during live fullscreen exhausted the low-memory margin once and the existing guard normally stopped the Google guest; tests now read bounds before opening fullscreen. Original budgets/guards and the bounded input queue were retained. A video encoding attempt exceeded its 20-second test budget under startup load; the same configuration passed a retry and subsequent dual-instance regression.
-
-**Google Store catalog/download validation is blocked by the visible Play Protect certification warning.** The GSF ID and byte-identical SSAID file match the pre-migration backup, which already contained an uncertified-status cache; the account comparison also matches. This does not prove the warning's cause. No Google data was cleared, certification result overridden or device fingerprint forged. The owner subsequently confirmed registration of the current instance and explicitly authorized a normal check-in. A check-in success marker was observed, but the actual Store still displayed the warning with no catalog. The owner deferred further investigation; no server-review cause or eventual recovery is claimed. Registration is not manufacturer certification or a Play Integrity guarantee.
-
-No Host reboot or physical flash was performed in this run. Earlier reboot success does not prove mapped-version reboot recovery. Fresh-host dispatcher installation, Enforcing, other ROMs/kernels, Android multi-user, arbitrary modules, DRM and long-duration hostile workloads remain unverified. README usage images are illustrations, without raw device/account data. See the [migration guide](userns.md) before updating e13 data.
-
-## In-guest download acceptance in progress — 2026-10-24
-
-After the owner's host reboot, instance 1 was denied by memory admission: its saved ceiling was 2560 MiB and a legacy instance was running. The legacy instance/manager were normally stopped under the owner's existing authorization, preserving their configuration/data. Instance 1 booted in 54,289 ms at its previously tested 768 MiB limit, retaining counter 8. Later the owner changed its saved limit to 2048 MiB; that setting is preserved while it stays stopped.
-
-The owner requested all app tests in the same signed-in instance 2 and accepted 2048 MiB after 2560 MiB admission failed. IDs, revisions and the private Google-account comparison remain unchanged. The Store still shows the certification warning; catalog/download acceptance remains blocked. No Google account/service data was cleared.
-
-The factory Browser2 is a WebView test shell without download handling. The 0.1.4 candidates add an ordinary in-guest download browser using Android DownloadManager and the system installer, without root, silent install or Host control. Candidate e18 rejected Via's generic MIME type; e19 preserves the explicit APK filename and was fully built and deployed with account/data retention checks.
-
-- Via 7.3.3: the guest downloaded 2,628,334 bytes from the official website through its own DownloadManager, installed it through Android's UI and opened/browsed successfully. Installer: `com.android.packageinstaller`, ordinary UID 10094.
-- AppBao 9.2.9: Via in the same guest downloaded the official Tencent mobile APK, 42,202,135 bytes. The normal system installer completed after its visible older-target compatibility warning and source authorization; the online home screen loaded. Play Protect was not disabled and no APK was submitted for review.
-- QQ: downloaded approximately 374.82 MB in the guest's AppBao and reached the system installer. Installation/startup/login are still pending at this checkpoint. WeChat and Tiantian Xiangqi authorization/gameplay are not yet passed.
-
-Target APKs were not injected from the computer. Screens, download records and logs remain private. The e20 full build additionally repairs stale system-browser package metadata by refreshing the package directory timestamp; deployment/restart validation is pending. Engine/ROM/Root/private-Google input checks passed 50/116/11/54 files, with 335 Host locale entries. A new public clone signs the browser with a different private key, so signed browser/engine hashes cannot be claimed identical to the local build.
-
-### e20 deployment and revised game test
-
-e20 was subsequently deployed through the verified stopped-state transaction. Instance 2 booted in 54,398 ms; Android now reports browser 1.0.1/versionCode 2, matching the trusted APK. Account identity, revision and strict namespace verification passed. A separate public-source full build matched the other 49 engine payloads and the browser's unsigned ZIP entries.
-
-QQ 9.3.75 was installed by Android and retained across restart. Its large install compilation and first launch triggered the unchanged Host guard when available physical memory fell below 512 MiB. QQ login/use did not pass. AppBao spawned multiple daemon/live/cloud keepalive processes and its own repeated instrumentation launches. A temporary Android background restriction was tested and restored to default. Single-thread/individual-DEX compiler properties were diagnostic changes in the current guest session, not a released performance fix.
-
-The Host has about 3.69 GiB physical memory and no active swap. Swap support is compiled in, but there is no ready zRAM device and ZSMALLOC is not enabled. No swap, kernel, fstab or Host Play-services change was made. The Host Store was normally closed after APK updating restarted it; no account data was cleared.
-
-The owner then abandoned QQ login and asked to install Tiantian Xiangqi directly for phone QR authorization. Guest QQ and AppBao were temporarily disabled with their APKs/data retained to stop keepalive; `pm enable --user 0 PACKAGE` restores either. Via in the same guest downloaded Tencent's official 198,465,378-byte APK; its MD5 matched the metadata fetched over HTTPS. The CDN HTTPS request stalled, so the official original HTTP link was used without injecting a computer APK. Android installed `com.tencent.qqgame.xq` 4.4.6.2, ordinary UID 10097, installer `com.android.packageinstaller`. The game loaded its native login screen and displayed its own WeChat authorization QR code, without local QQ/WeChat login. Host available memory was about 1.2 GiB, OOM-kill count zero at this checkpoint. Owner authorization and actual online play remain pending; WeChat installation, QQ login and Honor of Kings are not passed results.
-
-Native guest captures remained complete when partial black regions were seen in the live Host display during the earlier QQ load; display transport still needs investigation. Current-run old-project hashes/configuration/registry remain identical after excluding the explicitly authorized normal stop of legacy instance 7. All raw evidence remains private.
-
-## Owner-confirmed game and e21 orientation — 2026-10-24
-
-The owner subsequently confirmed successful WeChat QR login/gameplay and QQ QR login/gameplay in Tiantian Xiangqi. Standalone QQ login was cancelled, not passed. Instance 2 stays at 2048 MiB; QQ/AppBao APKs and data remain temporarily disabled to stop keepalive. Instance 1 stays stopped at its saved 2048 MiB. The legacy project is not restarted.
-
-The local 0.1.4/e21 APK, versionCode 118, was fully built and transactionally deployed. Audits passed for 51 engine, 116 ROM, 11 Root and 54 private Google inputs, plus 343 Host locale entries. Real toolbar changes between landscape 960×540 and portrait 540×960 retained the Guest session, counter and GPU pixel/draw checks. Host-window keyboard input Iris9L/Iris8P passed. Invalid mode/stale session returned 400/409; instance 1's configuration stayed unchanged. Portrait persisted across Guest restart. English and Chinese menus passed, then Follow app was restored. Evidence remains private.
-
-### Downloads recovered; certification has not passed
-
-Only GMS/Store temporary caches were cleared through Android's standard cache-only interface, followed by Google's normal check-in. A SUCCESS marker was followed by the real catalog and an actual Play download/install of Open Sudoku 4.11.1, ordinary UID 10098, installer com.android.vending. The app opened; its Play details remained usable after e21 deployment and Guest restart. This establishes downloads, not certification.
-
-The owner requires About to show Device is certified. It instead showed Device is not certified. Google's Fix device issue failed and recommended system updates. Temporarily turning off Guest Root and normally restarting, with su/magiskd absent, gave the same result. Root component data was retained. The owner's registration list privately matched the current GSF ID; identifiers are not published.
-
-Verified on-device private Google backups were retained. A separate Store backup preceded standard Store-only data reinitialization. GSF, GMS, system accounts and game data were not cleared; the keyed account comparison and GSF ID stayed unchanged. The fresh Store initially showed Certification status unavailable; its Check certification was invoked. An intermediate state is not a pass. No Google APK, certification value, fingerprint or displayed result was overridden.
-
-The [official certified-device list](https://storage.googleapis.com/play_public/supported_devices.html), checked at 54,261 table rows, had no Raspberry/rpi4/aosp_rpi4 match. The matched build remains Raspberry AOSP 13 userdebug/test-keys. Google's [certification guidance](https://support.google.com/googleplay/answer/7165974?hl=en) and [custom-ROM registration](https://www.google.com/android/uncertified/warningauto) distinguish certification from Google-app usage registration. The legacy records proved downloads/restart recovery, without establishing a certified About label.
-
-No Host reboot, legacy-project modification, Google-login deletion or GitHub push was performed. The owner's certification requirement remains unmet.
-
-The owner then explicitly authorized rebuilding Play-services data, with manual re-login if needed. After revalidating backups, Android uninstalled GMS updates to factory 22.46.19/224619045. The GSF ID and keyed account identity stayed unchanged. A standard PackageInstaller session restored all 11 original APKs (235,572,891 bytes), returning to 26.39.33/263933029 while retaining fresh service state instead of restoring old CE/DE. Game shared-preference files matched their pre-operation SHA-256 values. New-service logs showed check-in SUCCESS and the catalog opened, but About still showed Device is not certified. Google's own repair was invoked again. Retained account records do not establish that every Google authorization works.
-
-A separate sanitized local source snapshot fully rebuilt e21: 50 non-browser payloads and unsigned browser ZIP entries matched; public 51/116/11 input and 343 locale audits passed. Original keys, private Google payloads and raw evidence were absent. No GitHub push was performed.
-
-Original Guest Magisk was then restored, booting in 59,299 ms. Ordinary-app su approval and strict User namespace verification passed. After service rebuilding and this restart, Play actually installed/opened Google Calculator 9.3/85022643, ordinary UID 10101, installer com.android.vending, without re-login. The final real About row still said Device is not certified. Account identity, revision and GSF ID were retained; instance 2 stayed at 2048 MiB/Follow app.
-
-The owner subsequently authorized GitHub publication of resources and selected device screenshots, with deterministic cropping/privacy masks. README now includes installation-in-progress/completed, a game puzzle board and a live instance preview. Originals, accounts, Google payloads and raw logs remain private. QR gameplay is owner-confirmed; a puzzle image alone does not prove an online match. The list accurately shows one stopped and one running instance. See the bilingual Google recovery guide. Large assets are uploaded to a release draft before recording verified public links; no mirror URLs are invented.
-
-The 0.1.4 preview is now public: independent source history and four processed device captures were pushed. Eight release assets provide the APK, AOSP ROM, clean host image/metadata, Root/BusyBox and kernel sources, SHA256SUMS and resource manifest. Server sizes/digests were verified after upload; download pages use actual URLs returned by GitHub after publication. Drive mirrors are optional. The unmet device-certification requirement remains explicit in README, recovery guides, release notes and machine-readable metadata.
-
-## October 26: 0.1.5 Iris namespace migration and compatibility
-
-The product now uses com.irisbox.viewer, /data/irisbox and Iris-named owned helpers/services/resources. The stopped transaction retained both instance revisions, UID/GID ranges and ROM bindings, with independent per-file-verified userdata/overlay snapshots. A failed variable-collision attempt rolled back; dedicated transaction variables and retirement of the stopped display pointer fixed the transition. The previous entry point was privately backed up and retired; the new package received a normal host Magisk grant. The separate Project Iris was only normally stopped as authorized, with its configuration/data retained.
-
-Two real compatibility defects were found. YouTube blocked while querying camera count because the framework service had been replaced with true. Restoring only the stock framework service returns zero cameras; physical providers/devices stay disabled. Project-ID mapping alone did not solve external-storage setup: the matched kernel forbids noninitial-namespace quota changes. The e25 matched vold adapter skips only project quota tagging/inheritance in strictly mapped guests, retaining directory/ownership/mode/ACL/FUSE checks. Ordinary-app external-file write/read now passes. Per-app project disk quotas are not enforced by this profile. Patch, build script and hashes are supplied; AOSP and Host inputs stayed read-only.
-
-| Test | Actual result and scope |
-|---|---|
-| Play downloads | Clash of Clans, Angry Birds 2 and YouTube were actually installed inside instance 2; installer com.android.vending. Private account fingerprint, GSF identity and revision retained. Device certification has not passed. |
-| Clash of Clans 18.647.5 | Village rendered; real Viewer input advanced tutorial dialogue. Age screen stays private. Long-term battles, clan wars and payments untested. |
-| YouTube 21.42.243 | Original app played Blender's official Big Buck Bunny; e25 progress advanced from 1:35 to 3:02. Fullscreen rendering and nonzero audio observed. Buffering also occurred; this is not 4K/DRM certification. |
-| Angry Birds 2 26.7.1 | Play installation and data-preserving reinstall completed, but startup remained blocked, with asset-pack and first-save-path errors. Level/slingshot gameplay has not passed. A title image is not gameplay proof. |
-| Languages | 343 Host resources checked. English persisted across App restart; Chinese restored. Guest locale/session unchanged. |
-| Simultaneous instances | Ordinary instance 1 at 768 MiB and Google/Root instance 2 at 2048 MiB ran together. Separate maps, namespace ownership, wrong-tick rejection, Host-root/foreign-root dummy-file denial, actual fullscreen keyboard/swipe/reentry, no-INTERNET HTTPS/DNS denial, separate same-name file round trips and independent audio passed. No simultaneous-heavy-games claim. |
-
-The final e25 full build audited 52 engine, 116 ROM, 11 Root and 54 private Google inputs plus 343 locale entries. A separate public-source full build matched 51 non-browser payloads and unsigned browser ZIP entries. Recursive inspection of the final APK found no retired product namespace. Raw evidence/receipts/accounts remain private; selected captures use only authorized deterministic crops/redactions. Fresh physical flashing, new host Magisk installation, a never-used host's initial shared-dispatcher installation and Google device certification remain unverified or unmet.
-
-### October 27 continuation
-
-The owner explicitly allowed clearing only Angry Birds 2. Its CE/DE/external first-run state was privately backed up before standard pm clear; Google and other games were retained. A fresh run created its save directory and reached the Main scene, then displayed “You are offline / Please go online to complete the update.” The instance has CONNECTED/VALIDATED Ethernet and working YouTube/Google/ordinary-app networking. Private short capture on this instance's interface identified cloud.rovio.com requests; this does not establish full service health or device certification. Level gameplay remains unpassed. No game patching, TLS bypass or fabricated authentication was used.
-
-Final e25 dual-instance regression repeated namespace/DAC checks, real fullscreen keyboard/swipe/reentry, no-INTERNET HTTPS/DNS rejection, separate file round trips and independent audio. Both preview sequences advanced after the capture. OOM-kill counters were zero, but the Google guest reached its 2-GiB ceiling with memory-limit hits recorded; heavy dual-game performance is not promised. Final account fingerprint, GSF identity and revision checks passed; previous-project scripts/config/registry and Host boot stayed unchanged, with old guests stopped.
-
-The renamed ordinary QA app needed its own Guest Magisk grant. Enabling only com.irisbox.probe through the normal Superuser UI made its ordinary UID10104 su return Guest UID0 while strict Host mapping remained unprivileged. No grant row was inserted directly. Language selection persisted across App restart; Chinese was restored after testing.
-
-The 0.1.5 preview is public. Server digests/sizes matched the APK, SHA256SUMS and final manifest; unchanged large resources reuse real verified v0.1.4 URLs. A normal Clash idle timeout occurred during publication work. After the original Reload game flow and cancellation of cloud-village overwrite, actual Viewer input advanced the welcome dialogue to the next line. The published Clash capture now shows that final e25 test, not the idle-disconnect dialog.
+| Test | Observed Result & Scope |
+| :--- | :--- |
+| **Google Play Downloads** | Installed *Clash of Clans*, *Angry Birds 2*, and *YouTube* directly inside Guest 2 (`installer=com.android.vending`); account fingerprint, GSF ID, and `revision` retained. **Play Protect device certification has still not passed.** |
+| **Clash of Clans `18.647.5`** | Tutorial village rendered and real Viewer input advanced dialogue after normal idle-timeout reload. |
+| **YouTube `21.42.243`** | Played Blender Foundation's official *Big Buck Bunny* with playback advancing from `1:35` to `3:02`, fullscreen rendering, and non-zero PCM audio (not a 4K/DRM claim). |
+| **Angry Birds 2 `26.7.1` (Before Host Swap)** | With `SwapTotal=0` in `0.1.5`, clearing only `com.rovio.baba` (after private backup) reached the `Main` scene but stopped at `"You are offline / Please go online to complete the update"` (below), and a Root-off control run was stopped at 410s by the 512 MiB host memory guard (`OOM-kill=0`). Retained as **not passed in `0.1.5`** until `0.1.6` added 2 GiB host swap. |
+| **Languages & Dual Regression** | 343 locale resources audited; English/Chinese selection persisted across App restarts; simultaneous `768 MiB` + `2048 MiB` guests passed strict UserNS, network, file, and audio regression. |
 
 ![Angry Birds 2 update remains offline; gameplay has not passed](../images/angry-offline.png)
 
-A Root-off control run verified su/magiskd absent and retained account identity, but the Host fell below 512 MiB available. The watchdog normally stopped that checked session at 410 seconds; OOM-kill remained zero. This is inconclusive about Root compatibility, not a passed control. Original Magisk and the 2048-MiB desktop were restored. No swap, reduced guard, boot configuration change or Host Google suspension was applied; temporary 2-GiB swap awaits explicit owner choice. The maintenance --recover option now works independently, while upgrades still require the exact baseline APK.
+---
 
+## 3. 2026-10-24: `v0.1.4 / e18–e21` In-Guest Downloads, Xiangqi QR Play, Live Orientation & Play Recovery
 
-## October 27: 0.1.6/e27 swap settings and two games
+- **In-Guest Download Browser (`com.irisbox.browser`, `e18 → e20`)**:
+  - Added an ordinary in-guest browser using Android `DownloadManager` and `PackageInstaller` (`e19` preserved `.apk` filenames under `application/octet-stream`; `e20` refreshed parent directory timestamps so `PackageManager` updates system-app metadata).
+  - **Via `7.3.3` (Passed)**: Downloaded `2,628,334 bytes` from the official site inside Guest 2, installed via system UI (`UID 10094`), and browsed normally.
+  - **Tencent AppBao `9.2.9` (Passed)**: Downloaded `42,202,135 bytes` via Via in Guest 2, installed through the standard system prompt, and loaded its online home page.
+  - **Standalone QQ `9.3.75` (Installed; Login Abandoned Due to RAM Guard)**: Downloaded `~374.82 MB` and installed, but heavy DEX compilation and AppBao keepalive processes triggered the 512 MiB host memory guard (`SwapTotal=0` at that time). QQ and AppBao were disabled (`pm disable-user`) with data retained.
+  - **Tiantian Xiangqi `4.4.6.2` (Passed)**: Downloaded `198,465,378 bytes` directly inside Guest 2 via Via (MD5 `99B32B44E4176F9157EA72B34A2E0758` matched official HTTPS metadata), installed via system UI (`UID 10097`), and displayed its native QR login screen. **The owner subsequently confirmed both WeChat QR login/gameplay and QQ QR login/gameplay.**
+- **Live Orientation (`e21`, Passed)**:
+  - Audited 51 engine, 116 ROM, 11 Root, and 54 private Google inputs plus 343 locale entries. Live toolbar switching between landscape (`960×540`) and portrait (`540×960`) preserved the session, counters, GPU rendering, and keyboard input (`Iris9L` / `Iris8P`), and persisted across Guest restart.
+- **Google Play Store Recovery vs. Unmet Certification**:
+  - Clearing only temporary GMS/Store caches (`pm clear --cache-only`) followed by a standard check-in restored the Play Store catalog and installed **Open Sudoku `4.11.1`** (`UID 10098`).
+  - After an explicitly authorized GMS service-data rebuild and restoration of all 11 original split APKs (`26.39.33`) plus Guest Magisk, Play installed and opened **Google Calculator `9.3`** (`UID 10101`, `installer=com.android.vending`) without re-login.
+  - **Unmet Requirement**: `Settings → About → Play Protect certification` still displays **`Device is not certified`** (the official 54,261-row certified device list contains no `Raspberry` / `rpi4` / `aosp_rpi4` entry, and the build uses `userdebug/test-keys`). See [Google Play Recovery](google-recovery.md).
 
-The home/list Swap space page supports Off / 1 / 2 / 4 GiB, actual usage/RAM/disk status and optional host-Magisk reboot restoration. Final version: 0.1.6, code 120, e27. Normally stop all IrisBox guests before resizing/disabling. Host Google, swappiness, guest limits and the 512-MiB host guard were unchanged.
+---
 
-Real UI tests covered 1 GiB→4 GiB→Off→2 GiB with auto restore. A real host reboot restored 2 GiB without opening the App or a computer enabling it. The final APK also passed auto-enabled→Off: swap stopped and only its own boot hook was removed. Re-enabling reused the same file/inode without reformatting. Invalid size/flags, symlinks, a foreign same-name hook and running-guest changes were rejected. Owned test fixtures and inactive capacity-test files were cleaned up.
+## 4. 2026-10-21: `v0.1.3 / e17` User Namespace Identity Isolation Regression
 
-The first e26 attempt safely rejected configuration because Android mksh marks extra descriptors close-on-exec; no swap file was created. e27 explicitly passes the lock FD and passed device tests. Guest startup and swap changes share locking; it was released after both guests became ready rather than inherited by long-lived children. An independent public-source full build matched 52 non-browser payloads and 3 unsigned browser entries; audits passed 53/116/11/54 inputs and 372 locale entries. Final APK replacement retained both live guest sessions.
+- **Strict UID/GID Mapping**: Guest `root (0)` maps to Host `2000000000` (Guest 1) and `2000100000` (Guest 2), with `100,000` UIDs/GIDs per domain and **no Host `UID 0` mapping**. Verified all six non-user namespace owners via `NS_GET_USERNS`, stale-tick rejection, and denial of Host-`UID 0` or cross-instance `0600` test files.
+- **Migration & Boot Timings**: Independent stopped-state backups matched per-file SHA-256 digests before migration. First mapped boots took `174,836 ms` (`768 MiB` Guest 1) and `78,097 ms` (`1536 MiB` Guest 2); subsequent boots took `100,613 ms` and `67,905 ms`. A fresh `1024 MiB` pure-AOSP+Root QA instance booted in `86,483 ms` and passed all media/network checks before being reset and deleted.
+- **Full Subsystem Regression**: Both instances passed fullscreen FD handoff, mixed-case keyboard input (`Iris42Z`), swipe, ordinary-UID HTTPS/DNS/GPU/PCM, `640×360` H.264 encode/playback, retained Magisk `su`, 51-byte file roundtrips, 10 JPEG previews each, 403 bearer rejection, and `21.44s` audio-helper recovery. All 49 engine payloads matched in an independent sanitized public-snapshot build.
 
-| Test | Actual result and boundary |
-|---|---|
-| Conditions | One 4-GB Pi, 2-GiB host swap; guest 1 at 1024 MiB without Google/Root, guest 2 at 2048 MiB with retained Google/Magisk. Not two 2-GB guests or two high-frame-rate fullscreen windows. |
-| Clash of Clans 18.647.5 | The other guest installed the 5 existing on-device, Play-downloaded official APKs through its PackageManager. No account/save clone or claimed second Play download. Village loaded; real Viewer input advanced tutorial dialogue. Idle disconnection occurred; the original Reload Game flow recovered it. Final dual capture is after reconnect. Long battles, clan wars and payments untested. |
-| Angry Birds 2 26.7.1 | While Clash ran, actual slingshot hits, target destruction, the second room and Red’s ability completed the tutorial at 203,332 points. The tutorial rejects off-guide aim with a red cross; green alignment launched normally. This was not a broken input channel. |
-| Observation | 24 samples over about 146.8s kept both guests ready; minimum Host MemAvailable 809104 KiB (about 790.1 MiB), both OOM-kill counters zero. Both preview sequences advanced. This is not a long-run, all-level or frame-rate guarantee. |
-| Retention/isolation | Account fingerprint, guest revisions and both User namespace identities rechecked; no Host-UID0 fallback. After host reboot, the previous project remained stopped with scripts/config/registry retained. |
+---
 
-Earlier YouTube playback, real Play downloads, Xiangqi QR play, languages and orientation retain their original version/date scope. Google device certification has not passed acceptance; certification values, Google APKs and fingerprints were not overridden. See [swap/recovery](low-memory.md) for resume, boot restoration and uninstall.
+## 5. 2026-10-15: `v0.1.0 / e2` – `v0.1.2 / e13` Initial Delivery, Post-Login Media & Localization
 
-![Actual simultaneously running games](../images/dual-games.png)
+- **`v0.1.0 / e2` Initial Acceptance & Host Reboot**:
+  - Passed all 11 on-device `PackageArchive` security tests (valid archive, bad hash, missing file, duplicate, undeclared entry, oversize, wrong profile, path traversal, absolute path, wrong first entry, manifest bomb).
+  - Verified dual instances (`1007` at `768 MiB`, `1008` at `1024 MiB`), ordinary-UID HTTPS 200, independent counters (`1` and `2`), 51-byte file exchange, temporary `1280 MiB` Google+Magisk instance `1009`, and full recovery across a **real Raspberry Pi physical reboot** (`boot_id` change verified).
+- **`v0.1.1 / e9` Post-Login Regression**:
+  - Added the 48 kHz PCM audio loopback bridge (`AudioBridge`), restored `mediaextractor` and software H.264 video decoding, masked `Traceur` via pre-init private `tmpfs`, and fixed single-frame preview exit destructors (`_exit(0)`).
+  - Verified retained Google login, Play Store downloads of **Chrome** and **Simon Tatham's Puzzles**, 120 consecutive JPEG previews without crash-buffer errors, `11.86s` audio recovery after helper termination, and memory admission protection across host reboot.
+- **`v0.1.2 / e13` Localization & Public Snapshot**:
+  - Imported the public Google-free `IrisBox-rpi4-a13-aosp.irisrom` via the system picker, booted a clean `1024 MiB` AOSP+Root guest in `64,128 ms`, audited 334 EN/ZH resource keys and 44 engine payloads, and statically validated the 12 GiB blank-`userdata` clean host `.img.xz` preview image (**physical USB flash and first boot remain untested**).

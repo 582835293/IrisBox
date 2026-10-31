@@ -1,17 +1,37 @@
-# 来源与组件说明
+# 来源与组件演进说明 · Source Provenance
 
-本项目从用户本地 Project Iris V3.0 提取当前控制脚本、Viewer/Broker/Gateway源码，以及固定恢复包中的配套组件。`source-inputs.json`保存185项最初输入的路径及SHA-256；后续改动以本项目源码为准。
+本文档记录 **虹膜空间（IrisBox）** 从参考工程提取、演进及各版本适配组件的真实来源与校验依据。
 
-参考运行源码已包含2026-10-14网络账本修复；旧冻结包本身是2026-10-10版本。因此采用“明确清单中的当前脚本/载荷覆盖固定包”，不是把旧tar直接改名。额外Connectivity Guest联网库来自设备现用静态产物，并与本地对应build产物核对。
+---
 
-关键上游：AOSP Android13及树莓派板卡驱动、Linux/BusyBox、Magisk30.7、NikGapps core arm64 Android13（固定包日期20260204）。Google层沿用旧项目固定manifest和摘要，提取的是已准备的静态程序层；没有复制账号、运行中更新或实例data。
+## 1. 基础提取与基线核验
 
-Magisk组件内保留原LICENSE、adaptation.json、apk_assets.patch和摘要。其Manager/二进制为旧项目适配并配套签名的组件，不代表官方原版可直接替换。系统兼容补丁在`reference/patches`，BPF源码、固定指令头和Guest库patch在`engine/native/inet`。
+- **初始来源**：本项目从用户本地只读参考工程 `Project Iris V3.0` 提取控制脚本、`Viewer` / `Broker` / `Gateway` 源码及固定恢复包中的配套组件。`reference/source-inputs.json` 完整记录了最初 **185 项输入文件**的相对路径与 SHA-256 摘要；后续演进以本仓库源码为准。
+- **版本对齐策略**：参考工程运行源码已包含 2026-10-14 的网络账本修复，而其早期冻结归档包停留在 2026-10-10。因此提取时采用**按明确清单用最新运行脚本/载荷覆盖冻结包**的策略，而非简单将旧归档改名。此外，Connectivity Guest 联网库直接取自设备已验证的静态产物，并与本地构建产物逐字节核对一致。
 
-当前公开发行使用不含 Google 的 AOSP ROM 和重新创建空白 userdata 的宿主镜像。第三方许可、对应源码索引、镜像验证边界见仓库 THIRD_PARTY_NOTICES.md 与 docs/08_国际化与发布.md。原私人 Google 包和所有用户数据不公开。
+---
 
-本轮将当前producer C++源码及直接编译脚本提取至`engine/native/buffer`，修复后在用户已有AOSP13环境的独立临时目录重编；摘要见`producer-build.json`。新增Java音频桥和Host监督脚本为本项目实现，不从旧实例提取运行数据。
+## 2. 上游组件与可选层来源
 
-0.1.3另参考旧项目2026-10-20的User namespace实现，输入摘要见`userns-provenance.json`。本项目改为独立UID范围，适配0700产品目录、私有BusyBox、独有音频桥和既有维护事务。闹钟JNI复用已核验的固定产物，并附AOSP源码位置与补丁；没有修改旧工程或宿主系统库，也没有声称重编整个AOSP。
+| 组件类别 | 来源与合规边界 |
+| :--- | :--- |
+| **基础系统与内核** | AOSP Android 13（`android-13.0.0_r75`）及 Raspberry Vanilla 树莓派 4 板卡驱动、Linux 5.15.150 内核、BusyBox 1.36.1.1。 |
+| **实例 Root 组件** | Magisk 30.7（`engine/runtime/root/magisk_30_7/`），保留上游 `LICENSE`、`adaptation.json`、`apk_assets.patch` 与 `SHA256SUMS`。其中的 Manager 与二进制为容器适配并独立重签名的组件，不可直接用官方未修改原版替换。 |
+| **系统与网络补丁** | 系统兼容补丁位于 `reference/patches/`；BPF 源码、预编译指令头（`policy_insns.h`）及 Guest 联网补丁位于 `engine/native/inet/`。 |
+| **可选 Google 静态层** | 沿用参考工程针对 `NikGapps core arm64 Android 13`（固定包日期 `20260204`）提取的 54 项静态文件清单与 SHA-256 摘要，仅包含未运行的静态程序层，**绝不复制任何个人账号、运行期更新或实例 `data`**。公开 AOSP ROM 与公开 Git 仓库均不包含 Google 二进制文件。 |
 
-0.1.5/e25新增映射实例存储适配：在匹配AOSP的独立临时目录仅重编vold Utils并使用只读依赖重链接；补丁、源码/二进制摘要和复编脚本分别见`reference/patches/vold-userns.patch`、`reference/storage-build.json`和`engine/native/storage/`。只跳过该内核不允许容器设置的项目配额标签/继承，保留目录/属主/ACL检查。相机框架恢复仅用于返回零设备，物理provider保持禁用。
+---
+
+## 3. 各版本新增与重编组件记录
+
+### v0.1.1 / e9：图形 Producer 重编与音频桥
+- **图形 Producer（`engine/native/buffer/`）**：提取 C++ 源码与直接编译脚本，修复单帧预览进程退出时的静态析构竞争问题，并在经授权的匹配 AOSP 13 编译机独立临时目录（`/tmp/irisbox-producer-*`）完成重编，摘要记录于 `reference/producer-build.json`。
+- **音频桥（`engine/audio/AudioBridge.java`）**：新增实例 PCM 回环采集与宿主 `AudioTrack` 监督播放实现，不从旧实例提取任何运行期数据。
+
+### v0.1.3 / e17：User Namespace 身份隔离
+- **参考与独立适配**：参考旧项目 2026-10-20 的 User Namespace 实现（输入摘要见 `reference/userns-provenance.json`），将本项目映射更改为互不重叠的独立 UID/GID 范围（`2000000000` 起），并专门适配 `0700` 宿主私有根目录、私有 BusyBox、独立音频桥降权连接与维护升级事务。
+- **闹钟兼容库（`libalarm_jni.so`）**：复用已核验的固定产物，附带 AOSP 源码位置与补丁（`reference/patches/userns-alarm.patch`）；未修改旧工程或宿主系统库，亦不宣称全量重编 AOSP。
+
+### v0.1.5 / e25：映射存储（`vold`）与相机框架恢复
+- **映射实例存储适配（`engine/native/storage/`）**：在匹配 AOSP 编译机的独立临时目录中仅重编 `system/vold/Utils.cpp` 并基于只读依赖重链接 `vold`。仅在严格匹配的实例映射身份下跳过内核禁止非初始 User Namespace 修改的项目配额（Project Quota）标签/继承，完整保留目录、UID/GID、权限模式与默认 ACL 检查。补丁、摘要与复编脚本分别见 `reference/patches/vold-userns.patch`、`reference/storage-build.json` 与 `engine/native/storage/`。
+- **相机框架服务恢复**：恢复实例内原厂 `cameraserver` 框架服务以正常返回 `0` 台摄像头（解决 YouTube 启动查询相机数量阻塞导致的 ANR），同时保持所有物理相机 Provider 禁用。

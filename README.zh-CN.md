@@ -1,80 +1,92 @@
 # 虹膜空间 · IrisBox
 
-简体中文 · [English](README.md)
+**简体中文** · [English](README.md) · [下载与校验 (SHA-256)](DOWNLOADS.zh-CN.md) · [GitHub Releases](https://github.com/582835293/IrisBox/releases)
 
-虹膜空间是在已获 Root 的树莓派 Android 宿主上运行多个独立 Android 实例的 App。使用流程：**安装 APK → 授予宿主 Magisk root → 安装引擎 → 导入 ROM → 创建实例 → 启动**。
+**虹膜空间（IrisBox）** 是一款运行在已获取 Root 权限的树莓派 4 Android 宿主上的多实例 Android 容器应用。各实例共享宿主 Linux 内核，同时拥有独立的命名空间（User / Mount / PID / Network / IPC / UTS / Cgroup）、私有 BinderFS、OverlayFS 写入层与应用数据目录。
 
-当前预览版限定 **树莓派 4 / ARM64 / 已匹配的 Raspberry Vanilla AOSP 13**。实例共享宿主 Linux 内核，应用、账号、写入层及数据分别保存；不能导入任意手机刷机包。
+> [!IMPORTANT]
+> **当前预览版支持边界（v0.1.6 / 引擎 e27）**
+> - **唯一适配宿主**：树莓派 4（ARM64，约 4 GiB 内存）+ 指定匹配的 **Raspberry Vanilla AOSP 13** 构建 + 已开启 Permissive 的 SELinux 环境。仅具备 Root 权限无法使其他设备或任意手机刷机包兼容。
+> - **宿主 Magisk 需自行安装**：IrisBox 仅申请标准宿主 Root 授权，绝不自行安装或修补宿主 Magisk，也不修改宿主物理分区。
+> - **存量版本升级注意**：
+>   - `0.1.4 / e21` 用户升级前必须先按 [0.1.5 命名迁移与恢复指南](docs/11_Iris命名迁移.md) 执行停机备份与目录迁移，并为新包名 `com.irisbox.viewer` 重新授予宿主 Root。
+>   - `0.1.2 / e13` 用户升级前必须先按 [User Namespace 隔离与迁移说明](docs/09_User_namespace隔离与迁移.md) 完成停机备份与 UID/GID 映射迁移。
 
-## 安装
+---
 
-1. 阅读[安装说明](docs/01_安装与使用.md)和[宿主镜像说明](docs/08_国际化与发布.md)，确认指纹、内核、GPU、资源组、Wi-Fi 和已配置的 Permissive 环境。
-2. **宿主 Magisk 由使用者自行安装**。App 不安装宿主 Magisk，不修改宿主 SELinux 或物理分区。
-3. 安装 `IrisBox-0.1.6.apk`，打开后依次点“授权与检查”“安装内置引擎”。
-4. 点“导入 ROM”，选择 `IrisBox-rpi4-a13-aosp.irisrom`；再进入管理页，新增并启动实例。
-5. “EN / 中文”可以选择跟随系统、English 或简体中文。只改变本 App 的语言，不修改实例的 Android 语言、账号和数据。
+## 核心特性
 
-[下载与 SHA-256](DOWNLOADS.zh-CN.md) · [GitHub Releases](https://github.com/582835293/IrisBox/releases)
+| 模块 | 能力说明 |
+| :--- | :--- |
+| **多实例与资源隔离** | 独立实例数据、可配置内存上限（`0.5`–`2.5 GiB`）、分辨率预设、实时横竖屏切换（跟随应用 / 横屏 / 竖屏）及生命周期控制。 |
+| **Root 身份隔离** | 自 `0.1.3` 起强制启用每实例独立 User Namespace；实例内 `root (UID 0)` 映射至专有宿主非特权 UID 范围（`2000000000` 起），**无 Host UID 0 回退**。 |
+| **安全 ROM 导入** | 严格校验归档路径、容量上限、清单格式与逐文件 SHA-256 摘要；仅解包普通文件，绝不执行 ROM 包内的任何安装脚本。 |
+| **宿主交换空间（v0.1.6）** | 支持在 App 内配置宿主共享 Swap（关闭 / `1 GiB` / `2 GiB` / `4 GiB`），并可通过用户已安装的宿主 Magisk 实现重启后自动恢复。 |
+| **图形、输入与多媒体** | 实例列表提供约 1 秒/帧的实时低频预览；全屏采用独立共享图形缓冲区管线，支持键鼠/触屏输入模式切换、单向 PCM 音频混音输出与软件视频解码。 |
+| **文件交换与多语言** | 内置基于 Android SAF 的单实例文件导入/导出（`Download/IrisExchange`）；支持宿主 App 界面语言切换（跟随系统 / English / 简体中文），不影响实例内部系统语言。 |
+| **可选组件支持** | **实例 Root（Magisk）**：内置适配组件并提供每实例独立开关及救援启动模式。<br>**Google 组件**：公开 AOSP ROM 不含 Google 应用或账号；支持使用者自行提供合法授权且摘要匹配的静态组件层，现有私人 Google 实例升级时完整保留原 ROM 与登录状态。 |
+
+---
+
+## 快速开始
 
 ![虹膜空间使用流程示意](docs/images/usage.zh-CN.svg)
 
-上图为操作示意，不包含设备截图、账号或私密数据。
+*注：上图为操作流程示意，不包含真实设备截图、账号或私密数据。*
 
-现有0.1.4/e21安装请先阅读 [0.1.5命名迁移与恢复](docs/11_Iris命名迁移.md)，停机备份后迁移；新包名需要正常重新授予宿主root。
+1. **检查宿主环境**：阅读 [安装与使用说明](docs/01_安装与使用.md) 及 [宿主镜像说明](docs/08_国际化与发布.md)，确认构建指纹、内核命名空间、GPU 驱动、cgroup 资源组、Wi-Fi 及 Permissive 状态符合要求。
+2. **准备宿主 Root**：按照树莓派启动分区布局与 Magisk 官方说明**自行安装宿主 Magisk**。
+3. **安装并初始化引擎**：安装 `IrisBox-0.1.6.apk`，打开应用后依次点击 **“1 · 授权与检查”** → **“2 · 安装内置引擎”**。
+4. **导入适配 ROM**：点击 **“3 · 导入 ROM”**，选择 `IrisBox-rpi4-a13-aosp.irisrom` 完成校验入库。
+5. **创建并运行实例**：点击 **“4 · 管理实例”** → **“新增实例”** → **“启动”**，待状态显示“桌面已就绪”后点击 **“进入”**。
 
-## Root 身份隔离
+---
 
-0.1.3要求每个实例使用独立User namespace；实例root映射到专有宿主普通UID范围，没有Host UID0回退。现有e13安装需要停机备份及迁移，只更新APK还不够，见[隔离与迁移说明](docs/09_User_namespace隔离与迁移.md)。
+## 实机运行与验收画面
 
-## 能力与资料
+> [!NOTE]
+> 以下均为经设备所有者授权公开、通过确定性脚本裁切并遮挡隐私信息的实机运行画面（无 AI 重绘）。详细背景与边界说明请参阅 [实机图片说明](docs/images/README.md) 与 [实机验收记录](docs/06_验收记录.md)。
 
-支持独立多实例、内存上限、分辨率设置、列表预览、全屏显示、键鼠/触控输入、文件交换、实例播放声音和已测的软件视频。新增宿主交换空间设置：关闭/1/2/4GiB，可通过使用者自行安装的宿主Magisk在重启后自动恢复。实例 Root 保留现有组件及独立开关，与宿主 Magisk 授权分开。
+### 1. 实例双开与大型游戏并发（v0.1.6 / e27）
 
-公开 ROM 不包含 Google 程序及任何账号；可选 Google 层需要使用者自行提供有权使用、与适配清单匹配的材料。现有私人 Google 实例保持原 ROM、数据和登录，不改为公开 AOSP ROM。
+| 双实例桌面并发预览（768 MiB + 2048 MiB） | 双游戏同屏并发（1024 MiB 部落冲突 + 2048 MiB 愤怒的小鸟 2） |
+| :---: | :---: |
+| ![两个实例同时运行的实时缩略图](docs/images/dual-instances.png) | ![部落冲突与愤怒的小鸟2同时运行的真实双开图](docs/images/dual-games.png) |
 
-已发布0.1.3的验收曾被Play Protect认证提示阻止。10月24日0.1.4实测已恢复商店目录，并从Play实际安装Open Sudoku和Google计算器；**设备认证仍未通过**，见[本轮验收](docs/06_验收记录.md)。每个实例需要使用自己的标识进行适用的自定义ROM登记，登记不等于设备认证。
+- **测试条件**：4 GB 树莓派 4 宿主开启 **2 GiB 共享交换空间**，实例 1（1024 MiB）运行《部落冲突》新手村庄，实例 2（2048 MiB，保留 Google 与实例 Magisk）运行《愤怒的小鸟 2》。
+- **交互结果**：两款游戏均通过真实全屏窗口触控交互，《愤怒的小鸟 2》完成拉弓发射、击碎目标与 Red 技能触发，教程结算得分 **203,332**；《部落冲突》在正常空闲断线后按原版 `Reload Game` 流程重连并推进对话。
+- **验收边界**：此项为短时教程交互验收，**不代表长期对战、部落战、支付或稳定高帧率承诺**。
 
-**0.1.6/e27**新增App内交换空间设置并验证真实重启自动恢复，保留Iris命名、外部存储及摄像头查询修复、实时横竖屏和中英文语言设置。Angry Birds 2已在2048MiB实例、宿主2GiB交换空间条件下实际发射、击碎目标并操作Red技能，恢复原实例Magisk后也通过。YouTube播放与实例双开已通过。详见[当前验收](docs/06_验收记录.md)、[交换空间与恢复](docs/12_低内存与临时交换空间.md)和[命名迁移](docs/11_Iris命名迁移.md)。
+### 2. 应用、多媒体与宿主交换空间
 
-## 实机画面
-
-| 商店实际安装中 | 从Play安装完成 | 天天象棋运行 |
-|---|---|---|
+| Google Play 实际下载中 | Google Play 安装完成 | 《天天象棋》实机残局棋盘 |
+| :---: | :---: | :---: |
 | ![Play实际安装过程](docs/images/play-download.png) | ![已安装并显示打开按钮](docs/images/play-installed.png) | ![实例内残局棋盘](docs/images/game-running.png) |
 
-![两个实例同时运行的实时缩略图](docs/images/dual-instances.png)
+| 《部落冲突》新手村庄交互 | YouTube 实际视频播放 | 《愤怒的小鸟 2》目标击碎 | 宿主交换空间设置（中文） |
+| :---: | :---: | :---: | :---: |
+| ![部落冲突村庄与教程](docs/images/clash-village.png) | ![YouTube播放](docs/images/youtube-playback.png) | ![愤怒的小鸟2实际发射](docs/images/angry-gameplay.png) | ![交换空间中文页面](docs/images/swap-settings-zh.png) |
 
-![部落冲突与愤怒的小鸟2同时运行的真实双开图](docs/images/dual-games.png)
+- **Google Play 下载与认证说明**：`0.1.4` 实测已恢复商店目录并实际下载安装 Open Sudoku 与 Google 计算器，但设置页 **Play Protect 设备认证仍未通过（`Device is not certified`）**。自定义 ROM 的 GSF ID 登记不等于设备认证通过，详见 [Google 商店恢复与认证说明](docs/10_Google商店恢复与认证说明.md)。
+- **扫码登录确认**：《天天象棋》残局棋盘为实机截图；微信及 QQ 扫码登录与对局游玩已由设备所有者另行亲测确认（单张棋盘截图本身不作为联网对局证明）。
 
-最新双游戏测试使用1024/2048MiB实例和宿主2GiB交换空间；两款均通过真实窗口交互，《愤怒的小鸟2》教程结算203,332分。属于短时教程验收，不代表长期对战或稳定帧率。部落冲突空闲断线已按原有流程重连，最终双开图取重连后画面。
+---
 
+## 文档导航
 
-| 部落冲突新手村庄 | YouTube 实际视频播放 |
-|---|---|
-| ![部落冲突村庄与教程](docs/images/clash-village.png) | ![YouTube播放](docs/images/youtube-playback.png) |
+| 类别 | 中文文档 | English Documentation |
+| :--- | :--- | :--- |
+| **安装与发行** | [安装与使用指南](docs/01_安装与使用.md) · [国际化、发布与干净镜像](docs/08_国际化与发布.md) | [Installation and Clean Host Image](docs/en/installation.md) |
+| **架构与规范** | [技术架构与隔离边界](docs/02_技术架构.md) · [ROM 包规范 v1](docs/03_ROM规范.md) | [Architecture and Isolation](docs/en/architecture.md) · [ROM Format v1](docs/en/rom-format.md) |
+| **迁移与隔离** | [0.1.5 Iris 命名迁移与恢复](docs/11_Iris命名迁移.md) · [User Namespace 隔离与迁移](docs/09_User_namespace隔离与迁移.md) | [0.1.5 Namespace Migration](docs/en/namespace-migration.md) · [User Namespaces](docs/en/userns.md) |
+| **内存与商店** | [交换空间设置、低内存与恢复](docs/12_低内存与临时交换空间.md) · [Google 商店恢复与认证说明](docs/10_Google商店恢复与认证说明.md) | [Swap Settings and Low Memory](docs/en/low-memory.md) · [Google Play Recovery](docs/en/google-recovery.md) |
+| **构建与演进** | [构建、升级与维护](docs/04_构建与维护.md) · [与旧项目对比及学习路线](docs/05_对比与学习.md) | [Building and Maintenance](docs/en/building.md) · [Comparison and Learning](docs/en/comparison.md) |
+| **实机验收记录** | [首次实机验收与历次回归](docs/06_验收记录.md) · [登录后回归与修复](docs/07_登录后回归与修复.md) | [Validation Report and Boundaries](docs/en/validation.md) |
 
-| 愤怒的小鸟2实际击碎目标 | App交换空间设置 |
-|---|---|
-| ![愤怒的小鸟2实际发射](docs/images/angry-gameplay.png) | ![交换空间中文页面](docs/images/swap-settings-zh.png) |
+---
 
-以上是经用户授权裁切、遮挡隐私的实机截图，没有AI重绘。天天象棋图为残局棋盘；微信及QQ扫码登录、游玩由用户另外亲测确认。早期计数桌面双开图使用768/2048MiB；最新双游戏图使用1024/2048MiB与宿主2GiB交换空间，教程交互通过，长期对战与帧率未验证。部落冲突图片为新手村庄与教程交互，不代表长期对战；YouTube为实际播放片段。这些画面不代表Google设备认证通过。见[图片说明](docs/images/README.md)。
+## 已知边界与合规声明
 
-- [0.1.5 Iris命名迁移与恢复](docs/11_Iris命名迁移.md)
-- [User namespace隔离、迁移与回退](docs/09_User_namespace隔离与迁移.md)
-- [技术架构与资源边界](docs/02_技术架构.md)
-- [ROM 包规范](docs/03_ROM规范.md)
-- [构建、升级与恢复](docs/04_构建与维护.md)
-- [交换空间设置、低内存与恢复](docs/12_低内存与临时交换空间.md)
-- [与旧项目对比及学习路线](docs/05_对比与学习.md)
-- [首次验收](docs/06_验收记录.md)、[登录后回归](docs/07_登录后回归与修复.md)
-- [Google商店恢复步骤、备份与认证区别](docs/10_Google商店恢复与认证说明.md)
-- [国际化、发布及干净镜像](docs/08_国际化与发布.md)
-- [English documentation](docs/en/installation.md)
-
-干净宿主刷机镜像使用原始 boot/system/vendor 和全新空白 userdata 制作，已完成静态校验，**尚未用备用USB盘刷入并验证首次启动**。现有宿主实测不能替代从未安装旧项目的空白宿主验收。其他设备/内核、Enforcing、摄像头/麦克风、DRM、Play Integrity 和第三方模块不作通过承诺。
-
-本项目独立维护。0.1.5使用包名 `com.irisbox.viewer` 和设备目录 `/data/irisbox`；现有安装需要按文档停机迁移。`.irisrom` 格式保持兼容，原参考工程保持只读。
-
-第三方材料保留各自许可证，见[组件说明](THIRD_PARTY_NOTICES.md)与[来源记录](reference/NOTICE.md)。项目自有代码暂未授予统一开源许可证；公开仓库不等于更改上游许可。密钥、账号、实例数据、设备原始截图和日志不公开。
-
-干净宿主预览镜像固定USB/sda启动，带12GiB空白userdata，适用于16GB以上USB盘；不能当作SD卡/mmc镜像使用。
+1. **干净宿主刷机镜像边界**：随附的 `.img.xz` 整盘镜像基于原始 `boot` / `system` / `vendor` 分区与全新格式化（12 GiB 空白 `userdata`）合成，固定仅支持 **USB / `sda` 启动**（适用 16 GB 及以上 USB 盘，**不可作为 SD 卡 / `mmc` 镜像使用**）。目前已通过分区与文件系统静态校验，**尚未在备用 USB 盘上验证物理刷入与首次启动**。
+2. **未承诺范围**：非匹配内核/设备、Enforcing SELinux、物理摄像头/麦克风直通、DRM 受保护视频、Play Integrity、实例内按应用项目磁盘配额（Project Quota）以及任意第三方 Root 模块均不在支持承诺范围内。
+3. **独立工程与开源许可**：本项目使用包名 `com.irisbox.viewer` 与设备目录 `/data/irisbox` 独立维护，`.irisrom` 格式保持兼容，旧参考工程保持只读。第三方组件保留各自上游许可证（见 [第三方组件声明](THIRD_PARTY_NOTICES.md) 与 [来源说明](reference/NOTICE.md)）；项目自有代码暂未授予统一开源许可证。签名私钥、账号、实例数据及原始未脱敏日志与截图均不随仓库公开。

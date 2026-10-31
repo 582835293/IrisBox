@@ -1,37 +1,64 @@
-# 0.1.5: Iris namespace migration and recovery
+# 0.1.5: Iris Namespace Migration and Recovery
 
-[简体中文](../11_Iris命名迁移.md)
+**English** · [简体中文](../11_Iris命名迁移.md) · [Back to README](../../README.md)
 
-Version 0.1.5/e25 uses `com.irisbox.viewer` and `/data/irisbox`. Product-owned helpers, audio services, sockets and resource groups also use Iris names. Instance numbers, data revisions, ROM bindings and User namespace UID/GID ranges stay unchanged. The verified shared INET dispatcher remains shared; its existing path and other projects' tables are not moved or removed.
+---
 
-An existing 0.1.4/e21 installation needs a **stopped-state migration**, not just an APK update. The new package needs a normal host Magisk grant. Do not copy root grant databases, clear Google services or recreate instances. Fresh installations follow the normal installation guide.
+## 1. Scope of the `0.1.5 / e25` Migration
 
-## Maintainer procedure
+Version `0.1.5 / e25` unifies all product-owned package names, device directories, native helpers, audio services, sockets, and cgroup resource groups under the **IrisBox (`Iris`)** namespace:
 
-Only the verified 0.1.4/e21 → 0.1.5/e25 transition is supported. Keep the exact installed old APK, private signing keys and sufficient independent backup space. The separate previous Project Iris is read-only reference material, not a migration source.
+- **Host Package Name**: `com.irisbox.viewer` (bundled guest download browser: `com.irisbox.browser`)
+- **Device Root Directory**: `/data/irisbox` (`/data/irisbox/runtime`)
+- **Preserved State**: Manager port `19762`, instance numbers, userdata `revision`s, ROM bindings, User namespace UID/GID ranges (`2000000000+`), Google accounts, and third-party app/game data.
+- **Shared Exception**: The verified root-cgroup BPF socket dispatcher (`/sys/fs/bpf/iris_inet_v1`) continues to be shared safely; its path and other projects' tables are never moved or deleted.
 
-1. Normally stop every instance of this product and wait for display, network and lifecycle cleanup. Close the previous entry point.
-2. Select your ADB device (`IRISBOX_SERIAL` in the public snapshot). The tool reads the previous package/root from the supplied APK and checks installed APK bytes, every engine hash, PID:start_tick, empty resource groups, network ownership and read-only lower mounts. It refuses mismatches.
-3. Check, then apply:
+> [!WARNING]
+> **Existing `0.1.4 / e21` Installations Must Migrate While Stopped**
+> - Because the package name changes to `com.irisbox.viewer`, Android treats it as a new application requiring a normal **host Magisk root grant**.
+> - **Do not** merely install the new APK without migrating, **do not** copy Magisk grant databases manually, and **do not** clear Google services or recreate instances. (Fresh installations simply follow the [Installation Guide](installation.md).)
 
+---
+
+## 2. Maintainer Stopped-State Migration Procedure
+
+`tools/migrate_namespace.py` supports only the verified **`0.1.4 / e21 → 0.1.5 / e25`** transition. Retain the exact installed `IrisBox-0.1.4.apk`, private signing keys, and sufficient free disk space before starting (the separate previous `Project Iris` remains read-only reference material and is never used as a migration source):
+
+1. **Stop All Instances**:
+   Normally stop every instance in the old App, wait for display, network, and lifecycle cleanup to finish, and close the old App UI.
+2. **Select Your Device & Verify Preconditions**:
+   Set `IRISBOX_SERIAL` to your ADB serial. The script reads the previous package and root path from `--from-apk` and verifies installed APK bytes, every engine payload SHA-256, `PID:start_tick`, empty resource groups, network ownership, and read-only lower mounts.
+3. **Run Dry-Run Check, Then Apply**:
    ```powershell
-   python tools/migrate_namespace.py --from-apk out/IrisBox-0.1.4.apk --to-apk out/IrisBox-0.1.5.apk
-   python tools/migrate_namespace.py --from-apk out/IrisBox-0.1.4.apk --to-apk out/IrisBox-0.1.5.apk --apply
+   # 1. Dry-run verification (no changes written)
+   python tools/migrate_namespace.py `
+     --from-apk out/IrisBox-0.1.4.apk `
+     --to-apk out/IrisBox-0.1.5.apk
+
+   # 2. Stopped-state full backup and atomic namespace migration
+   python tools/migrate_namespace.py `
+     --from-apk out/IrisBox-0.1.4.apk `
+     --to-apk out/IrisBox-0.1.5.apk `
+     --apply
    ```
+4. **What the Transaction Performs**:
+   - Creates independent stopped copies (distinct inodes, not hard links) of each instance's `data`, `upper`, `vendor.upper`, and `metadata` with per-file SHA-256 verification, plus configuration and engine rollback materials.
+   - Releases verified owned read-only lower mounts, disables the old entry point, installs the `0.1.5` trusted engine, and moves the product root to `/data/irisbox` (retiring stale display pointers and audio paths into the private backup).
+5. **Install the New APK & Authorize Host Root**:
+   Install `IrisBox-0.1.5.apk` (or a same-signed `0.1.6` APK), open **1 · Authorize and check**, approve the standard host Magisk prompt, and start your retained instances. Retire/uninstall the old APK only after verifying userdata, accounts, display, input, networking, and isolation.
 
-4. The tool makes independent stopped copies of each instance's data, upper, vendor.upper and metadata, checks per-file SHA-256 and retains configuration/engine recovery materials. These are not hard links. It releases only verified owned lower mounts, disables the previous entry point, installs the trusted engine and moves the product root. Stopped display pointers and old audio files are retained privately for recovery instead of reusing stale absolute paths.
-5. Install the new APK, run **Authorize and check**, allow its normal host Magisk request and start the retained instance. The tool does not uninstall the old APK. Retire the previous entry point only after backing it up and validating data, account identity, display, input, network and isolation.
+*Note: Private transaction receipts are saved to `out/maintenance/namespace-transition.json` and on-device snapshots reside under `/data/irisbox/maintenance/` (never publish receipts, account fingerprints, or raw logs; on-device snapshots do not replace external backups). The bundled browser's package change (`com.irisbox.browser`) means its old private `DownloadManager` history stays in the snapshot, while third-party Google/game packages and UIDs remain unchanged.*
 
-The private receipt `out/maintenance/namespace-transition.json` records the actual stage and full snapshots. Backups move with the product root, under `/data/irisbox/maintenance/` or the recorded transaction directory. Do not publish receipts, account fingerprints, raw logs or device captures. An on-device snapshot does not replace an external backup.
+---
 
-The bundled download browser also changes package identity. Its old private cache/DownloadManager history does not automatically become the new UID's history; original downloaded files and old state remain in the full snapshot. Third-party Google/game package identities and their existing UID/data layouts stay unchanged.
+## 3. Rollback & Recovery Rules
 
-## Recovery
+- **Never Force Startup If `engine-upgrade.pending` Exists**: Preserve the receipt and console output, verify all guests and display processes are stopped, and inspect the recorded `recover.sh`.
+- **Automatic Transaction Rollback**: During initial device testing, a sourced script overwrote a short variable name; the transaction automatically rolled back with all userdata intact, and dedicated variables plus subshell checks resolved the issue on the next run.
+- **Scope of `recover.sh`**: The generated recovery script applies strictly to that **stopped directory/engine transaction**, not arbitrary later userdata writes. If the old APK was uninstalled, reinstall the exact old APK before restoring its entry point and grant.
 
-Do not force startup while `engine-upgrade.pending` exists. Retain the receipt and failure output, confirm all guests/display tasks are stopped, then inspect the recorded `recover.sh`. Do not guess paths, delete the marker, recursively change ownership or rerun initial extraction scripts.
+---
 
-The transaction attempts rollback on apply failure. Device testing caught a sourced library overwriting a short transaction variable; dedicated variables and subshell checks fixed it. The failed attempt rolled back with data retained, and the subsequent migration passed verification.
+## 4. Validated Results
 
-The generated recovery script covers that **stopped directory/engine transaction**, not arbitrary later userdata changes. If the old entry point has since been uninstalled, reinstall the exact old APK before restoring its entry point and normal grant. Full snapshot restoration also requires matching revisions, UID mappings, mounts and configuration. Never overwrite later user changes blindly or combine an old engine with incompatible ownership. For Google usage, follow [Google recovery](google-recovery.md) before considering any data reset; preserve GSF identity.
-
-Both existing instances were migrated with IDs, revisions and UID/GID ranges retained. Instance 2 kept its private Google account fingerprint and GSF ID and installed further Play apps after restart. Normal host root authorization, EN/ZH settings and real fullscreen game input passed. The separate previous project was only normally stopped as authorized; its data/configuration remain. See [validation](validation.md) for exact app and dual-instance results. Users still install host Magisk themselves. Google device certification has not passed.
+Both retained instances migrated with their IDs, `revision`s, and UID/GID ranges intact. Instance 2 retained its private Google account fingerprint and GSF ID and installed additional Play Store apps (`Clash of Clans`, `Angry Birds 2`, `YouTube`) after restart. Normal host Magisk authorization, EN/ZH language persistence, and fullscreen game input passed (see the [Validation Report](validation.md)).

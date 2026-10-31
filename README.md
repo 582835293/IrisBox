@@ -1,89 +1,92 @@
 # IrisBox · Android Container
 
-[简体中文](README.zh-CN.md) · English
+[简体中文](README.zh-CN.md) · **English** · [Downloads & SHA-256](DOWNLOADS.md) · [GitHub Releases](https://github.com/582835293/IrisBox/releases)
 
-IrisBox (**虹膜空间**) runs multiple Android userspaces inside a rooted Raspberry Pi 4 Android host. Install the APK, grant host Magisk root, import a compatible ROM, create an instance and start it.
+**IrisBox (虹膜空间)** runs multiple isolated Android userspaces inside a rooted Raspberry Pi 4 Android host. Instances share the host Linux kernel while maintaining separate namespaces (User / Mount / PID / Network / IPC / UTS / Cgroup), private BinderFS instances, OverlayFS write layers, and independent app data.
 
-This preview supports one matched **Raspberry Vanilla AOSP 13 / ARM64 / Raspberry Pi 4** host profile. Instances share the host Linux kernel, with separate namespaces, Binder devices, overlays and app data. Root access alone does not make other devices or arbitrary Android ROMs compatible.
+> [!IMPORTANT]
+> **Preview Scope & Upgrade Requirements (v0.1.6 / Engine e27)**
+> - **Matched Host Profile Only**: Requires a **Raspberry Pi 4 (ARM64, ~4 GiB RAM)** running the exact matched **Raspberry Vanilla AOSP 13** build with Wi-Fi and an already configured **Permissive** SELinux environment. Root access alone does not make other boards or arbitrary Android ROMs compatible.
+> - **User-Installed Host Magisk**: Install host Magisk yourself following upstream instructions and the board's boot partition layout. IrisBox never installs or patches host Magisk.
+> - **Mandatory Migrations for Existing Users**:
+>   - Existing `0.1.4 / e21` installations must complete the stopped-state [0.1.5 Namespace Migration and Recovery](docs/en/namespace-migration.md) and grant normal host root to the new `com.irisbox.viewer` package.
+>   - Existing `0.1.2 / e13` installations must complete the stopped-state [User Namespace Isolation and Migration](docs/en/userns.md) before starting instances.
 
-Existing 0.1.4/e21 users must first follow the stopped-state [0.1.5 namespace migration and recovery](docs/en/namespace-migration.md). The new package needs its own normal host root grant.
+---
 
-## Get started
+## Key Capabilities
 
-1. Read the [host and installation guide](docs/en/installation.md). The host needs the matched build, kernel capabilities, Wi-Fi and an already configured Permissive environment.
-2. Install **host Magisk yourself**, following its upstream installation instructions and the board's boot layout. IrisBox never installs or patches host Magisk.
-3. Install `IrisBox-0.1.6.apk`. Open it and choose **Authorize and check**, then **Install engine**.
-4. Choose **Import ROM**, select `IrisBox-rpi4-a13-aosp.irisrom`, then **Manage instances → New instance → Start → Enter**.
-5. Use **EN / 中文** to choose System default, English or 简体中文. This changes the host App UI only; each guest keeps its own Android language and data.
+| Area | Summary |
+| :--- | :--- |
+| **Multi-Instance Isolation** | Independent app data, configurable memory ceilings (`0.5`–`2.5 GiB`), resolution presets, live orientation switching (`Follow app` / `Landscape` / `Portrait`), and lifecycle controls. |
+| **User Namespace Identity** | Every instance runs in a dedicated User namespace (`0.1.3+`). Guest `root (UID 0)` maps to an unprivileged host UID block (`2000000000+`) with **no Host-UID0 fallback**. |
+| **Verified ROM Import** | Enforces path safety, size bounds, manifest structure, and per-file SHA-256 checks. Extracts regular files only—no installer scripts from ROM archives are ever executed. |
+| **Host Swap Control (v0.1.6)** | App-managed shared host swap (`Off` / `1 GiB` / `2 GiB` / `4 GiB`) with optional automatic restoration across host reboots via user-installed host Magisk. |
+| **Display, Input & Media** | ~1 fps live list previews; shared-buffer fullscreen rendering with fence synchronization; mouse/keyboard/touch input modes; per-instance 48 kHz PCM audio playback and software video decoding. |
+| **File Exchange & Localization** | Per-instance SAF file import/export (`Downloads/IrisExchange`); persistent host App UI language selector (`System default` / `English` / `简体中文`) independent of guest Android locales. |
+| **Optional Guest Root & Google** | **Guest Root (Magisk)**: Bundled adapted component with per-instance toggle and rescue startup mode (separate from host Magisk).<br>**Google Layer**: The public AOSP ROM excludes Google apps and accounts. Optional Google support accepts separately supplied, properly licensed matching components; existing private Google instances retain their ROM and sign-in state. |
 
-[Downloads and SHA-256](DOWNLOADS.md) · [GitHub Releases](https://github.com/582835293/IrisBox/releases)
+---
+
+## Quick Start
 
 ![IrisBox illustrated usage workflow](docs/images/usage.en.svg)
 
-The image illustrates the workflow; it contains no account or device data.
+*Note: The diagram above illustrates the workflow and contains no account or device data.*
 
-## Included
+1. **Verify the Host**: Read the [Installation and Host Image Guide](docs/en/installation.md) to confirm the matched build fingerprint, kernel namespaces, GPU stack, Wi-Fi, and Permissive setup.
+2. **Prepare Host Root**: Install **host Magisk yourself** according to the Raspberry Pi boot partition layout.
+3. **Install the Engine**: Install `IrisBox-0.1.6.apk`, open IrisBox, and select **1 · Authorize and check**, then **2 · Install engine**.
+4. **Import a Compatible ROM**: Select **3 · Import ROM** and pick `IrisBox-rpi4-a13-aosp.irisrom`.
+5. **Create & Launch an Instance**: Open **4 · Manage instances** → **New instance** → **Start**, wait for **Desktop ready**, and select **Enter**.
 
-- ROM import with path, size, manifest and per-file SHA-256 checks; no installer scripts from ROM packages.
-- Independent instance data, memory ceilings, resolution presets, lifecycle controls and optional guest Root.
-- Shared host swap settings: Off / 1 / 2 / 4 GiB, with optional restore after reboot through the user-installed host Magisk.
-- Live list previews, shared-buffer fullscreen display, mouse/keyboard/touch input and file exchange.
-- Per-instance playback audio and software video support on the tested profile.
-- Matched host image preparation, source provenance, build instructions and comparison with the previous Project Iris engine.
+---
 
-The public ROM contains AOSP and compatibility files, **without Google apps or accounts**. Optional Google support remains available for separately supplied, appropriately licensed matching components. Existing private Google-enabled instances retain their ROM and data. Guest Root uses the existing bundled component and per-instance switch; this is separate from installing host Magisk.
+## Device Captures & Validation Highlights
 
-The published 0.1.3 test was blocked by a Play Protect certification warning. On October 24, the 0.1.4 test restored the catalog and actually installed Open Sudoku and Google Calculator from Play; **device certification still has not passed**. See the [current results](docs/en/validation.md). Each guest needs its own custom-ROM registration where applicable; registration does not establish device certification.
+> [!NOTE]
+> All screenshots below are real device captures cropped and privacy-redacted with the owner's permission (no AI redraw). See [Device Captures Details](docs/images/README.md) and the [Validation Report](docs/en/validation.md) for full test conditions and boundaries.
 
-Version **0.1.6/e27** adds App-controlled host swap with real reboot restoration. It retains the Iris namespace/storage/camera fixes, live **Orientation → Follow app / Landscape / Portrait** and persistent **System default / English / 简体中文** settings. Angry Birds 2 tutorial shots, target destruction and Red’s ability passed with a 2048-MiB guest and 2-GiB host swap, including restored guest Magisk. YouTube playback and simultaneous instances also passed. See [current validation](docs/en/validation.md), [swap and recovery](docs/en/low-memory.md), and [namespace migration](docs/en/namespace-migration.md).
+### 1. Simultaneous Instances & Dual Heavy Games (v0.1.6 / e27)
 
-## Device screenshots
+| Dual Running Instances (768 MiB + 2048 MiB) | Simultaneous Games: Clash of Clans (1024 MiB) + Angry Birds 2 (2048 MiB) |
+| :---: | :---: |
+| ![Two simultaneously running instances](docs/images/dual-instances.png) | ![Two games running together: Clash village and Angry Birds 2 tutorial result](docs/images/dual-games.png) |
 
-| Play installation in progress | Installed from Play | Tiantian Xiangqi running |
-|---|---|---|
+- **Test Conditions**: Tested on a 4 GB Raspberry Pi 4 with **2 GiB shared host swap**, running a `1024 MiB` ordinary guest (Clash of Clans tutorial village) alongside a `2048 MiB` Google + Magisk guest (Angry Birds 2).
+- **Observed Results**: Real fullscreen Viewer interaction passed in both games, including Angry Birds 2 tutorial slingshot launches, target destruction, Red's ability activation, and tutorial completion at **203,332 points**. Clash of Clans recovered from a normal idle disconnect via its built-in `Reload Game` flow prior to the dual capture.
+- **Scope Boundary**: This validates short tutorial interaction only and is **not a guarantee of long-duration battles, clan wars, or stable frame rates**.
+
+### 2. Play Store Downloads, Media & Host Swap
+
+| Play Installation in Progress | Installed from Play | Tiantian Xiangqi Puzzle Board |
+| :---: | :---: | :---: |
 | ![Actual Play installation](docs/images/play-download.png) | ![Installed calculator with Open button](docs/images/play-installed.png) | ![Actual game puzzle board](docs/images/game-running.png) |
 
-![Two simultaneously running instances](docs/images/dual-instances.png)
+| Clash of Clans Tutorial Village | YouTube Video Playback | Angry Birds 2 Target Destruction | Host Swap Settings (English) |
+| :---: | :---: | :---: | :---: |
+| ![Clash village and tutorial](docs/images/clash-village.png) | ![YouTube playback](docs/images/youtube-playback.png) | ![Actual Angry Birds 2 shot](docs/images/angry-gameplay.png) | ![English swap settings](docs/images/swap-settings-en.png) |
 
-![Two games running together: Clash village and Angry Birds 2 tutorial result](docs/images/dual-games.png)
+- **Play Store vs. Device Certification**: Version `0.1.4` restored the Play Store catalog and installed Open Sudoku and Google Calculator directly from Play, but **Play Protect device certification (`Device is not certified`) has still not passed**. Custom-ROM GSF registration does not establish device certification; see [Google Play Recovery and Certification](docs/en/google-recovery.md).
+- **QR Login Confirmation**: The Tiantian Xiangqi capture shows a puzzle board; the device owner separately confirmed WeChat and QQ QR login and gameplay (the static board capture alone does not prove an online match).
 
-The latest dual-game test used 1024/2048-MiB guests and 2-GiB shared host swap. Real Viewer interaction passed in both games, including Angry Birds 2 tutorial completion at 203,332 points. This is a short tutorial test, not a long-battle or frame-rate guarantee. Clash’s normal idle-disconnect flow was reloaded before the final image.
+---
 
+## Documentation Index
 
-| Clash of Clans tutorial village | YouTube video playback |
-|---|---|
-| ![Clash village and tutorial](docs/images/clash-village.png) | ![YouTube playback](docs/images/youtube-playback.png) |
+| Topic | English | 简体中文 |
+| :--- | :--- | :--- |
+| **Installation & Host Image** | [Installation and Clean Host Image](docs/en/installation.md) | [安装与使用](docs/01_安装与使用.md) · [国际化、发布与干净镜像](docs/08_国际化与发布.md) |
+| **Architecture & ROM Spec** | [Architecture and Isolation Boundaries](docs/en/architecture.md) · [ROM Format v1](docs/en/rom-format.md) | [技术架构与隔离边界](docs/02_技术架构.md) · [ROM 包规范 v1](docs/03_ROM规范.md) |
+| **Namespace & Identity Migration** | [0.1.5 Namespace Migration](docs/en/namespace-migration.md) · [User Namespaces](docs/en/userns.md) | [0.1.5 Iris 命名迁移与恢复](docs/11_Iris命名迁移.md) · [User Namespace 隔离与迁移](docs/09_User_namespace隔离与迁移.md) |
+| **Swap & Google Play** | [Swap, Low Memory and Recovery](docs/en/low-memory.md) · [Google Play Recovery](docs/en/google-recovery.md) | [交换空间与低内存恢复](docs/12_低内存与临时交换空间.md) · [Google 商店恢复与认证说明](docs/10_Google商店恢复与认证说明.md) |
+| **Build & Engineering** | [Building and Maintenance](docs/en/building.md) · [Comparison and Learning Route](docs/en/comparison.md) | [构建、恢复与维护](docs/04_构建与维护.md) · [与旧项目对比及学习路线](docs/05_对比与学习.md) |
+| **Validation Records** | [Validation and Limitations](docs/en/validation.md) | [首次验收与历次回归](docs/06_验收记录.md) · [登录后回归与修复](docs/07_登录后回归与修复.md) |
 
-| Angry Birds 2 actual target destruction | Swap settings |
-|---|---|
-| ![Actual Angry Birds 2 shot](docs/images/angry-gameplay.png) | ![English swap settings](docs/images/swap-settings-en.png) |
+---
 
-Real device captures, cropped and privacy-redacted with owner permission; no AI redraw. The Xiangqi image shows a puzzle board. The owner separately confirmed WeChat and QQ QR login/gameplay. The earlier counter/desktop list uses 768/2048 MiB. The separate latest dual-game image uses 1024/2048 MiB and 2-GiB host swap; tutorial interaction passed, with long battles and stable frame rates untested. Clash shows a tutorial village and actual interaction, not a long-term battle test. YouTube shows actual video playback. Screenshots do not establish Google device certification. [Image details](docs/images/README.md).
+## Preview Boundaries & Legal Notices
 
-## Documentation
-
-| English | 简体中文 |
-|---|---|
-| [0.1.5 namespace migration and recovery](docs/en/namespace-migration.md) | [Iris命名迁移与恢复](docs/11_Iris命名迁移.md) |
-| [Installation and clean host image](docs/en/installation.md) | [安装与使用](docs/01_安装与使用.md)、[发布与刷机](docs/08_国际化与发布.md) |
-| [Architecture and isolation boundaries](docs/en/architecture.md) | [技术架构](docs/02_技术架构.md) |
-| [ROM format](docs/en/rom-format.md) | [ROM 规范](docs/03_ROM规范.md) |
-| [Build, maintenance and recovery](docs/en/building.md) | [构建与维护](docs/04_构建与维护.md) |
-| [Comparison and learning route](docs/en/comparison.md) | [对比与学习](docs/05_对比与学习.md) |
-| [Swap, low memory and recovery](docs/en/low-memory.md) | [交换空间与低内存恢复](docs/12_低内存与临时交换空间.md) |
-| [Validation and limitations](docs/en/validation.md) | [首次验收](docs/06_验收记录.md)、[登录后回归](docs/07_登录后回归与修复.md) |
-| [Google Play recovery and certification](docs/en/google-recovery.md) | [Google商店恢复、备份与认证区别](docs/10_Google商店恢复与认证说明.md) |
-
-## Root identity isolation
-
-Version 0.1.3 requires a distinct User namespace per instance. Guest root maps to a dedicated unprivileged Host UID range, with no Host-UID0 fallback. Existing e13 installations need a stopped-state backup and migration; installing the APK alone is insufficient. See the [migration and isolation guide](docs/en/userns.md).
-
-## Preview boundaries
-
-The clean flash image has new, empty userdata and unmodified factory boot/system/vendor partitions. Static checks are recorded; **a fresh USB-disk flash and first boot have not been tested**. Existing-host validation does not establish a complete installation on a host that never ran the previous project. Other kernels/devices, Enforcing SELinux, camera/microphone, protected video, Play Integrity and arbitrary third-party Root modules are not covered.
-
-This is an independent IrisBox project. Version 0.1.5 uses `com.irisbox.viewer` and `/data/irisbox`; existing installations require the documented stopped-state namespace migration. The `.irisrom` format is unchanged.
-
-See [third-party notices](THIRD_PARTY_NOTICES.md) and [source provenance](reference/NOTICE.md). Publishing this repository does not relicense third-party components; project-specific code currently has no blanket license grant. Signing keys, user data, accounts, raw device logs and screenshots are excluded.
-
-The clean host preview is **USB/sda only**, with 12 GiB empty userdata for a 16 GB or larger USB disk. It is not an SD/mmc image.
+1. **Clean Host Flash Image (`USB / sda` Only)**: The `.img.xz` preview image combines unmodified factory `boot` / `system` / `vendor` partitions with a freshly formatted **12 GiB empty `userdata`** partition for a **16 GB or larger USB disk**. It is **not an SD / `mmc` image**. Static partition and filesystem checks are recorded, but **a physical flash and first boot on a spare USB disk have not been tested**.
+2. **Unsupported Scope**: Other kernels or devices, Enforcing SELinux, hardware camera/microphone passthrough, DRM-protected video, Play Integrity, per-app project disk quotas in mapped guests, and arbitrary third-party Root modules are not covered.
+3. **Provenance & Licensing**: IrisBox (`com.irisbox.viewer`, `/data/irisbox`) is maintained independently while keeping `.irisrom` compatibility; the previous reference project remains read-only. See [Third-Party Notices](THIRD_PARTY_NOTICES.md) and [Source Provenance](reference/NOTICE.md). Publishing this repository does not relicense third-party components, and project-specific source currently carries no blanket license grant. Signing keys, user accounts, instance data, and raw device logs/screenshots are excluded.

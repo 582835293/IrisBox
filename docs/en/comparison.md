@@ -1,58 +1,58 @@
-# Learning from Project Iris V3.0
+# Architectural Comparison & Learning Route
 
-[中文](../05_对比与学习.md)
+**English** · [简体中文](../05_对比与学习.md) · [Back to README](../../README.md)
 
-The previous engine established that Android userspace could boot under a shared host kernel with graphics, input, networking and multiple instances. IrisBox turns that engine into an installable App with trusted package import, versioned payloads and repeatable deployment.
+---
 
-| Topic | Previous project | IrisBox | Read |
-|---|---|---|---|
-| Deployment | Computer-provisioned runtime | Signed APK installs its verified engine and host tools | SetupService, EngineInstaller, HostTools |
-| ROM | Fixed device image paths | SAF URI, manifest/SHA validation, independent library | PackageArchive, make_rom.py |
-| Adaptation | Runtime-fixed RC/libraries | ROM compat pinned by APK profile | inner.sh, package_engine.py |
-| Instances | Pre-existing defaults | Empty registry, explicit creation, IDs 1007 onward | instances.sh, InstanceCatalog |
-| Versioning | One fixed ROM | Immutable per-instance ROM ID; default only affects new instances | common.sh, config/rom_v1 |
-| Isolation | Namespaces, Binder, overlays, cgroups | Reused mechanisms with separate resource ownership | wrapper.sh, inner.sh |
-| Network | Shared host dispatcher and guest maps | Verified reuse, own cookie/map pairs, no restore | network.sh, policy.c |
-| Google | Static programs extracted from a matching host | Optional matching ROM layer; host Google unnecessary | guest_layer.sh |
-| Recovery | Development workflow | App reconnect, bounded helpers and transactional maintenance | HostRootEntry, audio.sh |
-| Internationalization | Chinese-first viewer | EN default, Chinese resources and App locale switch | I18n, translations.json |
+## 1. From `Project Iris V3.0` to `IrisBox`
 
-## Eight exercises
+The previous reference project (`Project Iris V3.0`) demonstrated how an Android userspace boots under a shared Linux kernel with graphics, input, networking, and multiple instances. **IrisBox (虹膜空间)** transforms that runtime into a self-contained, installable product with verified package imports, strict identity isolation, and repeatable maintenance.
 
-1. Mark where each process runs: App UID, host root, or guest PID 1. Explain why root in the wrong mount namespace fails.
-2. Trace a file from content URI through ZIP validation to root staging and registration. Test a bad SHA and `../` path without touching existing ROMs.
-3. Trace ROM ID, data revision and process session independently. Explain why an old overlay cannot be blindly reused with another ROM.
-4. Follow creation → lifecycle lock → cgroups → namespaces → pivot_root → init. Distinguish a live init from a ready desktop.
-5. Compare two guests' namespaces, Binder devices, data and files. Stop a disposable test guest and verify the other session remains unchanged.
-6. Separate network reachability from UID permission. Explain why DHCP success does not prove a normal App can open sockets.
-7. Follow JPEG preview separately from fullscreen buffer/fence release and input geometry. Management HTTP is not the fullscreen media path.
-8. Reopen the App and restore its manager while retaining guest sessions. Practise reset/delete only in a disposable instance with explicit confirmation.
+| Topic | Previous Project (`Project Iris V3.0`) | IrisBox (`虹膜空间`) | Key Source Files |
+| :--- | :--- | :--- | :--- |
+| **Deployment** | Computer-provisioned runtime scripts | Signed APK installs verified engine & private host BusyBox | `SetupService`, `EngineInstaller`, `HostTools` |
+| **ROM Import** | Fixed on-device image paths | SAF URI picker, manifest & per-file SHA-256 checks, isolated library | `PackageArchive`, `make_rom.py` |
+| **ROM Adaptation** | Runtime-hardcoded RC & libraries | `compat/` carried by ROM and pinned by APK `rom-profile.json` | `inner.sh`, `package_engine.py` |
+| **Instance Registry** | Pre-seeded default instances (`7`, `8`) | Empty initial registry; user-created IDs `1007`–`1134` | `instances.sh`, `InstanceCatalog` |
+| **ROM Versioning** | Single global ROM path in `common.sh` | Per-instance `config/rom_v1/ID.id`; new imports only change future defaults | `common.sh`, `instances.sh` |
+| **Identity Isolation** | Six namespaces, BinderFS, Overlays, cgroups | Seven namespaces (**including User namespace**) + disjoint IrisBox resources | `irisbox_userns.c`, `wrapper.sh`, `inner.sh` |
+| **Network Policy** | Global BPF dispatcher + guest UID maps | Verified dispatcher reuse, private cookie/map pairs (`1007`–`1134`), no `restore` | `network.sh`, `policy.c` |
+| **Google Support** | Extracted live from a matching host `/system` | Optional static 54-file ROM layer; host Google installation unnecessary | `guest_layer.sh`, `rom/compat/google/` |
+| **Recovery & Audio** | Developer shell scripts | App reconnect, supervised 48 kHz PCM audio bridge, transactional upgrades | `HostRootEntry`, `audio.sh`, `AudioBridge` |
+| **Localization** | Chinese-only UI strings | English default, `values-zh` resources, persistent in-App locale selector | `I18n.java`, `translations.json` |
 
-Additional regression work introduced playback audio supervision, mediaextractor restoration, a private Traceur mask and preview-process exit handling. Kill only an identity-verified audio helper: its replacement and host player should recover while the guest's main session stays unchanged. Encode/play an MP4 from an ordinary UID and inspect actual playback progress, rather than package presence.
+---
 
-For every experiment record the input, identity checks, execution namespace, resources changed, evidence of completion and cleanup behavior. Historical results from the previous project are useful provenance; they do not automatically validate a new ROM import or fresh host.
+## 2. Eight Core Architecture Exercises
 
-## Two productization exercises
+1. **Map Execution Contexts**: Label where each component runs (`App UID`, `Host root`, or `Guest PID 1` mapped UID) across `SetupActivity` → `RootShell` → `BufferBroker` → `ctl.sh` → `inner.sh` → `Guest init`. Explain why `su` without `--mount-master` lands in the wrong mount namespace.
+2. **Trace a ROM Import**: Follow a `content://` URI from the system file picker through ZIP entry validation, SHA-256 verification, root staging, and atomic registration. Verify that bad hashes and `../` traversal paths are rejected before registration.
+3. **Trace Version Bindings**: Track `ROM ID`, userdata `revision`, and running `session (PID:start_tick)` independently. Explain why an existing instance's Overlay `upper` layer cannot be blindly mounted over a different base ROM.
+4. **Trace a Cold Boot**: Follow instance creation → lifecycle lock → cgroups → User/mount/PID namespaces → `pivot_root` → stock `init second_stage`. Distinguish a live `init` process from a `Desktop ready` state.
+5. **Verify Multi-Instance Isolation**: Compare two running guests' namespaces, private `binderfs` nodes, and `upper`/`data` trees. Stop a disposable test guest and confirm the other guest's session and counters remain untouched.
+6. **Separate Routing from Socket Permission**: Explain why IP routing/NAT and DHCP success do not allow an ordinary app without `INTERNET` permission to create sockets, and why BPF maps bind to the kernel `netns cookie` rather than the UI instance number.
+7. **Compare Preview vs. Fullscreen Graphics**: Contrast the 1 fps HTTP JPEG snapshot path with the `:display` process's shared hardware-buffer, fence release, and pointer-geometry pipeline.
+8. **Practise Non-Destructive Recovery**: Close and reopen the App, stop and restore `BufferBroker`, and test `Reset` / `Delete` in a disposable instance while confirming that active guest sessions and host `boot_id` remain undisturbed.
 
-Trace BusyBox across the boundary: the host uses `/data/irisbox/host/bin/busybox`; after pivot_root only the verified guest copy `/system/bin/busybox` exists. Audit both the post-pivot script and commands passed by host callers through `ctl exec`. A path on the development host is not proof that it exists on a new host or inside a guest.
+---
 
-Boot a ROM which actually omits optional components, with new userdata. Persistent overlays and Google layers can hide missing core directories. The public AOSP test exposed a missing `product/etc/init`; e13 now creates it in the verified private overlay. Test both retained data and a genuinely new instance.
+## 3. Five Productization & Debugging Case Studies
 
-## 0.1.3: follow the upstream identity isolation work
+### 1. Supervised Audio Recovery & Media Restoration (`v0.1.1`)
+Terminate only an identity-verified guest audio helper process and observe guest `init` restart the capture helper while the host supervisor replaces `AudioTrack` and resumes PCM playback—all without changing the main guest `PID:start_tick`. Encode and play back an H.264 MP4 under an ordinary UID to verify `mediaextractor` and software codec restoration.
 
-The previous local Iris project integrated User namespaces on 2026-10-20, after the e13 extraction checkpoint. This port follows its complete ownership/ACL/capability, metacopy, cgroup, network, display, Magisk and alarm adaptations. IrisBox additionally needs a private pre-pivot alias for its 0700 Host data root and a mapped PCM connector. Its persistent UID range is disjoint. See [the migration guide](userns.md).
+### 2. BusyBox Paths Across `pivot_root` & Pure-AOSP Cold Boot (`v0.1.2`)
+- **Path Boundary**: Host scripts invoke `/data/irisbox/host/bin/busybox`, whereas post-`pivot_root` guest commands must use `/system/bin/busybox`. Audit both guest RC scripts and commands passed from the host via `ctl.sh exec`.
+- **Unmasked Base ROMs**: Booting a pure AOSP ROM without a Google layer or pre-existing overlay exposed a missing `product/etc/init` directory, prompting `e13` to create required core directories inside the verified private overlay. Always test both retained userdata and fresh pure-AOSP instances.
 
-## 0.1.5: real applications expose isolation dependencies
+### 3. Porting User Namespaces (`v0.1.3`)
+Following the reference project's 2026-10-20 User namespace integration required coordinated handling of ownership/ACL/capability mapping, OverlayFS `metacopy=on,index=off`, delegated cgroups, BPF map ownership, credential-dropped display/audio connectors, Magisk `/sbin` tmpfs mounting, and non-waking alarm fallback (`libalarm_jni.so`), plus a private `/mnt` bind alias so the host's `0700` `/data/irisbox` directory remains unweakened (see [User Namespaces and Migration](userns.md)).
 
-UID/GID maps alone do not establish usable Android storage. Trace an ordinary getExternalFilesDir request through StorageManager, vold PrepareAppDirFromRoot/SetQuotaProjectId and the kernel fileattr check. A populated project-ID map still cannot override the matched kernel's prohibition on noninitial-namespace quota changes. The adapter handles only that unsupported tagging operation, retaining ownership/ACL failures and mapped credentials. Test first directory creation plus write/read, rather than treating map existence as success; see engine/native/storage/README.md.
+### 4. Real Apps Expose Deep Isolation Dependencies (`v0.1.5`)
+- **External Storage Project Quotas (`vold`)**: Tracing `getExternalFilesDir → StorageManager → vold::PrepareAppDirFromRoot → SetQuotaProjectId → kernel fileattr_set_prepare` revealed that even with `projid_map` populated, the matched Linux 5.15 kernel forbids non-initial User namespaces from changing project quota flags. The `e25` `vold` adapter skips **only** unsupported project-quota tagging/inheritance for strictly matched IrisBox mapped guests while preserving all ownership, mode, and ACL checks (see [`engine/native/storage/README.md`](../../engine/native/storage/README.md)).
+- **Camera Framework Contract (YouTube Startup ANR)**: Disabling physical cameras by replacing `cameraserver` with `true` caused YouTube to block indefinitely in `Camera.getNumberOfCameras()` until ANR. Restoring the stock framework `cameraserver` while keeping physical providers disabled properly returns `0` cameras.
+- **Package Identity Migration**: Changing the host package name to `com.irisbox.viewer` assigns a new Android UID requiring a normal host Magisk grant, full stopped-state snapshots, and updates across native JNI signatures, sockets, and controller paths.
 
-Physical-camera isolation also needs a functioning framework contract. YouTube queried camera count during startup; removing cameraserver blocked a worker and the main thread until ANR. Retaining the framework service with physical providers disabled returns zero devices. Following the actual ANR lock owner explains the failure better than increasing timeouts or patching YouTube.
-
-Finally, changing a package identity changes its UID and authorization. Validate exclusive ownership before revoking a retired UID, request normal grants for new packages, and check absolute controller paths, display pointers, audio RC, JNI names and generated binaries. Stopped full snapshots and transaction rollback are part of the migration design.
-
-
-### Host resource management in 0.1.6
-
-Host swap is a global resource; ROMs and guest Root must not supply paths to its controller. The App uses fixed capacities, its own directory, file-identity receipts, an owned Magisk boot hook and shared startup locking. Android mksh marks extra FDs close-on-exec: test inheritance on the device and close it in long-lived children. e26 safely rejected the first attempt; e27 explicitly inherits the lock FD.
-
-An unfired bird alone did not establish a memory/input defect. A held-input native frame showed real slingshot movement and a red tutorial cross; green alignment launched normally. Correlate events, native frames, both sessions, live-preview sequences and OOM counters to distinguish tutorial gates, idle disconnects and runtime failures. A short dual-game test does not establish long-run stability or frame rate.
+### 5. Host Swap Locking & Game Input Diagnostics (`v0.1.6`)
+- **`mksh` Lock Descriptor Inheritance**: Host swap is a global resource serialized against guest startup via shared file locks. Because Android `mksh` marks extra file descriptors `close-on-exec` by default (`e26` safely rejected configuration), `e27` explicitly passes the lock FD and closes it in long-lived child processes.
+- **Correlating Input Events with Native Frames**: When diagnosing an unfired bird in *Angry Birds 2*, capturing a native frame while holding touch input revealed real slingshot movement and the game's red tutorial cross rejecting an off-guide angle—aligning with the green trajectory guide launched normally. Always correlate input events, native frames, preview sequences, and OOM counters before blaming runtime or input channels.
