@@ -224,7 +224,7 @@ case "$ACTION" in
         # 检查宿主可用物理内存（至少需 1280 MiB 可用空间，防止宿主 OOM 崩溃）
         load_memory_limit
         AVAILABLE=$($BB awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
-        REQUIRED=$(((MEMORY_MIB + 256) * 1024))
+        REQUIRED=$(((MEMORY_MIB + HOST_RESERVE_MIB) * 1024))
         [ "$REQUIRED" -ge 786432 ] || REQUIRED=786432
         [ "$AVAILABLE" -ge "$REQUIRED" ] || { echo "Insufficient free memory: need ${REQUIRED} KiB; existing instances preserved" >&2; exit 4; }
 

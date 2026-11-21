@@ -9,6 +9,7 @@ final class HostTools {
     static final String BB="/data/irisbox/host/bin/busybox";
     static final String SHA="4d60ab3f5a59ebb2ca863f2f514e6924401b581e9b64f602665c008177626651";
     static synchronized void ensure(Context context) throws Exception {
+        HostStorage.ensureMountedGuard(context);
         File file=new File(context.getFilesDir(),"host-busybox-"+UUID.randomUUID());
         String temporary=BB+"."+UUID.randomUUID();
         try {

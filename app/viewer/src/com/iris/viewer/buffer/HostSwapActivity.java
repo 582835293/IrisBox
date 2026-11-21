@@ -45,7 +45,7 @@ public final class HostSwapActivity extends Activity {
         result=text("",14);result.setTextIsSelectable(true);body.addView(result);
         LinearLayout footer=new LinearLayout(this);body.addView(footer);
         Button update=new Button(this);update.setText(I18n.known("刷新状态"));update.setOnClickListener(v->{needRead=true;read();});footer.addView(update,new LinearLayout.LayoutParams(0,-2,1));
-        Button back=new Button(this);back.setText(I18n.known("返回"));back.setOnClickListener(v->finish());footer.addView(back,new LinearLayout.LayoutParams(0,-2,1));
+        Button back=new Button(this);back.setText(I18n.known("返回"));back.setOnClickListener(v->{finish();overridePendingTransition(0,0);});footer.addView(back,new LinearLayout.LayoutParams(0,-2,1));
         ScrollView scroll=new ScrollView(this);scroll.addView(body);setContentView(scroll);
     }
     private void read(){

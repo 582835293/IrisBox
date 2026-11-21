@@ -86,27 +86,38 @@ if [ -e "$RUN/google.core.enabled" ] || [ -L "$RUN/google.core.enabled" ]; then
     SYSTEM_LOWER=$COMPAT/google/rootfs:$SYSTEM_LOWER
 fi
 
+# 挂载 OverlayFS 前若该实例已关闭 Root，先清除此前隐藏原厂 /system/xbin/su 的 whiteout
+/system/bin/sh "$BASE/root.sh" premount "$ID"
+
 # 挂载 system 分区的 OverlayFS 根视图
 $BB mount -t overlay overlay -o "lowerdir=$SYSTEM_LOWER,upperdir=$RUN/upper,workdir=$RUN/work,metacopy=on,index=off" "$ROOT"
 
 # 挂载 vendor 分区的 OverlayFS 驱动视图
 $BB mount -t overlay overlay -o "lowerdir=$ROM/vendor.lower,upperdir=$RUN/vendor.upper,workdir=$RUN/vendor.work,metacopy=on,index=off" "$ROOT/vendor"
 
+if [ -L "$ROOT/system/product" ] && [ -d "$ROOT/product" ]; then
+    PRODUCT_ROOT=$ROOT/product
+    PRODUCT_MOUNT=/product
+else
+    PRODUCT_ROOT=$ROOT/system/product
+    PRODUCT_MOUNT=/system/product
+fi
+
 # The factory Browser2 is a WebView test shell without a DownloadListener.
 # Stage our verified engine APK as an ordinary Guest system app. Target APKs
 # are downloaded by this Guest's DownloadManager and installed through its UI.
 [ -f "$BASE/browser/IrisBoxBrowser.apk" ] && [ ! -L "$BASE/browser/IrisBoxBrowser.apk" ] || exit 3
-$BB mkdir -p "$ROOT/system/product/app/IrisBoxBrowser"
-copy_payload "$BASE/browser/IrisBoxBrowser.apk" "$ROOT/system/product/app/IrisBoxBrowser/IrisBoxBrowser.apk"
+$BB mkdir -p "$PRODUCT_ROOT/app/IrisBoxBrowser"
+copy_payload "$BASE/browser/IrisBoxBrowser.apk" "$PRODUCT_ROOT/app/IrisBoxBrowser/IrisBoxBrowser.apk"
 # Android caches a directory package using the directory's mtime. Replacing
 # only its APK leaves stale manifest metadata on upgrades. Also repair an
 # earlier e19 copy whose APK is newer than its parent, without clearing data.
-if [ "$ROOT/system/product/app/IrisBoxBrowser/IrisBoxBrowser.apk" -nt "$ROOT/system/product/app/IrisBoxBrowser" ]; then
-    $BB touch "$ROOT/system/product/app/IrisBoxBrowser"
+if [ "$PRODUCT_ROOT/app/IrisBoxBrowser/IrisBoxBrowser.apk" -nt "$PRODUCT_ROOT/app/IrisBoxBrowser" ]; then
+    $BB touch "$PRODUCT_ROOT/app/IrisBoxBrowser"
 fi
-$BB chmod 0755 "$ROOT/system/product/app/IrisBoxBrowser"
-$BB chmod 0644 "$ROOT/system/product/app/IrisBoxBrowser/IrisBoxBrowser.apk"
-/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/product/app/IrisBoxBrowser" "$ROOT/system/product/app/IrisBoxBrowser/IrisBoxBrowser.apk"
+$BB chmod 0755 "$PRODUCT_ROOT/app/IrisBoxBrowser"
+$BB chmod 0644 "$PRODUCT_ROOT/app/IrisBoxBrowser/IrisBoxBrowser.apk"
+/system/bin/chcon u:object_r:system_file:s0 "$PRODUCT_ROOT/app/IrisBoxBrowser" "$PRODUCT_ROOT/app/IrisBoxBrowser/IrisBoxBrowser.apk"
 
 # ------------------------------------------------------------------------------
 # 3. 核心专用载荷注入（图形、Init 与系统工具）
@@ -114,17 +125,27 @@ $BB chmod 0644 "$ROOT/system/product/app/IrisBoxBrowser/IrisBoxBrowser.apk"
 # The shared host kernel forbids project-quota changes from a User namespace.
 # This matched vold skips only quota tagging in the strictly mapped Guest;
 # directory creation, UID/GID ownership and ACL checks remain mandatory.
-copy_payload "$BASE/storage/vold" "$ROOT/system/bin/vold"
+VOLD_PAYLOAD=$BASE/storage/vold
+if [ -f "$COMPAT/payload/vold" ] && [ ! -L "$COMPAT/payload/vold" ]; then
+    VOLD_PAYLOAD=$COMPAT/payload/vold
+fi
+copy_payload "$VOLD_PAYLOAD" "$ROOT/system/bin/vold"
 $BB chmod 0755 "$ROOT/system/bin/vold"
 /system/bin/chcon u:object_r:vold_exec:s0 "$ROOT/system/bin/vold"
 
 # 【容器专用 Gralloc 渲染缓冲标识】：
 # Guest 专用的 gralloc ID 直接来源于 Linux 内核全局物理唯一的活动 dma-buf inode 节点。
 # 宿主机的 vendor 分区保持官方原厂不变，只在此私有 OverlayFS 写层中替换。
-[ -f "$COMPAT/payload/libminigbm_gralloc_gbm_mesa_guest_ids.so" ] || exit 3
-copy_payload "$COMPAT/payload/libminigbm_gralloc_gbm_mesa_guest_ids.so" "$ROOT/vendor/lib64/libminigbm_gralloc_gbm_mesa.so"
-$BB chmod 0644 "$ROOT/vendor/lib64/libminigbm_gralloc_gbm_mesa.so"
-/system/bin/chcon u:object_r:vendor_file:s0 "$ROOT/vendor/lib64/libminigbm_gralloc_gbm_mesa.so"
+# 【厂商图形 Gralloc 模块按 Board Profile 覆写】：
+# 仅在配置了 vendorGrallocPayload 与 vendorGrallocTarget 时替换原厂 gralloc 库，保留同级目录结构与 SELinux 上下文
+if [ -n "$BOARD_VENDOR_GRALLOC_PAYLOAD" ] && [ -n "$BOARD_VENDOR_GRALLOC_TARGET" ]; then
+    [ -f "$COMPAT/payload/$BOARD_VENDOR_GRALLOC_PAYLOAD" ] || exit 3
+    TARGET_GRALLOC=$ROOT$BOARD_VENDOR_GRALLOC_TARGET
+    [ ! -L "$TARGET_GRALLOC" ] || exit 3
+    copy_payload "$COMPAT/payload/$BOARD_VENDOR_GRALLOC_PAYLOAD" "$TARGET_GRALLOC"
+    $BB chmod 0644 "$TARGET_GRALLOC"
+    /system/bin/chcon u:object_r:vendor_file:s0 "$TARGET_GRALLOC"
+fi
 
 # 应用针对当前实例分配的 GPU 渲染配置
 /system/bin/sh "$BASE/graphics.sh" apply "$ID"
@@ -133,33 +154,61 @@ $BB chmod 0644 "$ROOT/vendor/lib64/libminigbm_gralloc_gbm_mesa.so"
 # Guest uses the ROM's virtual primary HAL; physical ALSA devices stay on Host.
 # A private playback-only remote submix is forwarded to Host AudioTrack.
 AUDIO_PROP=$ROOT/vendor/build.prop
-[ ! -L "$AUDIO_PROP" ] && [ "$($BB grep -c '^ro.hardware.audio.primary=' "$AUDIO_PROP")" = 1 ] || exit 3
-$BB sed -i 's/^ro.hardware.audio.primary=.*/ro.hardware.audio.primary=default/' "$AUDIO_PROP"
+[ ! -L "$AUDIO_PROP" ] || exit 3
+AUDIO_PROP_COUNT=$($BB grep -c '^ro\.hardware\.audio\.primary=' "$AUDIO_PROP" || true)
+if [ "$AUDIO_PROP_COUNT" = 1 ]; then
+    $BB sed -i 's/^ro\.hardware\.audio\.primary=.*/ro.hardware.audio.primary=default/' "$AUDIO_PROP"
+elif [ "$AUDIO_PROP_COUNT" = 0 ]; then
+    printf '\nro.hardware.audio.primary=default\n' >> "$AUDIO_PROP"
+else
+    exit 3
+fi
 /system/bin/chcon u:object_r:vendor_file:s0 "$AUDIO_PROP"
-# The Guest has no /dev/video*. Do not advertise the Host-only V4L2 codec.
-CODECS=$ROOT/vendor/etc/media_codecs.xml
-copy_payload "$ROM/vendor.lower/etc/media_codecs.xml" "$CODECS"
-[ ! -L "$CODECS" ] && [ "$($BB grep -c 'href="media_codecs_v4l2_c2_video.xml"' "$CODECS")" = 1 ] || exit 3
-$BB sed -i '/href="media_codecs_v4l2_c2_video.xml"/d' "$CODECS"
-$BB chmod 0644 "$CODECS"
-/system/bin/chcon u:object_r:vendor_configs_file:s0 "$CODECS"
+# The Guest has no physical video/VPU nodes. Do not advertise Host-only hardware codecs.
+if [ -n "$BOARD_REMOVE_CODEC_INCLUDES" ]; then
+    for CODEC_BASE in media_codecs.xml media_codecs_c2.xml; do
+        [ -f "$ROM/vendor.lower/etc/$CODEC_BASE" ] || continue
+        copy_payload "$ROM/vendor.lower/etc/$CODEC_BASE" "$ROOT/vendor/etc/$CODEC_BASE"
+    done
+    for CODEC_INC in $BOARD_REMOVE_CODEC_INCLUDES; do
+        CODEC_TARGET=""
+        for CODEC_BASE in media_codecs.xml media_codecs_c2.xml; do
+            CODEC_FILE=$ROOT/vendor/etc/$CODEC_BASE
+            [ -f "$CODEC_FILE" ] && [ ! -L "$CODEC_FILE" ] || continue
+            if [ "$($BB grep -c -F "href=\"$CODEC_INC\"" "$CODEC_FILE" || true)" = 1 ]; then
+                CODEC_TARGET=$CODEC_FILE
+                break
+            fi
+        done
+        [ -n "$CODEC_TARGET" ] || exit 3
+        $BB sed -i "\|href=\"$CODEC_INC\"|d" "$CODEC_TARGET"
+        $BB chmod 0644 "$CODEC_TARGET"
+        /system/bin/chcon u:object_r:vendor_configs_file:s0 "$CODEC_TARGET"
+    done
+fi
 
 # Traceur depends on global kernel tracing intentionally unavailable in Guest.
 # Mask only this fixed ROM system-app directory in the already-private mount tree.
-TRACEUR=$ROOT/system/app/Traceur
-[ -d "$TRACEUR" ] && [ ! -L "$TRACEUR" ] && [ "$($BB realpath "$TRACEUR")" = "$TRACEUR" ] || exit 3
+TRACEUR=""
+for T_CAND in "$ROOT/system/app/Traceur" "$ROOT/system/priv-app/Traceur"; do
+    if [ -d "$T_CAND" ] && [ ! -L "$T_CAND" ] && [ "$($BB realpath "$T_CAND")" = "$T_CAND" ]; then
+        TRACEUR=$T_CAND
+        break
+    fi
+done
+[ -n "$TRACEUR" ] || exit 3
 $BB mount -t tmpfs -o mode=0755,nodev,nosuid,size=64k irisbox_traceur "$TRACEUR"
 /system/bin/chcon u:object_r:system_file:s0 "$TRACEUR"
 
 copy_payload "$BASE/audio/audio.jar" "$ROOT/system/framework/irisbox-audio.jar"
 # AOSP-only ROMs do not inherit the optional Google product directories.
-for D in "$ROOT/system/product" "$ROOT/system/product/etc" "$ROOT/system/product/etc/init"; do
+for D in "$PRODUCT_ROOT" "$PRODUCT_ROOT/etc" "$PRODUCT_ROOT/etc/init"; do
     [ ! -L "$D" ] || exit 3
     $BB mkdir -p "$D"
 done
-copy_payload "$BASE/audio/media.rc" "$ROOT/system/product/etc/init/zzz_irisbox_media.rc"
-$BB chmod 0644 "$ROOT/system/product/etc/init/zzz_irisbox_media.rc"
-/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/product/etc/init/zzz_irisbox_media.rc"
+copy_payload "$BASE/audio/media.rc" "$PRODUCT_ROOT/etc/init/zzz_irisbox_media.rc"
+$BB chmod 0644 "$PRODUCT_ROOT/etc/init/zzz_irisbox_media.rc"
+/system/bin/chcon u:object_r:system_file:s0 "$PRODUCT_ROOT/etc/init/zzz_irisbox_media.rc"
 copy_payload "$BASE/audio/health.sh" "$ROOT/system/etc/irisbox-health.sh"
 $BB chmod 0644 "$ROOT/system/framework/irisbox-audio.jar"
 $BB chmod 0644 "$ROOT/system/etc/irisbox-health.sh"
@@ -181,7 +230,11 @@ boot_step "开始准备显示和服务配置"
 # 【低频小窗预览截图工具注入】：
 # 单次触发的 640×360 列表缩略图采集器（供 BufferBroker 抓取小窗画面）；
 # 交互式全屏图形渲染仍通过 Gralloc 共享物理显存缓冲区进行。
-copy_payload "$BASE/display/buffer_bridge/iris_buffer_producer" "$ROOT/system/bin/iris_preview_capture"
+PRODUCER_BIN=$BASE/display/buffer_bridge/iris_buffer_producer
+if [ -f "$COMPAT/payload/iris_buffer_producer" ]; then
+    PRODUCER_BIN=$COMPAT/payload/iris_buffer_producer
+fi
+copy_payload "$PRODUCER_BIN" "$ROOT/system/bin/iris_preview_capture"
 $BB chmod 0755 "$ROOT/system/bin/iris_preview_capture"
 /system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/bin/iris_preview_capture"
 
@@ -199,11 +252,13 @@ $BB chmod 0644 "$ROOT/system/framework/iris_file_exchange.jar"
 /system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/framework/iris_file_exchange.jar"
 
 # 【原生系统文件管理器平板布局补丁】：
-# 仅复制到各 Guest 的私有 OverlayFS 中，修复 DocumentsUI 在平板/大屏分辨率下的布局异常。
-[ -f "$COMPAT/payload/DocumentsUI.apk" ] && [ -f "$ROOT/system/priv-app/DocumentsUI/DocumentsUI.apk" ] || exit 3
-copy_payload "$COMPAT/payload/DocumentsUI.apk" "$ROOT/system/priv-app/DocumentsUI/DocumentsUI.apk"
-$BB chmod 0644 "$ROOT/system/priv-app/DocumentsUI/DocumentsUI.apk"
-/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/priv-app/DocumentsUI/DocumentsUI.apk"
+# 若板卡 compat 携带了 DocumentsUI.apk，仅复制到各 Guest 的私有 OverlayFS 中。
+if [ -f "$COMPAT/payload/DocumentsUI.apk" ]; then
+    [ -f "$ROOT/system/priv-app/DocumentsUI/DocumentsUI.apk" ] || exit 3
+    copy_payload "$COMPAT/payload/DocumentsUI.apk" "$ROOT/system/priv-app/DocumentsUI/DocumentsUI.apk"
+    $BB chmod 0644 "$ROOT/system/priv-app/DocumentsUI/DocumentsUI.apk"
+    /system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/priv-app/DocumentsUI/DocumentsUI.apk"
+fi
 
 # ------------------------------------------------------------------------------
 # 4. RC 启动脚本白名单精确分发与批量权限标记
@@ -227,7 +282,7 @@ while IFS= read -r FILE; do
     # 【解决 /product 绝对软链接解析问题】：
     # ROM 中的 /product 绝对符号链接在 pivot_root 切根之前绝不能解析到宿主机路径，
     # 因此将其物理重定向至 /system/product/...
-    case "$FILE" in /product/*) DEST=/system/product/${FILE#/product/} ;; esac
+    case "$FILE" in /product/*) DEST=$PRODUCT_MOUNT/${FILE#/product/} ;; esac
     $BB mkdir -p "${ROOT}${DEST%/*}"
     $BB cp "$SRC" "$ROOT$DEST"
     case "$FILE" in
@@ -239,11 +294,10 @@ done < "$COMPAT/loaded_files.txt"
 # Keep the framework camera service available even with physical providers
 # disabled. Apps query Camera.getNumberOfCameras() during startup; replacing
 # cameraserver with /system/bin/true leaves Binder getService waiting forever.
-# Restore only the stock framework service. No camera provider RC or physical
-# camera device is enabled/exposed by this change.
-CAMERA_DISABLE=$ROOT/system/product/etc/init/zz_disable_system.rc
-[ "$($BB grep -c '^service cameraserver /system/bin/true' "$CAMERA_DISABLE")" = 1 ] || exit 3
-$BB sed -i '/^service cameraserver \/system\/bin\/true/,/^$/d' "$CAMERA_DISABLE"
+CAMERA_DISABLE=$PRODUCT_ROOT/etc/init/zz_disable_system.rc
+if [ -f "$CAMERA_DISABLE" ] && [ "$($BB grep -c '^service cameraserver /system/bin/true' "$CAMERA_DISABLE" || true)" = 1 ]; then
+    $BB sed -i '/^service cameraserver \/system\/bin\/true/,/^$/d' "$CAMERA_DISABLE"
+fi
 
 # 性能优化：原来对每个文件单独执行 chmod 与 chcon 会引发几百次进程 fork；
 # 改为按类别合并数组一次性批量赋予权限与 SELinux 标签，效果相同但大幅缩短启动时间
@@ -294,30 +348,88 @@ boot_step "服务配置准备完成"
 # 在当前 Guest 私有文件系统中替换免 BPF（no_bpf）的系统网络组件。
 # 原因：由于在非特权容器环境中宿主机内核独占了 eBPF 网络过滤表，Guest 内部的原生 netd、
 # libmeminfo 等若加载 BPF 会直接报 EPERM 导致崩溃；因此替换为打过补丁的 no_bpf 二进制
-for SPEC in 'netd_no_bpf system/bin/netd netd_exec' \
-    'libmeminfo_no_bpf.so system/lib64/libmeminfo.so system_lib_file' \
-    'libnetd_updatable_no_bpf.so system/apex/com.android.tethering/lib64/libnetd_updatable.so system_lib_file' \
-    'libnetworkstats_no_bpf.so system/apex/com.android.tethering/lib64/libnetworkstats.so system_lib_file' \
-    'libservice-connectivity_guest_inet.so system/apex/com.android.tethering/lib64/libservice-connectivity.so system_lib_file' \
-    'service-connectivity_uid_cleanup.jar system/apex/com.android.tethering/javalib/service-connectivity.jar system_file'; do
+if [ "${BOARD_ANDROID_API:-33}" -le 32 ]; then
+    BPF_SPECS='netd_no_bpf system/bin/netd netd_exec
+libnetdbpf_no_bpf.so system/lib64/libnetdbpf.so system_lib_file
+libmeminfo_no_bpf.so system/lib64/libmeminfo.so system_lib_file'
+else
+    BPF_SPECS='netd_no_bpf system/bin/netd netd_exec
+libmeminfo_no_bpf.so system/lib64/libmeminfo.so system_lib_file
+libnetd_updatable_no_bpf.so system/apex/com.android.tethering/lib64/libnetd_updatable.so system_lib_file
+libnetworkstats_no_bpf.so system/apex/com.android.tethering/lib64/libnetworkstats.so system_lib_file
+libservice-connectivity_guest_inet.so system/apex/com.android.tethering/lib64/libservice-connectivity.so system_lib_file
+service-connectivity_uid_cleanup.jar system/apex/com.android.tethering/javalib/service-connectivity.jar system_file'
+fi
+printf '%s\n' "$BPF_SPECS" | while IFS= read -r SPEC; do
+    [ -n "$SPEC" ] || continue
     set -- $SPEC
     [ -f "$COMPAT/payload/$1" ] && [ -f "$ROOT/$2" ] || exit 3
     copy_payload "$COMPAT/payload/$1" "$ROOT/$2"
+    [ "$3" != netd_exec ] || $BB chmod 0755 "$ROOT/$2"
     /system/bin/chcon "u:object_r:$3:s0" "$ROOT/$2"
 done
+
+if [ -f "$COMPAT/payload/android.hardware.security.keymint-service.soft" ]; then
+    $BB mkdir -p "$ROOT/system/bin/hw"
+    copy_payload "$COMPAT/payload/android.hardware.security.keymint-service.soft" "$ROOT/system/bin/hw/android.hardware.security.keymint-service.soft"
+    $BB chmod 0755 "$ROOT/system/bin/hw/android.hardware.security.keymint-service.soft"
+    /system/bin/chcon u:object_r:hal_keymint_default_exec:s0 "$ROOT/system/bin/hw/android.hardware.security.keymint-service.soft"
+fi
+
+if [ -f "$COMPAT/payload/hwcomposer.iris.so" ]; then
+    $BB mkdir -p "$ROOT/vendor/lib64/hw"
+    copy_payload "$COMPAT/payload/hwcomposer.iris.so" "$ROOT/vendor/lib64/hw/hwcomposer.iris.so"
+    $BB chmod 0644 "$ROOT/vendor/lib64/hw/hwcomposer.iris.so"
+    /system/bin/chcon u:object_r:vendor_file:s0 "$ROOT/vendor/lib64/hw/hwcomposer.iris.so"
+fi
 
 # ------------------------------------------------------------------------------
 # 7. 物理外设与无用硬件声明裁撤
 # ------------------------------------------------------------------------------
 # 【移除物理可移动磁盘与不存在的硬件特征声明】：
-# 从 fstab.rpi4 中删除 voldmanaged= 物理外接盘配置（防止 vold 尝试格式化宿主机的 SD 卡/U 盘）；
-# 删除物理 HDMI-CEC、USB Host、USB 1.0 HAL 服务的声明文件（防止虚拟机因硬件不存在而无限等待或报错）
-$BB sed '/voldmanaged=/d' "$ROOT/vendor/etc/fstab.rpi4" > "$ROOT/vendor/etc/fstab.iris"
-$BB mv "$ROOT/vendor/etc/fstab.iris" "$ROOT/vendor/etc/fstab.rpi4"
+# 从 fstab 中删除 voldmanaged= 物理外接盘及容器内不可用/不应触碰的逻辑分区、zram、物理分区和加密检查项
+if [ -n "$BOARD_FSTAB_NAME" ] && [ -f "$ROOT/vendor/etc/$BOARD_FSTAB_NAME" ]; then
+    $BB awk '
+        /^[ \t]*#/ || /^[ \t]*$/ { print; next }
+        /voldmanaged=/ || /[, \t]logical([, \t]|$)/ || /zram/ { next }
+        $2 == "/boot" || $2 == "/misc" || $2 == "/cache" || $2 == "/metadata" { next }
+        $2 == "/data" && NF >= 5 {
+            gsub(/(^|,)(fileencryption|keydirectory|checkpoint|reservedsize)=[^,]*/, "", $5)
+            gsub(/(^|,)(formattable|check)(,|$)/, ",", $5)
+            gsub(/,+/, ",", $5); sub(/^,/, "", $5); sub(/,$/, "", $5)
+            if ($5 == "") $5 = "defaults"
+        }
+        { print }
+    ' "$ROOT/vendor/etc/$BOARD_FSTAB_NAME" > "$ROOT/vendor/etc/fstab.iris"
+    $BB mv "$ROOT/vendor/etc/fstab.iris" "$ROOT/vendor/etc/$BOARD_FSTAB_NAME"
+fi
 for F in android.hardware.hdmi.cec.xml android.hardware.usb.host.xml; do
     $BB rm -f "$ROOT/vendor/etc/permissions/$F"
 done
-$BB rm -f "$ROOT/vendor/etc/vintf/manifest/android.hardware.usb@1.0-service.xml"
+# 某些板卡（如 OPi5 Android 12）原本依赖 usb.host.xml 间接触发 SystemServer 启动 EthernetService；
+# 裁撤物理 USB Host 声明后补齐 android.hardware.ethernet 权限声明，确保容器私有 eth0 正常走 DHCP。
+if [ ! -f "$ROOT/vendor/etc/permissions/android.hardware.ethernet.xml" ] && \
+   [ ! -f "$ROOT/system/etc/permissions/android.hardware.ethernet.xml" ]; then
+    $BB mkdir -p "$ROOT/vendor/etc/permissions"
+    printf '%s\n' '<?xml version="1.0" encoding="utf-8"?>' '<permissions>' '    <feature name="android.hardware.ethernet" />' '</permissions>' > "$ROOT/vendor/etc/permissions/android.hardware.ethernet.xml"
+    $BB chmod 0644 "$ROOT/vendor/etc/permissions/android.hardware.ethernet.xml"
+    /system/bin/chcon u:object_r:vendor_configs_file:s0 "$ROOT/vendor/etc/permissions/android.hardware.ethernet.xml"
+fi
+for F in \
+    android.hardware.usb@1.0-service.xml \
+    android.hardware.cas@1.2-service.xml \
+    android.hardware.drm@1.4-service.widevine.xml \
+    android.hardware.gatekeeper@1.0-service.optee.xml \
+    android.hardware.weaver@1.0-service.xml \
+    android.hardware.wifi.hostapd.xml \
+    android.hardware.wifi.supplicant.xml \
+    android.hardware.wifi@1.0-service.xml \
+    manifest_media_c2_V1_1.xml \
+    rockchip.hardware.neuralnetworks@1.0-service.xml \
+    rockchip.hardware.rockit.hw@1.0-service.xml
+do
+    $BB rm -f "$ROOT/vendor/etc/vintf/manifest/$F"
+done
 
 # 创建关键基础系统目录
 $BB mkdir -p "$ROOT/old_root" "$ROOT/metadata" "$ROOT/dev" "$ROOT/sys"
@@ -337,9 +449,10 @@ done
 $BB mount -t sysfs -o ro,nosuid,nodev,noexec sysfs "$ROOT/sys"
 
 # 创建 /dev 下的核心子目录结构
-for D in socket __properties__ pts binderfs dri dma_heap cpuctl cpuset blkio memcg cgroup_info; do
+for D in socket __properties__ pts binderfs dri dma_heap cpuctl cpuset blkio memcg cgroup_info input; do
     $BB mkdir -p "$ROOT/dev/$D"
 done
+/system/bin/chcon u:object_r:input_device:s0 "$ROOT/dev/input" 2>/dev/null || true
 
 # 精确复制内核通用字符设备节点，完整保留其文件权限（mode）、所有者（ownership）与 SELinux 上下文（context）
 for NODE in null zero full random urandom ashmem tty fuse; do
@@ -368,11 +481,18 @@ for NODE in binder hwbinder vndbinder; do
     $BB chmod 0666 "$ROOT/dev/binderfs/$NODE"
 done
 
-# 透传物理 GPU 与内存分配堆节点（保留原厂属性复制 /dev/dri 与 /dev/dma_heap）
-for DIR in dri dma_heap; do
+# 透传物理 GPU 与内存分配堆节点（保留原厂属性按 Board Profile 复制设备目录与单个设备节点）
+for DIR in $BOARD_GPU_DEV_DIRS; do
+    [ -d "/dev/$DIR" ] || continue
+    $BB mkdir -p "$ROOT/dev/$DIR"
     for NODE in /dev/$DIR/*; do
         [ ! -e "$NODE" ] || /system/bin/cp -a --preserve=mode,ownership,context "$NODE" "$ROOT/dev/$DIR/"
     done
+done
+for NODE in $BOARD_GPU_DEV_NODES; do
+    [ -e "$NODE" ] || continue
+    $BB mkdir -p "$ROOT${NODE%/*}"
+    /system/bin/cp -a --preserve=mode,ownership,context "$NODE" "$ROOT$NODE"
 done
 
 # 【受托子 cgroup 挂载】：
@@ -461,8 +581,8 @@ case "$INET_COOKIE:$INET_MAP_ID" in ''|*[!0-9:]*|:*|*:) exit 3 ;; esac
 # 并将宿主机固化（pinned）的单张专有 UID 权限表绑定至 map_netd_uid_permission_map，
 # 满足 Android 原生 libnetd_client 对网络权限核验的要求
 $BB mount -t tmpfs -o mode=0755,nosuid,nodev,noexec tmpfs "$ROOT/sys/fs/bpf"
-$BB mkdir -p "$ROOT/sys/fs/bpf/netd_shared"
-INET_TARGET=$ROOT/sys/fs/bpf/netd_shared/map_netd_uid_permission_map
+INET_TARGET=$ROOT$BOARD_STOCK_BPF_MAP
+$BB mkdir -p "${INET_TARGET%/*}"
 : > "$INET_TARGET"
 $BB mount -o bind "$INET_MAP_PATH" "$INET_TARGET"
 
@@ -473,7 +593,11 @@ copy_payload "$BASE/security/userns/guest_entry.sh" "$ROOT/system/bin/irisbox_us
 $BB chmod 0755 "$ROOT/system/bin/irisbox_userns_entry.sh"
 /system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/bin/irisbox_userns_entry.sh"
 copy_payload "$BASE/security/userns/guest.rc" "$ROOT/system/etc/init/zz_irisbox_userns.rc"
-copy_payload "$BASE/security/userns/libalarm_jni.so" "$ROOT/system/lib64/libalarm_jni.so"
+ALARM_JNI_PAYLOAD=$BASE/security/userns/libalarm_jni.so
+if [ -f "$COMPAT/payload/libalarm_jni.so" ] && [ ! -L "$COMPAT/payload/libalarm_jni.so" ]; then
+    ALARM_JNI_PAYLOAD=$COMPAT/payload/libalarm_jni.so
+fi
+copy_payload "$ALARM_JNI_PAYLOAD" "$ROOT/system/lib64/libalarm_jni.so"
 $BB chmod 0644 "$ROOT/system/lib64/libalarm_jni.so"
 /system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/lib64/libalarm_jni.so"
 # Physical Bluetooth belongs to the Host (including its keyboard). Guest

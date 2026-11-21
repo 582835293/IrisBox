@@ -1,17 +1,32 @@
 {
   "product": "IrisBox",
   "chineseName": "虹膜空间",
-  "release": "v0.1.6-preview",
+  "release": "v0.3.0",
   "repository": "https://github.com/582835293/IrisBox",
   "package": "com.irisbox.viewer",
-  "versionName": "0.1.6",
-  "versionCode": 120,
-  "engineVersion": "0.1.6-e27",
+  "versionName": "0.3.0",
+  "versionCode": 130,
+  "engineVersion": "0.3.0-e41",
+  "supportedBoards": [
+    "rpi4-a13-v1",
+    "opi5-a12-v1"
+  ],
+  "publicRomsAvailable": [
+    "IrisBox-rpi4-a13-aosp.irisrom"
+  ],
+  "opi5PublicRomIncluded": false,
   "publicRomGoogleIncluded": false,
   "hostMagiskIncluded": false,
   "freshCardFlashTested": false,
   "userNamespaceIsolation": true,
   "legacyDataMigrationRequired": true,
+  "boardDecouplingVerified": true,
+  "dynamicUplinkAndDnsTested": true,
+  "fastFullscreenLatencyTested": true,
+  "linuxTelemetryAndHudTested": true,
+  "externalSsdStorageIsolationTested": true,
+  "sameHostVmAppMigrationTested": true,
+  "appDataMigrationHighRiskGateAdded": true,
   "googlePlayDownloadTested": true,
   "googleDeviceCertificationPassed": false,
   "liveOrientationTested": true,
@@ -24,16 +39,6 @@
     "zh-CN"
   ],
   "languagePersistenceTested": true,
-  "clashTutorialInteractionTested": true,
-  "clashLongTermBattlesTested": false,
-  "youtubePlaybackTested": true,
-  "angryBirds2GameplayTested": true,
-  "angryBirds2TestConditions": {
-    "guestMiB": 2048,
-    "hostSwapMiB": 2048,
-    "guestRoot": "magisk",
-    "scope": "Tutorial slingshot, Red ability and completion score 203332"
-  },
   "hostSwapSizeChoicesMiB": [
     0,
     1024,
@@ -42,31 +47,14 @@
   ],
   "hostSwapSettingsTested": true,
   "hostSwapAutoRestoreRebootTested": true,
-  "hostSwapOffRemovesOwnedHookTested": true,
-  "hostRebootTestedThisEngine": true,
-  "alreadyMapped015NeedsDataMigration": false,
   "dualInstanceTested": true,
-  "dualHeavyGamesTested": true,
-  "dualGamesConditions": {
-    "guestMemoryMiB": [
-      1024,
-      2048
-    ],
-    "hostSwapMiB": 2048,
-    "games": [
-      "Clash of Clans",
-      "Angry Birds 2"
-    ],
-    "scope": "Short tutorial interaction and live previews; game idle reconnect observed"
-  },
-  "dualHeavyGamesLongRunTested": false,
   "artifacts": [
     {
-      "file": "IrisBox-0.1.6.apk",
-      "bytes": 17974001,
-      "sha256": "2806b9db48c0e99cd76762adf35d58a0450fc892ff9aaa2cd9af6dc3ec74d053",
-      "distribution": "github-release",
-      "downloadUrl": "https://github.com/582835293/IrisBox/releases/download/v0.1.6-preview/IrisBox-0.1.6.apk"
+      "file": "IrisBox-0.3.0.apk",
+      "bytes": 18109464,
+      "sha256": "6ad286e6be03ae0dba1a3c2e7ac3f2d4731e44cffb1d3a251b1264b338fbb967",
+      "distribution": "release-page",
+      "downloadUrl": null
     },
     {
       "file": "IrisBox-rpi4-a13-aosp.irisrom",

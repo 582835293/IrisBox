@@ -1,7 +1,12 @@
 from pathlib import Path
-import hashlib, json, zipfile, io
+import hashlib, json, zipfile, io, sys
 ROOT=Path(__file__).resolve().parents[1]
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import board_profiles
+
 def main():
+    boards = board_profiles.sync_board_artifacts(ROOT)
     engine=ROOT/'engine/runtime'
     # jar工具默认写入构建时刻；规范时间后相同源码具有相同引擎摘要。
     for jar in engine.rglob('*.jar'):
@@ -17,16 +22,15 @@ def main():
             data=p.read_bytes()
             if p.suffix in ('.sh','.rc'):assert b'\r' not in data, 'Android script must use LF: '+str(p)
             files[p.relative_to(engine).as_posix()]={'size':len(data),'sha256':hashlib.sha256(data).hexdigest()}
-    for required in ('host_swap.sh','irisbox_ns','irisbox_userns','security/userns/libalarm_jni.so','browser/IrisBoxBrowser.apk','iris_inet_policy','display/buffer_bridge/iris_buffer_producer','display/buffer_viewer/broker.jar','display/buffer_viewer/gateway.jar'):
+    for required in ('host_swap.sh','board.sh','irisbox_ns','irisbox_userns','security/userns/libalarm_jni.so','browser/IrisBoxBrowser.apk','iris_inet_policy','display/buffer_bridge/iris_buffer_producer','display/buffer_viewer/broker.jar','display/buffer_viewer/gateway.jar'):
         assert required in files, 'Engine executable missing: '+required
-    manifest={'formatVersion':1,'compatibility':'rpi4-a13-v1','version':'0.1.6-e27','files':files}
+    profiles = [b['profile'] for b in boards]
+    manifest={'formatVersion':1,'compatibility':profiles[0],'compatibleProfiles':profiles,'version':'0.3.0-e41','files':files}
     out=ROOT/'app/viewer/assets/engine.zip';out.parent.mkdir(parents=True,exist_ok=True)
     with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
         z.writestr('engine.json',json.dumps(manifest,separators=(',',':')))
         for name in files:z.write(engine/name,name)
     (ROOT/'out').mkdir(exist_ok=True)
     (ROOT/'out/engine-manifest.json').write_text(json.dumps(manifest,indent=2),encoding='utf-8')
-    profile={p.relative_to(ROOT/'rom').as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT/'rom/compat').rglob('*')) if p.is_file() and 'google' not in p.relative_to(ROOT/'rom/compat').parts}
-    (ROOT/'app/viewer/assets/rom-profile.json').write_text(json.dumps(profile,separators=(',',':')),encoding='utf-8')
     print(f'Engine: {len(files)} files, {out.stat().st_size} bytes, SHA256 {hashlib.sha256(out.read_bytes()).hexdigest()}')
 if __name__=='__main__':main()

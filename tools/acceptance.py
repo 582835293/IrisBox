@@ -43,7 +43,7 @@ def main():
             r=wait(api,a.id,lambda x:x['ready'],300)
             (ROOT/f'validation/private/ready-{a.id}.json').write_text(json.dumps(r,ensure_ascii=False,indent=2),encoding='utf-8');print(json.dumps(compact(r)));return
         if a.action=='memory':
-            if not 512<=a.mib<=2560:raise SystemExit('Invalid memory budget')
+            if not 256<=a.mib<=32768:raise SystemExit('Invalid memory budget')
             path=f"/action?id={a.id}&type=memory&mib={a.mib}&previousMib={r['memory']['mib']}&session="
             api.call(path,True);r=wait(api,a.id,lambda x:not x['busy'] and x['memory']['mib']==a.mib);print(json.dumps(compact(r)));return
         if a.action=='start':

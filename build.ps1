@@ -32,6 +32,10 @@ if($RebuildProducer){
 & "$taskRoot\tests\audio\build.ps1" -SdkDir $SdkDir -JdkDir $JdkDir | Out-File "$taskRoot\out\audio-build.log"
 if($LASTEXITCODE -ne 0){throw 'Audio bridge build failed'}
 Copy-Item -LiteralPath "$taskRoot\out\IrisBox-Audio.jar" -Destination "$taskRoot\engine\runtime\audio\audio.jar"
+& "$taskRoot\app\file-exchange\build.ps1" -SdkDir $SdkDir -JdkDir $JdkDir | Out-File "$taskRoot\out\file-exchange-build.log"
+if($LASTEXITCODE -ne 0){throw 'File exchange helper build failed'}
+New-Item -ItemType Directory -Force -Path "$taskRoot\engine\runtime\file_exchange" | Out-Null
+Copy-Item -LiteralPath "$taskRoot\app\file-exchange\build\guest.jar" -Destination "$taskRoot\engine\runtime\file_exchange\guest.jar"
 & "$taskNdk\aarch64-linux-android30-clang.cmd" -static -O2 -Wall -Wextra -Werror -I "$taskRoot\engine\native\inet" "$taskRoot\engine\native\inet\policy.c" -o "$taskRoot\engine\runtime\iris_inet_policy"
 if($LASTEXITCODE -ne 0){throw 'INET helper build failed'}
 & "$taskNdk\aarch64-linux-android30-clang.cmd" -static -O2 -Wall -Wextra -Werror "$taskRoot\engine\native\iris_runtime_ns.c" -o "$taskRoot\engine\runtime\irisbox_ns"
@@ -44,6 +48,8 @@ if($LASTEXITCODE -ne 0){throw 'Broker build failed'}
 if($LASTEXITCODE -ne 0){throw 'Gateway build failed'}
 Copy-Item -LiteralPath "$taskRoot\app\broker\build\IrisBufferBroker.jar" -Destination "$taskRoot\engine\runtime\display\buffer_viewer\broker.jar"
 Copy-Item -LiteralPath "$taskRoot\app\gateway\build\IrisBufferViewerGateway.jar" -Destination "$taskRoot\engine\runtime\display\buffer_viewer\gateway.jar"
+& $Python "$taskRoot\tools\board_profiles.py" sync
+if($LASTEXITCODE -ne 0){throw 'Board profile sync failed'}
 & $Python "$taskRoot\tools\package_engine.py"
 if($LASTEXITCODE -ne 0){throw 'Engine packaging failed'}
 }

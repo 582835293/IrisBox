@@ -34,21 +34,26 @@ def main():
         assert source.suffix not in ('.keystore','.img','.irisrom','.log','.pem','.key')
         assert source.stat().st_size<100*1024*1024
         data=source.read_bytes()
-        if source.suffix in ('.py','.ps1','.md','.json','.sh') and not name.startswith(('rom/compat/','engine/runtime/root/magisk_30_7/')):
+        if source.suffix in ('.py','.ps1','.md','.json','.sh','.xml','.java','.c','.cpp','.h') and not name.startswith(('rom/compat/','engine/runtime/root/magisk_30_7/')):
             text=data.decode('utf8')
-            # Keep the exact Android fingerprint; only local machine defaults are removed.
-            text=text.replace('AOSP_BUILD_HOST','AOSP_BUILD_HOST').replace('DEVICE_SERIAL','DEVICE_SERIAL')
-            text=text.replace('/path/to/aosp-rpi4','/path/to/aosp-rpi4')
-            text=text.replace('builder@AOSP_BUILD_HOST','builder@AOSP_BUILD_HOST').replace('id_ed25519','id_ed25519')
-            text=text.replace('PATH_TO_PREVIOUS_IRIS_PROJECT','PATH_TO_PREVIOUS_IRIS_PROJECT')
-            text=text.replace('C:\\\\Users\\\\lijiaquan\\\\Desktop\\\\agyProgram\\\\嵌套安卓虚拟机项目V3.0','PATH_TO_PREVIOUS_IRIS_PROJECT')
-            text=text.replace("'C:\\Users\\lijiaquan\\AppData\\Local\\Android\\Sdk'",'"$env:LOCALAPPDATA\\Android\\Sdk"') if source.suffix=='.ps1' else text
+            rel_prefix='../'*(len(Path(name).parts)-1)
+            # Keep exact Android build fingerprints; remove local machine paths, LAN IPs and absolute IDE links.
+            text=text.replace('AOSP_BUILD_HOST','AOSP_BUILD_HOST').replace('DEVICE_SERIAL','DEVICE_SERIAL').replace('DEVICE_SERIAL','DEVICE_SERIAL').replace('DEVICE_IP','DEVICE_IP')
+            text=re.sub(r'/home/[^/\s"\']+/aosp-rpi4','/path/to/aosp-rpi4',text)
+            text=re.sub(r'[a-z0-9._-]+@AOSP_BUILD_HOST','builder@AOSP_BUILD_HOST',text).replace('id_ed25519','id_ed25519')
+            text=re.sub(r'file:///[A-Za-z]:[/\\]Users[/\\][^/\\\s"\'\)]+[/\\]Desktop[/\\]agyProgram[/\\]IrisBox[/\\]',rel_prefix,text)
+            text=re.sub(r'[A-Za-z]:(?:\\{1,2}|/)Users(?:\\{1,2}|/)[^/\\\s"\']+(?:\\{1,2}|/)Desktop(?:\\{1,2}|/)agyProgram(?:\\{1,2}|/)嵌套安卓虚拟机项目V3\.0','PATH_TO_PREVIOUS_IRIS_PROJECT',text)
+            text=re.sub(r"'[A-Za-z]:\\Users\\[^\\'\r\n]+\\AppData\\Local\\Android\\Sdk'",lambda _m:'"$env:LOCALAPPDATA\\Android\\Sdk"',text) if source.suffix=='.ps1' else text
             if name=='tools/device.py':
+                text=text.replace("ADB=['adb','-s',os.environ.get('IRISBOX_SERIAL','DEVICE_SERIAL')]","ADB=['adb']+(['-s',os.environ['IRISBOX_SERIAL']] if os.environ.get('IRISBOX_SERIAL') else [])")
                 text=text.replace("ADB=['adb','-s','DEVICE_SERIAL']","import os\nADB=['adb']+(['-s',os.environ['IRISBOX_SERIAL']] if os.environ.get('IRISBOX_SERIAL') else [])")
             if name=='tools/build_producer.py':
-                text=text.replace("'--host',default='builder@AOSP_BUILD_HOST'","'--host',required=True").replace("'--aosp',default='/path/to/aosp-rpi4'","'--aosp',required=True")
+                text=re.sub(r"'--host',default='[^']+'","'--host',required=True",text).replace("'--aosp',default='/path/to/aosp-rpi4'","'--aosp',required=True")
             if name=='reference/source-inputs.json':
                 obj=json.loads(text);obj['reference']='Previous Project Iris V3.0, read-only provenance';text=json.dumps(obj,ensure_ascii=False,indent=2)+'\n'
+            if name!='tools/prepare_public_snapshot.py':
+                assert not re.search(r'(?i)(?:file:///[A-Za-z]:|[A-Za-z]:(?:\\{1,2}|/)Users(?:\\{1,2}|/)|/home/[^/\s]+/)',text),'Unsanitized user path remains in '+name
+                assert not re.search(r'\b192\.168\.\d+\.\d+\b',text),'Unsanitized LAN IP remains in '+name
             data=text.encode('utf8')
         assert not re.search(rb'(?m)^-----BEGIN (?:OPENSSH |RSA |EC )?PRIVATE KEY-----',data),name
         target=dest/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data);copied.append(name)

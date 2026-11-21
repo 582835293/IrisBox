@@ -89,7 +89,7 @@ hs_status() {
     if [ -e "$HS_HOOK" ]; then hs_hook_check; HS_BOOT=true; fi
     HS_TOTAL=$("$BB" awk '/^SwapTotal:/ {print $2}' /proc/meminfo)
     HS_AVAILABLE=$("$BB" awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
-    HS_FREE=$("$BB" df -Pk /data | "$BB" awk 'NR==2 {print $4}')
+    HS_FREE=$("$BB" df -Pk /data/irisbox | "$BB" awk 'NR==2 {print $4}')
     HS_AUTO_JSON=false; [ "$HS_AUTO" = 0 ] || HS_AUTO_JSON=true
     printf 'IRIS_SWAP_JSON={"configuredMiB":%s,"autoRestore":%s,"activeMiB":%s,"usedKiB":%s,"allocatedMiB":%s,"hostSwapTotalKiB":%s,"memAvailableKiB":%s,"freeDiskKiB":%s,"bootHookInstalled":%s}\n' "$HS_SAVED" "$HS_AUTO_JSON" "$HS_ACTIVE" "$HS_USED" "$HS_ALLOCATED" "$HS_TOTAL" "$HS_AVAILABLE" "$HS_FREE" "$HS_BOOT"
 }
@@ -132,7 +132,7 @@ done
 HS_TMP=
 trap '[ -z "$HS_TMP" ] || "$BB" rm -f "$HS_TMP" "$HS_TMP.record"' EXIT
 if [ "$HS_NEW" != 0 ] && [ ! -f "$HS_DIR/swap-$HS_NEW.img" ]; then
-    HS_FREE=$("$BB" df -Pk /data | "$BB" awk 'NR==2 {print $4}')
+    HS_FREE=$("$BB" df -Pk /data/irisbox | "$BB" awk 'NR==2 {print $4}')
     [ "$HS_FREE" -ge "$(((HS_NEW + 2048) * 1024))" ] || hs_fail DISK_SPACE
     HS_TMP=$("$BB" mktemp "$HS_DIR/.build.XXXXXX")
     "$BB" chmod 0600 "$HS_TMP"

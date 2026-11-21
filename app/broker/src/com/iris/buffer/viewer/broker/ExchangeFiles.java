@@ -45,7 +45,7 @@ final class ExchangeFiles implements AutoCloseable {
         public void check()throws IOException {
             if(failure!=null)throw failure;
             if(closed)throw new Failure(503,"MANAGER_STOPPED","文件管理器已停止");
-            if(SystemClock.elapsedRealtime()>=deadline)throw new Failure(408,"TRANSFER_TIMEOUT","文件操作超过 120 秒，请重试");
+            if(SystemClock.elapsedRealtime()>=deadline)throw new Failure(408,"TRANSFER_TIMEOUT","文件操作超时，请重试");
             if(!session.equals(state.session(id)))throw new Failure(409,"SESSION_CHANGED","实例会话已改变，请返回列表重新进入");
             if(state.stopping(id))throw new Failure(409,"SESSION_STOPPING","实例正在停止，文件操作已取消");
         }
@@ -87,7 +87,7 @@ final class ExchangeFiles implements AutoCloseable {
         };
         Helper(Job job,String...args)throws Exception {
             this.job=job;job.check();
-            ArrayList<String> command=new ArrayList<>(Arrays.asList(BB,"timeout","-s","KILL","130","/system/bin/sh",BASE+"/ctl.sh","exec",Integer.toString(job.id),"/system/xbin/su","2000","/system/bin/busybox","env",
+            ArrayList<String> command=new ArrayList<>(Arrays.asList(BB,"timeout","-s","KILL",Integer.toString(ExchangeProtocol.TRANSFER_SECONDS+10),"/system/bin/sh",BASE+"/ctl.sh","exec",Integer.toString(job.id),"/system/bin/busybox","setuidgid","2000","/system/bin/busybox","env",
                     "CLASSPATH=/system/framework/iris_file_exchange.jar","IRIS_EXCHANGE_DEADLINE_MS="+job.deadline,"/system/bin/app_process","/system/bin","com.iris.fileexchange.GuestExchange"));
             command.addAll(Arrays.asList(args));
             ProcessBuilder builder=new ProcessBuilder(command);
@@ -213,7 +213,7 @@ final class ExchangeFiles implements AutoCloseable {
         // If the Broker dies, a helper could have been launched just before this
         // job's deadline. Cover its independent 130 s outer bound plus 15 s grace.
         writeRecord(job.id,new JSONObject().put("id",job.id).put("session",job.session).put("token",transaction).put("name",name)
-                .put("bootId",bootId()).put("recoverAfterElapsedMs",job.deadline+145000).put("helperExited",false));
+                .put("bootId",bootId()).put("recoverAfterElapsedMs",job.deadline+25000L).put("helperExited",false));
         job.transaction=transaction;
     }
     private void releaseRecoveryLease(Job job){

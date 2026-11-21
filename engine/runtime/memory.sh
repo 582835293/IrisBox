@@ -12,7 +12,7 @@ get) saved_memory_mib; echo "$MEMORY_MIB" ;;
 set)
     REQUESTED=${3:?MiB required}
     PREVIOUS=${4:?Previous MiB required}
-    valid_memory_mib "$REQUESTED" || { echo 'Memory must be 512..2560 MiB' >&2; exit 2; }
+    valid_memory_mib "$REQUESTED" || { echo "Memory must be ${MEM_MIN_MIB}..${MEM_MAX_MIB} MiB" >&2; exit 2; }
     [ "$PREVIOUS" = -1 ] || valid_memory_mib "$PREVIOUS" || exit 2
     "$BB" mkdir -p "$RUN"
     if [ "${IRIS_MEMORY_LOCKED:-}" != 1 ]; then

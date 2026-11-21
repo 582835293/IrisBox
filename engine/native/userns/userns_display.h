@@ -42,6 +42,31 @@ static void stage_file(int directory, const char *name, const char *source,
     if (fchown(fd, base, base) || fchmod(fd, mode) || fsync(fd)) die("display staged owner"); close(fd);
     if (renameat(directory, tmp, directory, name)) die("publish display file");
 }
+static void resolve_producer_source(unsigned id, char *out, size_t cap) {
+    char rec[256], rom_id[128] = {0};
+    snprintf(rec, sizeof(rec), HOME_BASE "/config/rom_v1/%u.id", id);
+    ssize_t n = read_text(rec, rom_id, sizeof(rom_id));
+    if (n < 0) n = read_text(HOME_BASE "/config/default_rom", rom_id, sizeof(rom_id));
+    if (n > 0) {
+        rom_id[strcspn(rom_id, "\r\n")] = 0;
+        size_t len = strlen(rom_id);
+        int ok = len > 0 && len <= 64 && rom_id[0] != '.';
+        for (size_t i = 0; ok && i < len; ++i) {
+            char c = rom_id[i];
+            if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '_' || c == '-')) ok = 0;
+        }
+        if (ok) {
+            char cand[512];
+            struct stat st;
+            snprintf(cand, sizeof(cand), HOME_BASE "/roms/%s/compat/payload/iris_buffer_producer", rom_id);
+            if (!lstat(cand, &st) && S_ISREG(st.st_mode) && !st.st_uid && strlen(cand) < cap) {
+                strcpy(out, cand);
+                return;
+            }
+        }
+    }
+    snprintf(out, cap, HOME_BASE "/display/buffer_bridge/iris_buffer_producer");
+}
 static int stage_display(unsigned id, unsigned pid, unsigned long long tick) {
     verify_map(id, pid, tick, 0); unsigned base = profile(id);
     int data = data_dir(id, base); char session[80]; snprintf(session, sizeof(session), "%u_%llu", pid, tick);
@@ -53,7 +78,9 @@ static int stage_display(unsigned id, unsigned pid, unsigned long long tick) {
     const char *stale[] = {"input.sock", "input.ready", "input.identity"};
     for (unsigned i = 0; i < 3; ++i) if (unlinkat(sd, stale[i], 0) && errno != ENOENT) die("retire input entry");
     if (unlinkat(gd, "output.sock", 0) && errno != ENOENT) die("retire graphics entry");
-    stage_file(gd, "iris_buffer_producer", HOME_BASE "/display/buffer_bridge/iris_buffer_producer", NULL, base, 0755);
+    char producer_src[512];
+    resolve_producer_source(id, producer_src, sizeof(producer_src));
+    stage_file(gd, "iris_buffer_producer", producer_src, NULL, base, 0755);
     stage_file(sd, "input.jar", HOME_BASE "/display/stream/input.jar", NULL, base, 0644);
     stage_file(sd, "start_input.sh", HOME_BASE "/display/stream/start_input.sh", NULL, base, 0755);
     stage_file(sd, "stop_input.sh", HOME_BASE "/display/stream/stop_input.sh", NULL, base, 0755);

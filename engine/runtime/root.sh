@@ -59,6 +59,23 @@ set)
     printf '%s\n' "$REQUESTED" > "$TEMP";"$BB" mv "$TEMP" "$C/$ID.profile"
     echo "APPLICATION_ROOT_SAVED id=$ID profile=$REQUESTED; applies on next start"
     ;;
+premount)
+    # inner.sh 在挂载 system OverlayFS 前调用：切回 off 时清除隐藏原厂 /system/xbin/su 的 whiteout。
+    [ "$(id -u)" = 0 ] || exit 3
+    for N in mnt net ipc uts cgroup; do
+        [ "$($BB readlink /proc/self/ns/$N)" != "$($BB readlink /proc/1/ns/$N)" ] || exit 3
+    done
+    saved
+    if [ "$PROFILE" = off ] && [ -f "$RUN/xbin_su.hidden" ] && [ ! -L "$RUN/xbin_su.hidden" ]; then
+        for P in "$RUN/upper" "$RUN/upper/system" "$RUN/upper/system/xbin"; do
+            [ ! -L "$P" ] || exit 3
+        done
+        if [ -c "$RUN/upper/system/xbin/su" ] && [ ! -L "$RUN/upper/system/xbin/su" ]; then
+            "$BB" rm -f "$RUN/upper/system/xbin/su"
+        fi
+        "$BB" rm -f "$RUN/xbin_su.hidden"
+    fi
+    ;;
 apply)
     # inner.sh calls this after RC copying, before pivot_root and stock init.
     [ "$(id -u)" = 0 ] || exit 3
@@ -80,11 +97,24 @@ apply)
         [ ! -L "$F" ] || exit 3
         "$BB" rm -rf "$F"
     done
-    [ ! -L "$RUN/root.effective" ] || exit 3
+    [ ! -L "$RUN/root.effective" ] && [ ! -L "$RUN/xbin_su.hidden" ] || exit 3
     printf '%s\n' "$PROFILE" > "$RUN/root.effective"
-    if [ "$PROFILE" = off ]; then echo "APPLICATION_ROOT_APPLIED id=$ID profile=off";exit 0;fi
+    if [ "$PROFILE" = off ]; then
+        "$BB" rm -f "$RUN/xbin_su.hidden"
+        echo "APPLICATION_ROOT_APPLIED id=$ID profile=off"
+        exit 0
+    fi
     [ "$(getenforce)" = Permissive ] || exit 4
     verify_component
+    # 遮蔽 ROM 原厂 /system/xbin/su（仅写入本实例私有 upper whiteout），避免 Magisk Manager 报竞争 su 警告
+    if [ -d "$ROOT/system/xbin" ]; then
+        [ ! -L "$ROOT/system" ] && [ ! -L "$ROOT/system/xbin" ] || exit 3
+        XBIN_SU=$ROOT/system/xbin/su
+        if [ -e "$XBIN_SU" ] || [ -L "$XBIN_SU" ]; then
+            "$BB" rm -f "$XBIN_SU"
+            printf '%s\n' hidden > "$RUN/xbin_su.hidden"
+        fi
+    fi
     "$BB" mkdir -p "$ROOT/sbin" "$ROOT/system/app/IrisMagisk" "$ROOT/system/etc/iris-root"
     [ ! -L "$ROOT/sbin" ] || exit 3
     # The upstream denylist unmount API identifies its own tmpfs by source
@@ -126,5 +156,5 @@ apply)
     /system/bin/chcon -R u:object_r:system_file:s0 "$SBIN" "$ROOT/system/etc/iris-root" "$ROOT/system/app/IrisMagisk" "$ROOT/system/etc/init/zz_iris_magisk.rc"
     echo "APPLICATION_ROOT_APPLIED id=$ID profile=$PROFILE"
     ;;
-*) echo 'Use get/set/verify/apply ID; application root is disabled by default' >&2;exit 2 ;;
+*) echo 'Use get/set/verify/premount/apply ID; application root is disabled by default' >&2;exit 2 ;;
 esac

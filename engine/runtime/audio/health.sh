@@ -4,7 +4,7 @@ set -eu
 # system_server; unsupported Traceur was masked in the private mount tree.
 for N in $(/system/bin/busybox seq 1 120); do
     if /system/bin/service check window 2>/dev/null | /system/bin/busybox grep -q ': found'; then
-        [ ! -e /system/app/Traceur/Traceur.apk ] || exit 4
+        [ ! -e /system/app/Traceur/Traceur.apk ] && [ ! -e /system/priv-app/Traceur/Traceur.apk ] || exit 4
         echo READY > /data/irisbox_audio/health.status
         exit 0
     fi

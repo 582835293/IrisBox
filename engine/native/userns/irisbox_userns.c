@@ -182,6 +182,14 @@ static void join_child(unsigned id, pid_t pid) {
         snprintf(path, sizeof(path), "%s/irisbox_%u/managed/cgroup.procs", controllers[i], id); put(path, value);
     }
 }
+/* 优先使用 Linux 5.12+ mount_setattr；在 5.10 内核返回 ENOSYS 时回退至等价的 per-mount 只读重挂 */
+static void seal_mount_readonly(const char *target, const char *label) {
+    struct mount_attr readonly = {.attr_set = MOUNT_ATTR_RDONLY | MOUNT_ATTR_NOSUID};
+    if (!syscall(__NR_mount_setattr, AT_FDCWD, target, 0, &readonly, sizeof(readonly))) return;
+    if (errno == ENOSYS && !mount(NULL, target, NULL, MS_BIND | MS_REMOUNT | MS_RDONLY | MS_NOSUID, NULL)) return;
+    die(label);
+}
+
 static void seal_and_map(unsigned id, unsigned base) {
     char root[256], path[512]; snprintf(root, sizeof(root), HOME_BASE "/instances/%u/rootfs", id);
     const char *trees[] = {"", "/vendor", "/dev", "/apex", "/linkerconfig", "/mnt", "/data", "/metadata", "/sbin"};
@@ -197,13 +205,52 @@ static void seal_and_map(unsigned id, unsigned base) {
     for (unsigned i = 0; i < 5; ++i) {
         snprintf(path, sizeof(path), "%s/irisbox_%u/managed", controllers[i], id); shift_tree(path, base);
     }
-    struct mount_attr readonly = {.attr_set = MOUNT_ATTR_RDONLY | MOUNT_ATTR_NOSUID};
-    if (syscall(__NR_mount_setattr, AT_FDCWD, root, 0, &readonly, sizeof(readonly))) die("seal system root");
+    seal_mount_readonly(root, "seal system root");
     snprintf(path, sizeof(path), "%s/vendor", root);
-    if (syscall(__NR_mount_setattr, AT_FDCWD, path, 0, &readonly, sizeof(readonly))) die("seal vendor root");
+    seal_mount_readonly(path, "seal vendor root");
     printf("USERNS_FILES_PREPARED base=%u shifted=%lu system_readonly=yes\n", base, shifted_files);
 }
 struct launch_args {int go[2], parent_fd; unsigned id, base; char root[256];};
+static char g_board_hw[40];
+static char g_gles_key[64];
+static char g_gles_val[64];
+
+/* 从 wrapper.sh 透传的环境变量严格校验并加载板卡硬件名与 GLES 覆写配置 */
+static int init_board_config(void) {
+    const char *hw = getenv("IRIS_BOARD_HARDWARE");
+    size_t i = 0;
+    if (!hw || !hw[0]) return -1;
+    for (; hw[i]; ++i) {
+        char c = hw[i];
+        if (i >= 32 || !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-')) return -1;
+        g_board_hw[i] = c;
+    }
+    g_board_hw[i] = '\0';
+
+    g_gles_key[0] = '\0';
+    g_gles_val[0] = '\0';
+    const char *gles = getenv("IRIS_GLES_OVERRIDE_ENV");
+    if (!gles || !gles[0]) return 0;
+    size_t k = 0, v = 0;
+    while (gles[k] && gles[k] != '=') {
+        char c = gles[k];
+        if (k >= 48 || !((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_')) return -1;
+        g_gles_key[k] = c;
+        k++;
+    }
+    if (k == 0 || gles[k] != '=') return -1;
+    g_gles_key[k] = '\0';
+    const char *vp = gles + k + 1;
+    if (!vp[0]) return -1;
+    for (; vp[v]; ++v) {
+        char c = vp[v];
+        if (v >= 63 || !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+                         c == '_' || c == '.' || c == ':' || c == '-')) return -1;
+        g_gles_val[v] = c;
+    }
+    g_gles_val[v] = '\0';
+    return 0;
+}
 struct release {unsigned pid; unsigned long long tick; unsigned gles;};
 static int guest_main(void *arg) {
     struct launch_args *a = arg; close(a->go[1]);
@@ -234,8 +281,10 @@ static int guest_main(void *arg) {
     setenv("IRIS_NETD_NO_BPF", "1", 1); setenv("IRIS_GUEST_NO_BPF", "1", 1);
     setenv("PATH", "/system/bin:/system/xbin:/vendor/bin:/apex/com.android.art/bin", 1);
     setenv("ANDROID_ROOT", "/system", 1); setenv("ANDROID_DATA", "/data", 1);
-    if (release.gles) setenv("MESA_GLES_VERSION_OVERRIDE", "3.0", 1);
-    else unsetenv("MESA_GLES_VERSION_OVERRIDE");
+    if (g_gles_key[0]) {
+        if (release.gles) setenv(g_gles_key, g_gles_val, 1);
+        else unsetenv(g_gles_key);
+    }
     /* APEX is not active yet; mksh's ELF interpreter is in /apex. The
      * existing static BusyBox can run this pre-init step without Host APEX.
      */
@@ -266,7 +315,8 @@ static void guest_proc_mount(unsigned pid, const char *root, unsigned base) {
          * real fixed platform selector, not Host serials or boot credentials.
          */
         char boot[512]; snprintf(boot, sizeof(boot), "%s/dev/.iris_platform_cmdline", root);
-        record(boot, "androidboot.hardware=rpi4\n");
+        char hwline[96]; snprintf(hwline, sizeof(hwline), "androidboot.hardware=%s\n", g_board_hw);
+        record(boot, hwline);
         if (chown(boot, base, base) || chmod(boot, 0444)) _exit(3);
         char cmdline[512]; snprintf(cmdline, sizeof(cmdline), "%s/proc/cmdline", root);
         if (mount(boot, cmdline, NULL, MS_BIND, NULL) ||
@@ -276,6 +326,7 @@ static void guest_proc_mount(unsigned pid, const char *root, unsigned base) {
     if (wait_result(child)) die("private Guest proc");
 }
 static int launch(unsigned id, const char *log) {
+    if (init_board_config() != 0) { fprintf(stderr, "Missing or invalid board config env\n"); return 3; }
     struct launch_args a = {.id = id, .base = profile(id)};
     snprintf(a.root, sizeof(a.root), HOME_BASE "/instances/%u/rootfs", id);
     char prefix[256]; snprintf(prefix, sizeof(prefix), HOME_BASE "/instances/%u/", id);

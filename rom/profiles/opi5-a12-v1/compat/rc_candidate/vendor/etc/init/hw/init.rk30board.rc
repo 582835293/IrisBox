@@ -1,0 +1,62 @@
+import /vendor/etc/init/hw/init.rockchip.rc
+import /vendor/etc/init/hw/init.connectivity.rc
+import /vendor/etc/init/hw/init.${ro.board.platform}.rc
+
+on post-fs-data
+    mkdir /data/vendor/logs 0755 root shell
+    mkdir /data/vendor/audio 0755 system system
+    mkdir /data/vendor/camera 0755 cameraserver cameraserver
+
+service abc /vendor/bin/abc
+    class main
+    disabled
+    oneshot
+
+service displayd /system/bin/displayd
+    class core
+    disabled
+
+service pppoe_setup /system/bin/pppoe-setup
+    class main
+    disabled
+    oneshot
+
+service pppoe_start /system/bin/pppoe-start
+    class main
+    disabled
+    oneshot
+
+service bplus_helper /system/bin/bplus_helper
+    class main
+    disabled
+    oneshot
+
+service pppoe_stop /system/bin/pppoe-stop
+    class main
+    disabled
+    oneshot
+
+service up_eth0 /system/bin/busybox ifconfig eth0 up
+    class main
+    disabled
+    oneshot
+
+service shutdownanim /system/bin/bootanimation shutdown
+    class core
+    disabled
+    oneshot
+
+service rk_store_keybox /vendor/bin/rk_store_keybox
+    class main
+    disabled
+    oneshot
+
+service flash_img /vendor/bin/flash_img.sh
+    class main
+    disabled
+    oneshot
+
+service read_pcie_info /vendor/bin/read_pcie_info.sh /mnt/sdcard/pcieInfo.tmp
+    class main
+    disabled
+    oneshot

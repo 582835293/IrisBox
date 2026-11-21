@@ -25,8 +25,39 @@
 #endif
 #define BASE "/data/irisbox/runtime"
 #define PINS "/sys/fs/bpf/iris_inet_v1"
-#define HOST_MAP "/sys/fs/bpf/netd_shared/map_netd_uid_permission_map"
-#define STOCK_PROG "/sys/fs/bpf/netd_shared/prog_netd_cgroupsock_inet_create"
+/* 从环境变量加载宿主原厂 BPF 对象路径，仅接受 /sys/fs/bpf/ 前缀且禁止路径穿越 */
+static const char *iris_bpf_path(const char *env_a, const char *env_b, const char *fallback) {
+    const char *v = getenv(env_a);
+    const char *prefix = "/sys/fs/bpf/";
+    size_t i = 0;
+    if (!v || !*v) v = getenv(env_b);
+    if (!v || !*v) return fallback;
+    for (i = 0; prefix[i]; ++i) {
+        if (v[i] != prefix[i]) {
+            fprintf(stderr, "Invalid BPF path prefix in %s\n", env_a);
+            _exit(3);
+        }
+    }
+    if (!v[i]) {
+        fprintf(stderr, "Empty BPF path after prefix in %s\n", env_a);
+        _exit(3);
+    }
+    for (i = 0; v[i]; ++i) {
+        char c = v[i];
+        if (i >= 192 || !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') ||
+                          c == '/' || c == '_' || c == '-' || c == '.')) {
+            fprintf(stderr, "Invalid BPF path character in %s\n", env_a);
+            _exit(3);
+        }
+        if (c == '.' && v[i + 1] == '.') {
+            fprintf(stderr, "Path traversal rejected in %s\n", env_a);
+            _exit(3);
+        }
+    }
+    return v;
+}
+#define HOST_MAP (iris_bpf_path("IRIS_STOCK_BPF_MAP", "BOARD_STOCK_BPF_MAP", "/sys/fs/bpf/netd_shared/map_netd_uid_permission_map"))
+#define STOCK_PROG (iris_bpf_path("IRIS_STOCK_BPF_PROG", "BOARD_STOCK_BPF_PROG", "/sys/fs/bpf/netd_shared/prog_netd_cgroupsock_inet_create"))
 #define OUTER PINS "/domains"
 #define PROGRAM PINS "/program"
 #define ORIGINAL PINS "/original"
@@ -345,12 +376,16 @@ int main(int argc, char **argv) {
     }
     int existing_dispatcher = access(PROGRAM, F_OK) == 0;
     ensure_objects();
-    if (existing_dispatcher && attached() != prog_id(program_fd)) {
+    uint32_t cur = attached();
+    if (existing_dispatcher && cur != prog_id(program_fd) && cur != prog_id(original_fd)) {
         errno = EBUSY; fail("existing dispatcher changed; refusing Host policy replacement");
     }
     if (!strcmp(argv[1], "verify") && argc == 2) {
+        if (cur != prog_id(program_fd)) {
+            errno = EBUSY; fail("dispatcher is not attached; run ensure");
+        }
         printf("verified=%u attached=%u original=%u host_map=%u domains=%u\n",
-            prog_id(program_fd), attached(), prog_id(original_fd), map_id(host_fd), map_id(outer_fd));
+            prog_id(program_fd), cur, prog_id(original_fd), map_id(host_fd), map_id(outer_fd));
     } else if (!strcmp(argv[1], "ensure") && argc == 2) {
         ensure_attached();
     } else if (!strcmp(argv[1], "register") && argc == 5) {

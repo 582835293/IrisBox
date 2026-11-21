@@ -6,4 +6,6 @@ umask 022
 host_only || exit 3
 [ ! -e "$RUN/userns.pending" ] && [ ! -L "$RUN/userns.pending" ] || exit 4
 "$BASE/irisbox_userns" profile "$ID" >/dev/null
+export IRIS_BOARD_HARDWARE="$BOARD_HARDWARE"
+export IRIS_GLES_OVERRIDE_ENV="$BOARD_GLES_OVERRIDE_ENV"
 exec "$BASE/irisbox_userns" launch "$ID" "$2"

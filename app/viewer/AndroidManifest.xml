@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.irisbox.viewer" android:versionCode="120" android:versionName="0.1.6">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.irisbox.viewer" android:versionCode="130" android:versionName="0.3.0">
     <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="33" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <application android:label="@string/app_name" android:theme="@android:style/Theme.Material.NoActionBar" android:allowBackup="false" android:usesCleartextTraffic="true" android:extractNativeLibs="true">
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <application android:label="@string/app_name" android:theme="@style/IrisNoTransitionTheme" android:allowBackup="false" android:usesCleartextTraffic="true" android:extractNativeLibs="true">
         <activity android:name=".SetupActivity" android:exported="true" android:screenOrientation="landscape"><intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter></activity>
         <activity android:name=".ListActivity" android:exported="true" android:screenOrientation="landscape" android:launchMode="singleTask">
         </activity>

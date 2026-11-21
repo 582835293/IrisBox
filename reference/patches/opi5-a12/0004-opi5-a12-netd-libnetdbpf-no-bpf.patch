@@ -1,0 +1,321 @@
+diff --git a/libnetdbpf/BpfNetworkStats.cpp b/libnetdbpf/BpfNetworkStats.cpp
+index a77f6f9..d158db5 100644
+--- a/libnetdbpf/BpfNetworkStats.cpp
++++ b/libnetdbpf/BpfNetworkStats.cpp
+@@ -16,6 +16,7 @@
+ 
+ #include <inttypes.h>
+ #include <net/if.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <unordered_set>
+ 
+@@ -44,6 +45,13 @@ using base::Result;
+ // from the config value.
+ static constexpr char const* STATS_MAP_PATH[] = {STATS_MAP_B_PATH, STATS_MAP_A_PATH};
+ 
++static bool isNoBpf() {
++    const char* v = getenv("IRIS_NETD_NO_BPF");
++    if (v && strcmp(v, "1") == 0) return true;
++    v = getenv("IRIS_GUEST_NO_BPF");
++    return v && strcmp(v, "1") == 0;
++}
++
+ int bpfGetUidStatsInternal(uid_t uid, Stats* stats,
+                            const BpfMap<uint32_t, StatsValue>& appUidStatsMap) {
+     auto statsEntry = appUidStatsMap.readValue(uid);
+@@ -58,6 +66,10 @@ int bpfGetUidStatsInternal(uid_t uid, Stats* stats,
+ }
+ 
+ int bpfGetUidStats(uid_t uid, Stats* stats) {
++    if (isNoBpf()) {
++        if (stats) memset(stats, 0, sizeof(*stats));
++        return 0;
++    }
+     BpfMapRO<uint32_t, StatsValue> appUidStatsMap(APP_UID_STATS_MAP_PATH);
+ 
+     if (!appUidStatsMap.isValid()) {
+@@ -100,6 +112,10 @@ int bpfGetIfaceStatsInternal(const char* iface, Stats* stats,
+ }
+ 
+ int bpfGetIfaceStats(const char* iface, Stats* stats) {
++    if (isNoBpf()) {
++        if (stats) memset(stats, 0, sizeof(*stats));
++        return 0;
++    }
+     BpfMapRO<uint32_t, StatsValue> ifaceStatsMap(IFACE_STATS_MAP_PATH);
+     int ret;
+     if (!ifaceStatsMap.isValid()) {
+@@ -186,6 +202,9 @@ int parseBpfNetworkStatsDetailInternal(std::vector<stats_line>* lines,
+ int parseBpfNetworkStatsDetail(std::vector<stats_line>* lines,
+                                const std::vector<std::string>& limitIfaces, int limitTag,
+                                int limitUid) {
++    if (isNoBpf()) {
++        return 0;
++    }
+     BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
+     if (!ifaceIndexNameMap.isValid()) {
+         int ret = -errno;
+@@ -262,6 +281,9 @@ int parseBpfNetworkStatsDevInternal(std::vector<stats_line>* lines,
+ }
+ 
+ int parseBpfNetworkStatsDev(std::vector<stats_line>* lines) {
++    if (isNoBpf()) {
++        return 0;
++    }
+     int ret = 0;
+     BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
+     if (!ifaceIndexNameMap.isValid()) {
+diff --git a/server/BandwidthController.cpp b/server/BandwidthController.cpp
+index 1b46234..d5f1904 100644
+--- a/server/BandwidthController.cpp
++++ b/server/BandwidthController.cpp
+@@ -207,6 +207,10 @@ static const uint32_t uidBillingMask = Fwmark::getUidBillingMask();
+  */
+ 
+ std::vector<std::string> getBasicAccountingCommands() {
++    const char* v1 = getenv("IRIS_NETD_NO_BPF");
++    const char* v2 = getenv("IRIS_GUEST_NO_BPF");
++    const bool noBpf = (v1 && strcmp(v1, "1") == 0) || (v2 && strcmp(v2, "1") == 0);
++
+     // clang-format off
+     std::vector<std::string> ipt_basic_accounting_commands = {
+             "*filter",
+@@ -219,11 +223,11 @@ std::vector<std::string> getBasicAccountingCommands() {
+             StringPrintf("-A bw_INPUT -j MARK --or-mark 0x%x", uidBillingMask),
+             "-A bw_OUTPUT -j bw_global_alert",
+             "-A bw_costly_shared -j bw_penalty_box",
+-            ("-I bw_penalty_box -m bpf --object-pinned " XT_BPF_DENYLIST_PROG_PATH " -j REJECT"),
++            (noBpf ? "" : "-I bw_penalty_box -m bpf --object-pinned " XT_BPF_DENYLIST_PROG_PATH " -j REJECT"),
+             "-A bw_penalty_box -j bw_happy_box",
+             "-A bw_happy_box -j bw_data_saver",
+             "-A bw_data_saver -j RETURN",
+-            ("-I bw_happy_box -m bpf --object-pinned " XT_BPF_ALLOWLIST_PROG_PATH " -j RETURN"),
++            (noBpf ? "" : "-I bw_happy_box -m bpf --object-pinned " XT_BPF_ALLOWLIST_PROG_PATH " -j RETURN"),
+             "COMMIT",
+ 
+             "*raw",
+@@ -242,7 +246,7 @@ std::vector<std::string> getBasicAccountingCommands() {
+             //
+             // Hence we will never double count and additional corrections are not needed.
+             // We can simply take the sum of base and stacked (+20B/pkt) interface counts.
+-            ("-A bw_raw_PREROUTING -m bpf --object-pinned " XT_BPF_INGRESS_PROG_PATH),
++            (noBpf ? "" : "-A bw_raw_PREROUTING -m bpf --object-pinned " XT_BPF_INGRESS_PROG_PATH),
+             "COMMIT",
+ 
+             "*mangle",
+@@ -258,9 +262,14 @@ std::vector<std::string> getBasicAccountingCommands() {
+             // This is egress interface accounting: we account 464xlat traffic only on
+             // the clat interface (as offloaded packets never hit base interface's ip6tables)
+             // and later sum base and stacked with overhead (+20B/pkt) in higher layers
+-            ("-A bw_mangle_POSTROUTING -m bpf --object-pinned " XT_BPF_EGRESS_PROG_PATH),
++            (noBpf ? "" : "-A bw_mangle_POSTROUTING -m bpf --object-pinned " XT_BPF_EGRESS_PROG_PATH),
+             COMMIT_AND_CLOSE};
+     // clang-format on
++    if (noBpf) {
++        ipt_basic_accounting_commands.erase(
++                std::remove(ipt_basic_accounting_commands.begin(), ipt_basic_accounting_commands.end(), ""),
++                ipt_basic_accounting_commands.end());
++    }
+     return ipt_basic_accounting_commands;
+ }
+ 
+diff --git a/server/FirewallController.cpp b/server/FirewallController.cpp
+index 35fd1e2..5cdffc6 100644
+--- a/server/FirewallController.cpp
++++ b/server/FirewallController.cpp
+@@ -93,7 +93,9 @@ int FirewallController::setupIptablesHooks(void) {
+     int res = flushRules();
+ 
+     // mUseBpfOwnerMatch should be removed, but it is still depended upon by test code.
+-    mUseBpfOwnerMatch = true;
++    const char* v1 = getenv("IRIS_NETD_NO_BPF");
++    const char* v2 = getenv("IRIS_GUEST_NO_BPF");
++    mUseBpfOwnerMatch = !((v1 && strcmp(v1, "1") == 0) || (v2 && strcmp(v2, "1") == 0));
+     if (mUseBpfOwnerMatch) {
+         return res;
+     }
+diff --git a/server/TrafficController.cpp b/server/TrafficController.cpp
+index 1f678cb..7a01809 100644
+--- a/server/TrafficController.cpp
++++ b/server/TrafficController.cpp
+@@ -74,6 +74,14 @@ using netdutils::status::ok;
+ 
+ constexpr int kSockDiagMsgType = SOCK_DIAG_BY_FAMILY;
+ constexpr int kSockDiagDoneMsgType = NLMSG_DONE;
++
++static bool isNoBpf() {
++    const char* v = getenv("IRIS_NETD_NO_BPF");
++    if (v && strcmp(v, "1") == 0) return true;
++    v = getenv("IRIS_GUEST_NO_BPF");
++    return v && strcmp(v, "1") == 0;
++}
++
+ constexpr int PER_UID_STATS_ENTRIES_LIMIT = 500;
+ // At most 90% of the stats map may be used by tagged traffic entries. This ensures
+ // that 10% of the map is always available to count untagged traffic, one entry per UID.
+@@ -180,6 +188,11 @@ TrafficController::TrafficController(uint32_t perUidLimit, uint32_t totalLimit)
+ Status TrafficController::initMaps() {
+     std::lock_guard guard(mMutex);
+ 
++    if (isNoBpf()) {
++        RETURN_IF_NOT_OK(mUidPermissionMap.init(UID_PERMISSION_MAP_PATH));
++        return netdutils::status::ok;
++    }
++
+     RETURN_IF_NOT_OK(mCookieTagMap.init(COOKIE_TAG_MAP_PATH));
+     RETURN_IF_NOT_OK(mUidCounterSetMap.init(UID_COUNTERSET_MAP_PATH));
+     RETURN_IF_NOT_OK(mAppUidStatsMap.init(APP_UID_STATS_MAP_PATH));
+@@ -258,6 +271,11 @@ Status TrafficController::start() {
+ 
+     RETURN_IF_NOT_OK(initMaps());
+ 
++    if (isNoBpf()) {
++        ALOGI("TrafficController: started in no-bpf mode (only mUidPermissionMap)");
++        return netdutils::status::ok;
++    }
++
+     RETURN_IF_NOT_OK(initPrograms());
+ 
+     // Fetch the list of currently-existing interfaces. At this point NetlinkHandler is
+@@ -306,6 +324,7 @@ Status TrafficController::start() {
+ }
+ 
+ int TrafficController::tagSocket(int sockFd, uint32_t tag, uid_t uid, uid_t callingUid) {
++    if (isNoBpf()) return 0;
+     std::lock_guard guard(mMutex);
+     if (uid != callingUid && !hasUpdateDeviceStatsPermission(callingUid)) {
+         return -EPERM;
+@@ -373,6 +392,7 @@ int TrafficController::tagSocket(int sockFd, uint32_t tag, uid_t uid, uid_t call
+ }
+ 
+ int TrafficController::untagSocket(int sockFd) {
++    if (isNoBpf()) return 0;
+     std::lock_guard guard(mMutex);
+     uint64_t sock_cookie = getSocketCookie(sockFd);
+ 
+@@ -386,6 +406,7 @@ int TrafficController::untagSocket(int sockFd) {
+ }
+ 
+ int TrafficController::setCounterSet(int counterSetNum, uid_t uid, uid_t callingUid) {
++    if (isNoBpf()) return 0;
+     if (counterSetNum < 0 || counterSetNum >= OVERFLOW_COUNTERSET) return -EINVAL;
+ 
+     std::lock_guard guard(mMutex);
+@@ -416,6 +437,7 @@ int TrafficController::setCounterSet(int counterSetNum, uid_t uid, uid_t calling
+ // is called inside removeUidsLocked() while holding mStatsLock. So it is safe
+ // to iterate and modify the stats maps.
+ int TrafficController::deleteTagData(uint32_t tag, uid_t uid, uid_t callingUid) {
++    if (isNoBpf()) return 0;
+     std::lock_guard guard(mMutex);
+     if (!hasUpdateDeviceStatsPermission(callingUid)) return -EPERM;
+ 
+@@ -485,6 +507,9 @@ int TrafficController::addInterface(const char* name, uint32_t ifaceIndex) {
+         return -1;
+     }
+ 
++    if (isNoBpf()) {
++        return 0;
++    }
+     strlcpy(iface.name, name, sizeof(IfaceValue));
+     Status res = mIfaceIndexNameMap.writeValue(ifaceIndex, iface, BPF_ANY);
+     if (!isOk(res)) {
+@@ -496,6 +521,7 @@ int TrafficController::addInterface(const char* name, uint32_t ifaceIndex) {
+ 
+ Status TrafficController::updateOwnerMapEntry(UidOwnerMatchType match, uid_t uid, FirewallRule rule,
+                                               FirewallType type) {
++    if (isNoBpf()) return netdutils::status::ok;
+     std::lock_guard guard(mMutex);
+     if ((rule == ALLOW && type == ALLOWLIST) || (rule == DENY && type == DENYLIST)) {
+         RETURN_IF_NOT_OK(addRule(uid, match));
+@@ -553,6 +579,7 @@ Status TrafficController::addRule(uint32_t uid, UidOwnerMatchType match, uint32_
+ Status TrafficController::updateUidOwnerMap(const std::vector<uint32_t>& appUids,
+                                             UidOwnerMatchType matchType,
+                                             BandwidthController::IptOp op) {
++    if (isNoBpf()) return netdutils::status::ok;
+     std::lock_guard guard(mMutex);
+     for (uint32_t uid : appUids) {
+         if (op == BandwidthController::IptOpDelete) {
+@@ -569,6 +596,7 @@ Status TrafficController::updateUidOwnerMap(const std::vector<uint32_t>& appUids
+ 
+ int TrafficController::changeUidOwnerRule(ChildChain chain, uid_t uid, FirewallRule rule,
+                                           FirewallType type) {
++    if (isNoBpf()) return 0;
+     Status res;
+     switch (chain) {
+         case DOZABLE:
+@@ -624,6 +652,9 @@ Status TrafficController::addUidInterfaceRules(const int iif,
+     if (!iif) {
+         return statusFromErrno(EINVAL, "Interface rule must specify interface");
+     }
++    if (isNoBpf()) {
++        return netdutils::status::ok;
++    }
+     std::lock_guard guard(mMutex);
+ 
+     for (auto uid : uidsToAdd) {
+@@ -636,6 +667,7 @@ Status TrafficController::addUidInterfaceRules(const int iif,
+ }
+ 
+ Status TrafficController::removeUidInterfaceRules(const std::vector<int32_t>& uidsToDelete) {
++    if (isNoBpf()) return netdutils::status::ok;
+     std::lock_guard guard(mMutex);
+ 
+     for (auto uid : uidsToDelete) {
+@@ -649,6 +681,7 @@ Status TrafficController::removeUidInterfaceRules(const std::vector<int32_t>& ui
+ 
+ int TrafficController::replaceUidOwnerMap(const std::string& name, bool isAllowlist __unused,
+                                           const std::vector<int32_t>& uids) {
++    if (isNoBpf()) return 0;
+     // FirewallRule rule = isAllowlist ? ALLOW : DENY;
+     // FirewallType type = isAllowlist ? ALLOWLIST : DENYLIST;
+     Status res;
+@@ -672,6 +705,7 @@ int TrafficController::replaceUidOwnerMap(const std::string& name, bool isAllowl
+ }
+ 
+ int TrafficController::toggleUidOwnerMap(ChildChain chain, bool enable) {
++    if (isNoBpf()) return 0;
+     std::lock_guard guard(mMutex);
+     uint32_t key = UID_RULES_CONFIGURATION_KEY;
+     auto oldConfiguration = mConfigurationMap.readValue(key);
+@@ -709,6 +743,7 @@ int TrafficController::toggleUidOwnerMap(ChildChain chain, bool enable) {
+ }
+ 
+ Status TrafficController::swapActiveStatsMap() {
++    if (isNoBpf()) return netdutils::status::ok;
+     std::lock_guard guard(mMutex);
+ 
+     uint32_t key = CURRENT_STATS_MAP_CONFIGURATION_KEY;
+@@ -823,6 +858,11 @@ void TrafficController::dump(DumpWriter& dw, bool verbose) {
+     std::lock_guard guard(mMutex);
+     ScopedIndent indentTop(dw);
+     dw.println("TrafficController");
++    if (isNoBpf()) {
++        dw.println("no-bpf mode active (skipping stats/owner maps)");
++        dumpBpfMap("mUidPermissionMap", dw, "");
++        return;
++    }
+ 
+     ScopedIndent indentPreBpfModule(dw);
+ 
+diff --git a/server/main.cpp b/server/main.cpp
+index bc48ac2..1b33b24 100644
+--- a/server/main.cpp
++++ b/server/main.cpp
+@@ -124,8 +124,14 @@ int main() {
+     }
+ 
+     // Make sure BPF programs are loaded before doing anything
+-    android::bpf::waitForProgsLoaded();
+-    gLog.info("BPF programs are loaded");
++    const char* v1 = getenv("IRIS_NETD_NO_BPF");
++    const char* v2 = getenv("IRIS_GUEST_NO_BPF");
++    if ((v1 && strcmp(v1, "1") == 0) || (v2 && strcmp(v2, "1") == 0)) {
++        gLog.info("Skipping BPF wait (no-bpf mode)");
++    } else {
++        android::bpf::waitForProgsLoaded();
++        gLog.info("BPF programs are loaded");
++    }
+ 
+     NetlinkManager *nm = NetlinkManager::Instance();
+     if (nm == nullptr) {

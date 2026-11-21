@@ -5,6 +5,9 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -94,7 +97,7 @@ public final class ListActivity extends Activity {
     private String connectionError = "";
 
     /** 分页控制与统计变量 */
-    private TextView pageText;
+    private TextView pageText, hostTelemetryText;
     private volatile int page;
     private int count;
     private boolean creating;
@@ -126,8 +129,10 @@ public final class ListActivity extends Activity {
     private String exportingLog = "";
     private static final int EXPORT_LOG = 41;
 
-    /** 从 Broker 动态加载的分辨率预设列表 */
+    /** 从 Broker 动态加载的分辨率预设列表、默认 ROM Google 支持模式与宿主机实时网络状态 */
     private JSONArray resolutionPresets = new JSONArray();
+    private String defaultRomGoogleMode = "optional";
+    private volatile JSONObject hostNetwork = new JSONObject();
 
     @Override
     public void onCreate(Bundle state) {
@@ -216,10 +221,10 @@ public final class ListActivity extends Activity {
         reconnect.setOnClickListener(v -> { rootAttempted = false; connectManager(); });
         heading.addView(reconnect);
         Button language=new Button(this);language.setText("EN / 中文");language.setOnClickListener(v->I18n.choose(this));heading.addView(language);
-        Button swap=new Button(this);swap.setText(I18n.known("交换空间"));swap.setOnClickListener(v->startActivity(new Intent(this,HostSwapActivity.class)));heading.addView(swap);
+        Button swap=new Button(this);swap.setText(I18n.known("交换空间"));swap.setOnClickListener(v->{startActivity(new Intent(this,HostSwapActivity.class).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION));overridePendingTransition(0,0);});heading.addView(swap);
         Button roms = new Button(this);
         roms.setText(I18n.s(R.string.ui_624266d31bd4));
-        roms.setOnClickListener(v -> startActivity(new Intent(this, SetupActivity.class)));
+        roms.setOnClickListener(v -> { startActivity(new Intent(this, SetupActivity.class).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)); overridePendingTransition(0, 0); });
         heading.addView(roms);
         add = new Button(this);
         add.setText(I18n.s(R.string.ui_4b95f6df9752));
@@ -229,11 +234,18 @@ public final class ListActivity extends Activity {
         heading.addView(add);
         root.addView(heading);
 
-        // 顶部全局状态通告栏
+        // 顶部全局状态通告栏与宿主机 Linux/硬件状态条
         notice = text(I18n.s(R.string.ui_9f4a28e615cf), 13);
         notice.setMaxLines(1);
         notice.setEllipsize(TextUtils.TruncateAt.END);
         root.addView(notice);
+
+        hostTelemetryText = text("", 11);
+        hostTelemetryText.setTextColor(Color.rgb(168, 212, 240));
+        hostTelemetryText.setMaxLines(1);
+        hostTelemetryText.setEllipsize(TextUtils.TruncateAt.END);
+        hostTelemetryText.setVisibility(View.GONE);
+        root.addView(hostTelemetryText);
 
         // 中间主卡片区（横向排布）
         cards = new LinearLayout(this);
@@ -351,8 +363,8 @@ public final class ListActivity extends Activity {
         logReader = null;
         for (HttpURLConnection c : connections) c.disconnect();
         connections.clear();
-        // 页面暂停离开时清除预览缓存，避免下次回到页面在等待认证响应时误展示上一轮的残留画面
-        for (Panel p : panels) if (p != null) { p.previewAllowed = false; p.clearImage(); }
+        // 暂停时仅停止抓图拉取并保留同会话最后一帧缩略图，避免切进/返回全屏时闪烁或露出日志；若会话变更则由 update() 清理。
+        for (Panel p : panels) if (p != null) { p.previewAllowed = false; if (brokerToken.isEmpty()) p.clearImage(); }
     }
 
     /**
@@ -365,6 +377,8 @@ public final class ListActivity extends Activity {
         try {
             JSONObject response = new JSONObject(new String(request("GET", "/state?offset=" + (page * 2) + "&limit=2", 200, epoch), "UTF-8"));
             JSONArray states = response.getJSONArray("instances"), presets = response.optJSONArray("resolutionPresets");
+            JSONObject hostNet = response.optJSONObject("hostNetwork");
+            JSONObject hostTel = response.optJSONObject("hostTelemetry");
             ui.post(() -> {
                 if (epoch != generation || !resumed) return;
                 connectionFailures = 0;
@@ -372,6 +386,13 @@ public final class ListActivity extends Activity {
                 rootAttempted = false;
                 reconnect.setVisibility(View.GONE);
                 resolutionPresets = presets == null ? new JSONArray() : presets;
+                defaultRomGoogleMode = response.optString("defaultRomGoogleMode", "optional");
+                if (hostNet != null) hostNetwork = hostNet;
+                if (hostTel != null) {
+                    String telSummary = TelemetryUi.hostBarText(hostTel);
+                    hostTelemetryText.setText(telSummary);
+                    hostTelemetryText.setVisibility(telSummary.isEmpty() ? View.GONE : View.VISIBLE);
+                }
                 count = response.optInt("count", 0);
                 int actualPage = response.optInt("offset", 0) / 2;
                 int created = response.optInt("lastCreatedId", 0);
@@ -411,6 +432,7 @@ public final class ListActivity extends Activity {
             ui.post(() -> {
                 if (epoch == generation && resumed) {
                     add.setEnabled(false);
+                    hostTelemetryText.setVisibility(View.GONE);
                     reconnect.setVisibility(View.VISIBLE);
                     for (Panel p : panels) p.clear(I18n.s(R.string.ui_f2f3e9803ccb));
                     // 连续 3 次连接失败且尚未触发过提权时，自动触发一次重新连接
@@ -551,7 +573,7 @@ public final class ListActivity extends Activity {
                 final int response = code;
                 ui.post(() -> {
                     if (current(epoch, panel, session)) {
-                        if (response != 202) panel.clearImage();
+                        if (response != 202 && response != 409) panel.clearImage();
                         panel.previewMessage = response == 202 ? I18n.s(R.string.ui_e29e654d3987) : response == 409 ? I18n.s(R.string.ui_4bd5dfa2f736) : I18n.s(R.string.ui_1316079be06d);
                         panel.renderPreview();
                     }
@@ -603,8 +625,8 @@ public final class ListActivity extends Activity {
         } catch (Exception failure) {
             ui.post(() -> {
                 if (current(epoch, panel, session)) {
-                    panel.clearImage();
-                    panel.previewMessage = I18n.s(R.string.ui_2b1557f6ad3d);
+                    if (!panel.running || !panel.ready) panel.clearImage();
+                    panel.previewMessage = (panel.openingScreen || panel.displayingScreen) ? I18n.s(R.string.ui_4bd5dfa2f736) : I18n.s(R.string.ui_2b1557f6ad3d);
                     panel.renderPreview();
                 }
             });
@@ -650,6 +672,12 @@ public final class ListActivity extends Activity {
         if (!type.equals("start") && !validSession(session)) return;
         panel.disable();
         panel.previewAllowed = false;
+        if (type.equals("open")) {
+            panel.openingScreen = true;
+            panel.openGraceUntil = SystemClock.elapsedRealtime() + 2500;
+            panel.previewMessage = I18n.s(R.string.ui_4bd5dfa2f736);
+            panel.renderPreview();
+        }
         if (type.equals("start") || type.equals("stop")) panel.clearImage();
         notice.setText(type.equals("open") ? I18n.s(R.string.ui_300d18c126af) : I18n.s(R.string.ui_f82e3b292bba));
         try {
@@ -663,7 +691,14 @@ public final class ListActivity extends Activity {
                     });
                 } catch (Exception error) {
                     ui.post(() -> {
-                        if (epoch == generation && resumed) notice.setText(I18n.s(R.string.ui_b96f65eefc0b));
+                        if (epoch == generation && resumed) {
+                            if (type.equals("open")) {
+                                panel.openingScreen = false;
+                                panel.openGraceUntil = 0;
+                                panel.renderPreview();
+                            }
+                            notice.setText(I18n.s(R.string.ui_b96f65eefc0b));
+                        }
                     });
                 }
             });
@@ -714,11 +749,21 @@ public final class ListActivity extends Activity {
         LinearLayout content = column();
         content.setPadding(dp(20), dp(8), dp(20), dp(8));
         TextView help = new TextView(this);
-        help.setText(I18n.s(R.string.ui_83ff48e09334));
+        help.setText(I18n.s(R.string.ui_847ed9179f56));
         help.setTextSize(15);
         content.addView(help);
         CheckBox google = new CheckBox(this);
-        google.setText(I18n.s(R.string.ui_a655ea55c447));
+        if ("builtin".equals(defaultRomGoogleMode)) {
+            google.setText(I18n.s(R.string.ui_75d88b88c190));
+            google.setChecked(true);
+            google.setEnabled(false);
+        } else if ("none".equals(defaultRomGoogleMode)) {
+            google.setText(I18n.s(R.string.ui_a6be439cb8af));
+            google.setChecked(false);
+            google.setEnabled(false);
+        } else {
+            google.setText(I18n.s(R.string.ui_a655ea55c447));
+        }
         content.addView(google);
         CheckBox rootChoice = new CheckBox(this);
         rootChoice.setText(I18n.s(R.string.ui_7ae34f47b8bb));
@@ -885,12 +930,398 @@ public final class ListActivity extends Activity {
     private void files(Panel panel) {
         if (!panel.ready || !validSession(panel.session)) return;
         Intent intent = new Intent(this, FileActivity.class);
-        intent.putExtra("instanceId", panel.id)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+            .putExtra("instanceId", panel.id)
             .putExtra("instanceNumber", panel.number)
             .putExtra("session", panel.session)
             .putExtra("brokerToken", brokerToken)
             .putExtra("brokerPort", 19762);
         startActivity(intent);
+        overridePendingTransition(0, 0);
+    }
+
+    /** 枚举宿主或指定运行中实例已安装第三方应用并直接迁入目标实例（支持 Split APKs、OBB、Android/data 与私有数据） */
+    private void importHostApp(Panel panel) {
+        if (!panel.ready || !validSession(panel.session)) return;
+        final int epoch = generation, id = panel.id, number = panel.number;
+        final String session = panel.session;
+        final AlertDialog loading = new AlertDialog.Builder(this)
+            .setTitle(InstanceNames.title(number) + I18n.s(R.string.ui_e4855d59ac50))
+            .setMessage(I18n.s(R.string.ui_8c5e2a1bcdac))
+            .setCancelable(true)
+            .show();
+
+        try {
+            actions.execute(() -> {
+                try {
+                    JSONObject st = new JSONObject(new String(request("GET", "/state?offset=0&limit=128", 200, epoch, 8000, 524288), "UTF-8"));
+                    JSONArray instances = st.optJSONArray("instances");
+                    final ArrayList<String> srcValues = new ArrayList<>();
+                    final ArrayList<String> srcLabels = new ArrayList<>();
+                    srcValues.add("host");
+                    srcLabels.add(I18n.s(R.string.ui_65bc12869c9f));
+                    if (instances != null) {
+                        for (int i = 0; i < instances.length(); i++) {
+                            JSONObject inst = instances.optJSONObject(i);
+                            if (inst == null) continue;
+                            int oid = inst.optInt("id", 0);
+                            if (oid == 0 || oid == id) continue;
+                            if (!inst.optBoolean("running") || !inst.optBoolean("ready")) continue;
+                            int onum = inst.optInt("number", 0);
+                            String title = onum > 0 ? InstanceNames.title(onum) : ("ID " + oid);
+                            srcValues.add("instance:" + oid);
+                            srcLabels.add(String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_bec9f0deb38a), title));
+                        }
+                    }
+
+                    ui.post(() -> {
+                        if (loading.isShowing()) loading.dismiss();
+                        if (epoch != generation || !resumed || !validSession(panel.session)) return;
+                        if (srcValues.size() == 1) {
+                            loadAppsFromSource(panel, id, number, session, "host", srcLabels.get(0), epoch);
+                            return;
+                        }
+                        final int[] chosen = {0};
+                        new AlertDialog.Builder(this)
+                            .setTitle(InstanceNames.title(number) + I18n.s(R.string.ui_e4855d59ac50) + " · " + I18n.s(R.string.ui_f63db871a067))
+                            .setSingleChoiceItems(srcLabels.toArray(new String[0]), 0, (d, which) -> chosen[0] = which)
+                            .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787), null)
+                            .setPositiveButton(I18n.s(R.string.ui_6c14bd7f6f9e), (d, w) -> {
+                                int idx = chosen[0];
+                                loadAppsFromSource(panel, id, number, session, srcValues.get(idx), srcLabels.get(idx), epoch);
+                            })
+                            .show();
+                    });
+                } catch (Exception e) {
+                    ui.post(() -> {
+                        if (loading.isShowing()) loading.dismiss();
+                        if (epoch == generation && resumed) notice.setText(I18n.s(R.string.ui_cfbc5107c8bf));
+                    });
+                }
+            });
+        } catch (Exception busy) {
+            if (loading.isShowing()) loading.dismiss();
+            notice.setText(I18n.s(R.string.ui_4a5b3e65561d));
+        }
+    }
+
+    private void loadAppsFromSource(Panel panel, int id, int number, String session, String source, String sourceLabel, int epoch) {
+        final AlertDialog loading = new AlertDialog.Builder(this)
+            .setTitle(InstanceNames.title(number) + I18n.s(R.string.ui_e4855d59ac50))
+            .setMessage(I18n.s(R.string.ui_8c5e2a1bcdac))
+            .setCancelable(true)
+            .show();
+
+        try {
+            actions.execute(() -> {
+                try {
+                    String listPath = "/apps/list?source=" + URLEncoder.encode(source, "UTF-8");
+                    JSONObject resp = new JSONObject(new String(request("GET", listPath, 200, epoch, 30000, 1048576), "UTF-8"));
+                    JSONArray raw = resp.optJSONArray("apps");
+                    PackageManager pm = getPackageManager();
+                    final ArrayList<JSONObject> items = new ArrayList<>();
+                    if (raw != null) {
+                        for (int n = 0; n < raw.length(); n++) {
+                            JSONObject entry = raw.optJSONObject(n);
+                            if (entry == null) continue;
+                            String pkg = entry.optString("pkg", "");
+                            if (pkg.isEmpty()) continue;
+                            String appLabel = pkg;
+                            try {
+                                ApplicationInfo ai = pm.getApplicationInfo(pkg, 0);
+                                CharSequence cs = pm.getApplicationLabel(ai);
+                                if (cs != null && cs.length() > 0) appLabel = cs.toString();
+                            } catch (Exception ignored) {}
+                            entry.put("label", appLabel);
+                            items.add(entry);
+                        }
+                    }
+                    java.util.Collections.sort(items, (a, b) -> {
+                        long tb = b.optLong("totalBytes", 0), ta = a.optLong("totalBytes", 0);
+                        int cmp = a.optString("label").compareToIgnoreCase(b.optString("label"));
+                        return "host".equals(source) ? cmp : (tb != ta ? Long.compare(tb, ta) : cmp);
+                    });
+
+                    ui.post(() -> {
+                        if (loading.isShowing()) loading.dismiss();
+                        if (epoch != generation || !resumed || !validSession(panel.session)) return;
+                        if (items.isEmpty()) {
+                            new AlertDialog.Builder(this)
+                                .setTitle(InstanceNames.title(number) + I18n.s(R.string.ui_e4855d59ac50))
+                                .setMessage(I18n.s(R.string.ui_b3bec5fd233e))
+                                .setPositiveButton(I18n.s(R.string.ui_6c14bd7f6f9e), null)
+                                .show();
+                            return;
+                        }
+
+                        LinearLayout content = column();
+                        content.setPadding(dp(18), dp(8), dp(18), dp(8));
+                        TextView help = new TextView(this);
+                        help.setTextSize(14);
+                        help.setText(sourceLabel + "\n" + I18n.s(R.string.ui_f45b850c64cc));
+                        content.addView(help);
+
+                        CheckBox obbCheck = new CheckBox(this);
+                        obbCheck.setText(I18n.s(R.string.ui_2eb55f49fee8));
+                        obbCheck.setChecked(true);
+                        content.addView(obbCheck);
+
+                        CheckBox extDataCheck = new CheckBox(this);
+                        extDataCheck.setText(I18n.s(R.string.ui_d7e9f3e7c89f));
+                        extDataCheck.setChecked(true);
+                        content.addView(extDataCheck);
+
+                        final CheckBox appDataCheck = new CheckBox(this);
+                        appDataCheck.setText(I18n.s(R.string.ui_43a05689d2d1));
+                        appDataCheck.setChecked(false);
+                        if (!"host".equals(source)) {
+                            appDataCheck.setOnClickListener(v -> {
+                                if (appDataCheck.isChecked()) {
+                                    // 必须先重置为未勾选，并通过文字确认口令才能正式解锁
+                                    appDataCheck.setChecked(false);
+                                    appDataCheck.setTextColor(0xFFE0E0E0);
+                                    promptAppDataRiskUnlock(appDataCheck);
+                                } else {
+                                    appDataCheck.setTextColor(0xFFE0E0E0);
+                                }
+                            });
+                            content.addView(appDataCheck);
+                        }
+
+                        RadioGroup choices = new RadioGroup(this);
+                        final int[] selected = {0};
+                        for (int n = 0; n < items.size(); n++) {
+                            JSONObject entry = items.get(n);
+                            String label = entry.optString("label");
+                            String pkg = entry.optString("pkg");
+                            long apkBytes = entry.optLong("apkBytes", 0);
+                            int splits = entry.optInt("splitCount", 1);
+                            long obbBytes = entry.optLong("obbBytes", 0);
+                            long extBytes = entry.optLong("extDataBytes", 0);
+                            long appBytes = entry.optLong("appDataBytes", 0);
+
+                            String extra = (splits > 1 ? String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_9630b7b37bf7), splits) : "")
+                                + (obbBytes > 0 ? String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_05f5f2434ff0), formatAppSize(obbBytes)) : "")
+                                + (extBytes > 0 ? String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_a0d49c672dbf), formatAppSize(extBytes)) : "")
+                                + (appBytes > 0 ? String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_9c99415ac51a), formatAppSize(appBytes)) : "");
+
+                            boolean highRisk = isHighRiskSocialApp(pkg);
+                            String displayLabel = highRisk ? (label + I18n.s(R.string.ui_dddc64b67449)) : label;
+
+                            RadioButton radio = new RadioButton(this);
+                            radio.setId(View.generateViewId());
+                            radio.setTextSize(14);
+                            radio.setPadding(dp(4), dp(8), dp(4), dp(8));
+                            if (highRisk) radio.setTextColor(0xFFFFB74D);
+                            radio.setText(String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_8fe932fbeb20), displayLabel, pkg, formatAppSize(apkBytes), extra));
+                            choices.addView(radio);
+                            if (n == 0) radio.setChecked(true);
+                            final int idx = n;
+                            radio.setOnClickListener(v -> selected[0] = idx);
+                        }
+                        ScrollView listScroll = new ScrollView(this);
+                        listScroll.addView(choices);
+                        content.addView(listScroll, new LinearLayout.LayoutParams(-1, dp(300)));
+
+                        new AlertDialog.Builder(this)
+                            .setTitle(InstanceNames.title(number) + I18n.s(R.string.ui_e4855d59ac50))
+                            .setView(content)
+                            .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787), null)
+                            .setPositiveButton(I18n.s(R.string.ui_51256e8caae0), (d, w) -> {
+                                JSONObject target = items.get(selected[0]);
+                                String targetPkg = target.optString("pkg");
+                                String targetLabel = target.optString("label");
+                                boolean withObb = obbCheck.isChecked();
+                                boolean withExtData = extDataCheck.isChecked();
+                                boolean withAppData = !"host".equals(source) && appDataCheck.isChecked();
+                                if (isHighRiskSocialApp(targetPkg)) {
+                                    if (withAppData) {
+                                        new AlertDialog.Builder(this)
+                                            .setTitle(I18n.s(R.string.ui_983198675136))
+                                            .setMessage(I18n.s(R.string.ui_90cf6d0198c4))
+                                            .setPositiveButton(I18n.s(R.string.ui_6c14bd7f6f9e), null)
+                                            .show();
+                                        return;
+                                    }
+                                    new AlertDialog.Builder(this)
+                                        .setTitle(I18n.s(R.string.ui_15420a5702e0))
+                                        .setMessage(I18n.s(R.string.ui_6fe9974f4c1c))
+                                        .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787), null)
+                                        .setPositiveButton(I18n.s(R.string.ui_51256e8caae0), (d2, w2) ->
+                                            startHostAppImport(id, number, session, source, targetPkg, targetLabel, withObb, withExtData, false, epoch))
+                                        .show();
+                                    return;
+                                }
+                                startHostAppImport(id, number, session, source, targetPkg, targetLabel, withObb, withExtData, withAppData, epoch);
+                            })
+                            .show();
+                    });
+                } catch (Exception e) {
+                    ui.post(() -> {
+                        if (loading.isShowing()) loading.dismiss();
+                        if (epoch == generation && resumed) notice.setText(I18n.s(R.string.ui_cfbc5107c8bf));
+                    });
+                }
+            });
+        } catch (Exception busy) {
+            if (loading.isShowing()) loading.dismiss();
+            notice.setText(I18n.s(R.string.ui_4a5b3e65561d));
+        }
+    }
+
+    /** 判定高风控即时通讯/社交包（跨设备指纹容器迁移极易触发封控，禁止迁入 /data/data）。 */
+    private static boolean isHighRiskSocialApp(String pkg) {
+        return "com.tencent.mm".equals(pkg)
+            || "com.tencent.mobileqq".equals(pkg)
+            || "com.tencent.tim".equals(pkg)
+            || "com.tencent.wework".equals(pkg)
+            || "com.tencent.qqlite".equals(pkg);
+    }
+
+    /** 弹出高危账号封控警告框，必须手动输入指定确认文字后才解锁 /data/data 迁移勾选。 */
+    private void promptAppDataRiskUnlock(CheckBox appDataCheck) {
+        final String requiredPhrase = I18n.s(R.string.ui_843303cad082);
+        LinearLayout box = column();
+        box.setPadding(dp(20), dp(12), dp(20), dp(8));
+
+        TextView warn = new TextView(this);
+        warn.setTextSize(14);
+        warn.setTextColor(0xFFFF8A80);
+        warn.setText(String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_a77a7e1a6afa), requiredPhrase));
+        box.addView(warn);
+
+        final EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setHint(String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_4449b0306813), requiredPhrase));
+        input.setTextColor(0xFFFFFFFF);
+        input.setHintTextColor(0xFF9E9E9E);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.topMargin = dp(12);
+        box.addView(input, lp);
+
+        new AlertDialog.Builder(this)
+            .setTitle(I18n.s(R.string.ui_cda744734fbe))
+            .setView(box)
+            .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787), null)
+            .setPositiveButton(I18n.s(R.string.ui_c3ad3c4f53a4), (d, w) -> {
+                String entered = input.getText() == null ? "" : input.getText().toString().trim();
+                if (requiredPhrase.equals(entered)) {
+                    appDataCheck.setChecked(true);
+                    appDataCheck.setTextColor(0xFFFFB74D);
+                    Toast.makeText(this, I18n.s(R.string.ui_897fd4797df7), Toast.LENGTH_SHORT).show();
+                } else {
+                    appDataCheck.setChecked(false);
+                    appDataCheck.setTextColor(0xFFE0E0E0);
+                    Toast.makeText(this, I18n.s(R.string.ui_c2f495d6703b), Toast.LENGTH_LONG).show();
+                }
+            })
+            .show();
+    }
+
+    private void startHostAppImport(int id, int number, String session, String source, String pkg, String label,
+            boolean withObb, boolean withExtData, boolean withAppData, int epoch) {
+        LinearLayout content = column();
+        content.setPadding(dp(20), dp(12), dp(20), dp(12));
+        TextView detail = new TextView(this);
+        detail.setTextSize(14);
+        detail.setText(String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_33b107080eaf), label));
+        content.addView(detail);
+        ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        bar.setMax(1000);
+        bar.setIndeterminate(true);
+        content.addView(bar, new LinearLayout.LayoutParams(-1, dp(24)));
+
+        final boolean[] closed = {false};
+        final AlertDialog progressDialog = new AlertDialog.Builder(this)
+            .setTitle(InstanceNames.title(number) + I18n.s(R.string.ui_e4855d59ac50))
+            .setView(content)
+            .setPositiveButton(I18n.s(R.string.ui_6c14bd7f6f9e), (d, w) -> closed[0] = true)
+            .setOnDismissListener(d -> closed[0] = true)
+            .create();
+        progressDialog.show();
+
+        try {
+            actions.execute(() -> {
+                try {
+                    String path = "/apps/import?id=" + id
+                        + "&session=" + URLEncoder.encode(session, "UTF-8")
+                        + "&source=" + URLEncoder.encode(source, "UTF-8")
+                        + "&pkg=" + URLEncoder.encode(pkg, "UTF-8")
+                        + "&obb=" + (withObb ? "1" : "0")
+                        + "&extData=" + (withExtData ? "1" : "0")
+                        + "&appData=" + (withAppData ? "1" : "0");
+                    request("POST", path, 202, epoch, 20000, 65536);
+                    ui.postDelayed(() -> pollHostAppImport(id, session, label, epoch, progressDialog, detail, bar, closed), 600);
+                } catch (Exception e) {
+                    ui.post(() -> {
+                        if (progressDialog.isShowing()) progressDialog.dismiss();
+                        if (epoch == generation && resumed) {
+                            Toast.makeText(this, I18n.s(R.string.ui_f344492a9aff), Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            });
+        } catch (Exception busy) {
+            if (progressDialog.isShowing()) progressDialog.dismiss();
+            notice.setText(I18n.s(R.string.ui_4a5b3e65561d));
+        }
+    }
+
+    private void pollHostAppImport(int id, String session, String label, int epoch,
+            AlertDialog dialog, TextView detail, ProgressBar bar, boolean[] closed) {
+        if (epoch != generation || !resumed) return;
+        try {
+            actions.execute(() -> {
+                try {
+                    String path = "/apps/import/status?id=" + id + "&session=" + URLEncoder.encode(session, "UTF-8");
+                    JSONObject st = new JSONObject(new String(request("GET", path, 200, epoch, 3000, 65536), "UTF-8"));
+                    boolean finished = st.optBoolean("finished");
+                    boolean success = st.optBoolean("success");
+                    long done = st.optLong("doneBytes", 0), total = st.optLong("totalBytes", 0);
+                    String statusDetail = st.optString("detail", "");
+                    String error = st.optString("error", "");
+
+                    ui.post(() -> {
+                        if (epoch != generation || !resumed) return;
+                        if (!closed[0] && dialog.isShowing()) {
+                            if (total > 0) {
+                                bar.setIndeterminate(false);
+                                bar.setProgress((int) Math.min(1000L, done * 1000L / total));
+                                detail.setText(statusDetail + "\n" + formatAppSize(done) + " / " + formatAppSize(total));
+                            } else if (!statusDetail.isEmpty()) {
+                                detail.setText(statusDetail);
+                            }
+                        }
+                        if (finished) {
+                            if (success) {
+                                if (!closed[0] && dialog.isShowing()) dialog.dismiss();
+                                Toast.makeText(this, I18n.s(R.string.ui_09f06e521c97) + label, Toast.LENGTH_LONG).show();
+                            } else {
+                                if (!closed[0] && dialog.isShowing()) {
+                                    bar.setIndeterminate(false);
+                                    bar.setProgress(0);
+                                    detail.setText(I18n.s(R.string.ui_c8446ed45e71) + error);
+                                }
+                                Toast.makeText(this, I18n.s(R.string.ui_c8446ed45e71) + label, Toast.LENGTH_LONG).show();
+                            }
+                        } else {
+                            ui.postDelayed(() -> pollHostAppImport(id, session, label, epoch, dialog, detail, bar, closed), 800);
+                        }
+                    });
+                } catch (Exception e) {
+                    ui.postDelayed(() -> pollHostAppImport(id, session, label, epoch, dialog, detail, bar, closed), 1200);
+                }
+            });
+        } catch (Exception ignored) {
+            ui.postDelayed(() -> pollHostAppImport(id, session, label, epoch, dialog, detail, bar, closed), 1200);
+        }
+    }
+
+    private static String formatAppSize(long bytes) {
+        if (bytes >= 1073741824L) return String.format(java.util.Locale.ROOT, "%.2f GiB", bytes / 1073741824.0);
+        if (bytes >= 1048576L) return String.format(java.util.Locale.ROOT, "%.1f MiB", bytes / 1048576.0);
+        if (bytes >= 1024L) return String.format(java.util.Locale.ROOT, "%.1f KiB", bytes / 1024.0);
+        return bytes + " B";
     }
 
     /** 弹出屏幕分辨率预设选择对话框（单选列表） */
@@ -986,7 +1417,7 @@ public final class ListActivity extends Activity {
         }
     }
 
-    /** 弹出内存上限调节对话框（支持输入 0.5 ~ 2.5 GiB 或一键恢复默认） */
+    /** 弹出内存上限调节对话框（基于板卡与物理内存动态放开上限或恢复默认） */
     private void memory(Panel panel) {
         if (panel.running || !panel.memoryAvailable) return;
         final int epoch = generation, previous = panel.memoryMiB;
@@ -994,7 +1425,7 @@ public final class ListActivity extends Activity {
         content.setPadding(dp(20), dp(8), dp(20), dp(8));
         TextView help = new TextView(this);
         help.setTextSize(15);
-        help.setText(I18n.s(R.string.ui_976a4799e83f));
+        help.setText(String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_db2b25e5c8ee), gib(panel.memoryMinMiB), gib(panel.memoryMaxMiB), gib(panel.memoryDefaultMiB)));
         content.addView(help);
 
         final EditText input = new EditText(this);
@@ -1003,12 +1434,14 @@ public final class ListActivity extends Activity {
         input.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         input.setContentDescription(InstanceNames.description("memory-input", panel.number));
         input.setHint(I18n.s(R.string.ui_01ab180f0a34));
-        input.setText(previous > 0 ? gib(previous) : "1.25");
+        input.setText(previous > 0 ? gib(previous) : gib(panel.memoryDefaultMiB));
         input.selectAll();
         content.addView(input);
 
         TextView units = new TextView(this);
-        units.setText(I18n.s(R.string.ui_1225ee44356f));
+        units.setText(panel.hostTotalMiB > 0
+            ? String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_524499799121), gib(panel.memoryDefaultMiB), gib(panel.hostTotalMiB))
+            : String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_5e5d942c3c54), gib(panel.memoryDefaultMiB)));
         units.setTextSize(13);
         content.addView(units);
 
@@ -1016,7 +1449,7 @@ public final class ListActivity extends Activity {
             .setTitle(InstanceNames.title(panel.number) + I18n.s(R.string.ui_9e92c4cb6d22))
             .setView(content)
             .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787), null)
-            .setNeutralButton(I18n.s(R.string.ui_a191935bc678), (d, w) -> saveMemory(panel, 1280, previous, epoch))
+            .setNeutralButton(I18n.s(R.string.ui_a191935bc678), (d, w) -> saveMemory(panel, panel.memoryDefaultMiB, previous, epoch))
             .setPositiveButton(I18n.s(R.string.ui_fadf24dbc5a9), null)
             .create();
 
@@ -1025,21 +1458,417 @@ public final class ListActivity extends Activity {
             try {
                 if (!value.matches("[0-9]{1,2}(\\.[0-9]{1,3})?")) throw new IllegalArgumentException();
                 BigDecimal amount = new BigDecimal(value);
-                if (amount.compareTo(new BigDecimal("0.5")) < 0 || amount.compareTo(new BigDecimal("2.5")) > 0)
+                if (amount.multiply(new BigDecimal(1024)).compareTo(BigDecimal.valueOf(panel.memoryMinMiB)) < 0 || amount.multiply(new BigDecimal(1024)).compareTo(BigDecimal.valueOf(panel.memoryMaxMiB)) > 0)
                     throw new IllegalArgumentException();
                 if (previous < 0) { input.setError(I18n.s(R.string.ui_bd76d510bf82)); return; }
                 int mib = amount.multiply(BigDecimal.valueOf(1024)).setScale(0, RoundingMode.HALF_UP).intValueExact();
                 saveMemory(panel, mib, previous, epoch);
                 dialog.dismiss();
             } catch (IllegalArgumentException | ArithmeticException invalid) {
-                input.setError(I18n.s(R.string.ui_62553256518f));
+                input.setError(String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_05e8a1e4c5f3), gib(panel.memoryMinMiB), gib(panel.memoryMaxMiB)));
             }
         }));
         dialog.show();
     }
 
-    /** 打开 HTTP 连接并配置 Bearer Token 与超时参数 */
+    /** 校验固定绑定的物理网卡名称（仅允许非虚拟上行接口） */
+    private static boolean validNetIfaceInput(String iface) {
+        return !iface.isEmpty() && iface.length() <= 16 && iface.matches("[a-zA-Z0-9_.-]+") &&
+            !iface.equals("lo") && !iface.startsWith("tun") && !iface.startsWith("tap") &&
+            !iface.startsWith("rv") && !iface.startsWith("veth") && !iface.startsWith("dummy");
+    }
+
+    /** 格式化宿主机实时网络摘要（物理默认路由列表 + VPN 状态） */
+    private String hostNetworkSummary(JSONObject hn) {
+        JSONObject data = hn == null ? hostNetwork : hn;
+        JSONArray list = data.optJSONArray("physicalInterfaces");
+        StringBuilder phys = new StringBuilder();
+        if (list != null) {
+            for (int i = 0; i < list.length(); i++) {
+                String item = list.optString(i, "");
+                if (!item.isEmpty()) {
+                    if (phys.length() > 0) phys.append(", ");
+                    phys.append(item);
+                }
+            }
+        }
+        if (phys.length() == 0) {
+            String primary = data.optString("activePhysical", "");
+            if (!primary.isEmpty()) phys.append(primary);
+        }
+        String physText = phys.length() == 0 ? I18n.s(R.string.ui_df54098aa67d) : phys.toString();
+        String vpnText = data.optBoolean("vpnActive") && !data.optString("vpnInterface", "").isEmpty() ?
+            data.optString("vpnInterface", "tun0") : I18n.s(R.string.ui_b9004e6f7bb1);
+        return String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_d79cc5a8e001), physText, vpnText);
+    }
+
+    private static boolean validIpv4Part(String ip) {
+        if (ip == null || !ip.matches("([0-9]{1,3}\\.){3}[0-9]{1,3}") || ip.equals("0.0.0.0")) return false;
+        for (String part : ip.split("\\.")) {
+            int n = Integer.parseInt(part);
+            if (n < 0 || n > 255 || (part.length() > 1 && part.startsWith("0"))) return false;
+        }
+        return true;
+    }
+
+    private static String normalizeCustomDns(String raw) {
+        if (raw == null) return null;
+        String clean = raw.trim().replaceAll("\\s+", ",");
+        if (clean.isEmpty()) return null;
+        String[] parts = clean.split(",", -1);
+        if (parts.length < 1 || parts.length > 2) return null;
+        for (String p : parts) {
+            if (!validIpv4Part(p)) return null;
+        }
+        return String.join(",", parts);
+    }
+
+    private static String dnsShortLabel(String dns) {
+        if ("domestic".equals(dns)) return I18n.s(R.string.ui_8b294c5f664a);
+        if ("overseas".equals(dns)) return I18n.s(R.string.ui_a00bc7617b9f);
+        if (dns == null || dns.isEmpty() || "auto".equals(dns)) return I18n.s(R.string.ui_4afad877551a);
+        return dns;
+    }
+
+    /** 将实例当前策略与实时生效出口映射为简洁可读的状态文案 */
+    private String networkSummary(Panel panel) {
+        if (!panel.netValid) return I18n.s(R.string.ui_45aa05c62049);
+        String eff = panel.netEffectiveUplink;
+        String base;
+        switch (panel.netMode) {
+            case "fixed_uplink":
+                if (!panel.running) base = String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_ff2859c8b4aa), panel.netIface);
+                else base = eff.isEmpty() || eff.equals("none") ?
+                    String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_601b7110667f), panel.netIface) :
+                    String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_d5470b16ca16), panel.netIface, eff);
+                break;
+            case "host_vpn_tun":
+                if (!panel.running) base = I18n.s(R.string.ui_f40b3e2ce715);
+                else if (eff.startsWith("tun")) base = String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_bc69e7fdc2f7), eff);
+                else base = eff.isEmpty() || eff.equals("none") ?
+                    I18n.s(R.string.ui_1c2ed4a9ce87) :
+                    String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_647a8ff0a426), eff);
+                break;
+            case "host_proxy":
+                if (!panel.running) base = String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_ba1d0107054c), panel.netPort);
+                else base = panel.netProxyApplied ?
+                    String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_2f6e55e7f694), panel.netPort,
+                        eff.isEmpty() ? "none" : eff) :
+                    String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_9f70df99d29c), panel.netPort);
+                break;
+            default:
+                if (!panel.running) base = I18n.s(R.string.ui_d8d6333d8669);
+                else base = eff.isEmpty() || eff.equals("none") ?
+                    I18n.s(R.string.ui_03d48485a934) :
+                    String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_1db6deec58ef), eff);
+                break;
+        }
+        return base + I18n.s(R.string.ui_af7062df2338) + dnsShortLabel(panel.netDns);
+    }
+
+    /** 提交实例网络出口策略到 Broker（停机与运行中均可直接保存并热切换） */
+    private void saveNetwork(Panel panel, String mode, String iface, int port, String vpnFallback, String dns, String expectedSession, int epoch) {
+        if (epoch != generation || !resumed) return;
+        panel.disable();
+        notice.setText(I18n.s(R.string.ui_401596f7c7db));
+        try {
+            actions.execute(() -> {
+                try {
+                    String query = "/action?id=" + panel.id
+                        + "&session=" + URLEncoder.encode(expectedSession, "UTF-8")
+                        + "&type=network"
+                        + "&mode=" + URLEncoder.encode(mode, "UTF-8")
+                        + "&iface=" + URLEncoder.encode(iface, "UTF-8")
+                        + "&port=" + port
+                        + "&vpnFallback=" + URLEncoder.encode(vpnFallback, "UTF-8")
+                        + "&dns=" + URLEncoder.encode(dns, "UTF-8");
+                    request("POST", query, 202, epoch);
+                    ui.post(() -> {
+                        if (epoch == generation && resumed) notice.setText(I18n.s(R.string.ui_f0c3b1b2f683));
+                    });
+                } catch (Exception error) {
+                    ui.post(() -> {
+                        if (epoch == generation && resumed) notice.setText(I18n.s(R.string.ui_30f209548d85));
+                    });
+                }
+            });
+        } catch (Exception busy) {
+            notice.setText(I18n.s(R.string.ui_4a5b3e65561d));
+        }
+    }
+
+    /** 弹出实例网络出口策略设置与诊断对话框 */
+    private void network(Panel panel) {
+        if (!panel.network.isEnabled()) return;
+        final int epoch = generation;
+        final String expectedSession = panel.session;
+
+        ScrollView scroll = new ScrollView(this);
+        LinearLayout content = column();
+        content.setPadding(dp(20), dp(8), dp(20), dp(8));
+
+        final TextView hostInfoText = new TextView(this);
+        hostInfoText.setTextSize(13);
+        hostInfoText.setText(hostNetworkSummary(hostNetwork));
+        content.addView(hostInfoText);
+
+        final TextView currentEgressText = new TextView(this);
+        currentEgressText.setTextSize(13);
+        currentEgressText.setPadding(0, dp(2), 0, dp(8));
+        currentEgressText.setText(String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_c5b9ec8b7e9e),
+            panel.running ? (panel.netEffectiveUplink.isEmpty() ? "none" : panel.netEffectiveUplink) : I18n.s(R.string.ui_7b4c157a1308)));
+        content.addView(currentEgressText);
+
+        final RadioGroup modeGroup = new RadioGroup(this);
+        final RadioButton rbFollow = new RadioButton(this);
+        rbFollow.setId(View.generateViewId());
+        rbFollow.setText(I18n.s(R.string.ui_47850cbbbbb0));
+        rbFollow.setTextSize(14);
+        modeGroup.addView(rbFollow);
+
+        final RadioButton rbVpn = new RadioButton(this);
+        rbVpn.setId(View.generateViewId());
+        rbVpn.setText(I18n.s(R.string.ui_e53905718aa8));
+        rbVpn.setTextSize(14);
+        modeGroup.addView(rbVpn);
+
+        final LinearLayout vpnBox = column();
+        vpnBox.setPadding(dp(28), dp(2), 0, dp(6));
+        final CheckBox vpnFailClosed = new CheckBox(this);
+        vpnFailClosed.setText(I18n.s(R.string.ui_851c082fc074));
+        vpnFailClosed.setTextSize(13);
+        vpnFailClosed.setChecked("fail_closed".equals(panel.netVpnFallback));
+        vpnBox.addView(vpnFailClosed);
+        modeGroup.addView(vpnBox);
+
+        final RadioButton rbProxy = new RadioButton(this);
+        rbProxy.setId(View.generateViewId());
+        rbProxy.setText(I18n.s(R.string.ui_296877a88812));
+        rbProxy.setTextSize(14);
+        modeGroup.addView(rbProxy);
+
+        final LinearLayout proxyBox = column();
+        proxyBox.setPadding(dp(28), dp(2), 0, dp(6));
+        TextView proxyLabel = new TextView(this);
+        proxyLabel.setText(I18n.s(R.string.ui_3e977326f63b));
+        proxyLabel.setTextSize(13);
+        proxyBox.addView(proxyLabel);
+        final EditText portInput = new EditText(this);
+        portInput.setSingleLine(true);
+        portInput.setTextSize(16);
+        portInput.setInputType(InputType.TYPE_CLASS_NUMBER);
+        portInput.setText(Integer.toString(panel.netPort > 0 && panel.netPort <= 65535 ? panel.netPort : 7890));
+        portInput.setContentDescription(InstanceNames.description("network-port", panel.number));
+        proxyBox.addView(portInput);
+        modeGroup.addView(proxyBox);
+
+        final RadioButton rbFixed = new RadioButton(this);
+        rbFixed.setId(View.generateViewId());
+        rbFixed.setText(I18n.s(R.string.ui_cd75e3894213));
+        rbFixed.setTextSize(14);
+        modeGroup.addView(rbFixed);
+
+        final LinearLayout fixedBox = column();
+        fixedBox.setPadding(dp(28), dp(2), 0, dp(6));
+        TextView fixedLabel = new TextView(this);
+        fixedLabel.setText(I18n.s(R.string.ui_1858af82008e));
+        fixedLabel.setTextSize(13);
+        fixedBox.addView(fixedLabel);
+        final EditText ifaceInput = new EditText(this);
+        ifaceInput.setSingleLine(true);
+        ifaceInput.setTextSize(16);
+        ifaceInput.setText(panel.netIface);
+        ifaceInput.setContentDescription(InstanceNames.description("network-iface", panel.number));
+        fixedBox.addView(ifaceInput);
+
+        final LinearLayout ifaceQuickRow = new LinearLayout(this);
+        ifaceQuickRow.setOrientation(LinearLayout.HORIZONTAL);
+        JSONArray knownIfaces = hostNetwork.optJSONArray("physicalInterfaces");
+        if (knownIfaces != null) {
+            for (int i = 0; i < knownIfaces.length(); i++) {
+                final String cand = knownIfaces.optString(i, "");
+                if (!validNetIfaceInput(cand)) continue;
+                Button chip = new Button(this);
+                chip.setText(cand);
+                chip.setTextSize(12);
+                chip.setAllCaps(false);
+                chip.setMinHeight(0);
+                chip.setMinimumHeight(0);
+                chip.setPadding(dp(8), dp(4), dp(8), dp(4));
+                chip.setOnClickListener(v -> ifaceInput.setText(cand));
+                ifaceQuickRow.addView(chip);
+            }
+        }
+        fixedBox.addView(ifaceQuickRow);
+        modeGroup.addView(fixedBox);
+
+        content.addView(modeGroup);
+
+        TextView dnsHeader = new TextView(this);
+        dnsHeader.setTextSize(14);
+        dnsHeader.setPadding(0, dp(10), 0, dp(2));
+        String curDnsShow = panel.running && !panel.netEffectiveDns.isEmpty()
+            ? String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_02cd2bc1522e), panel.netEffectiveDns)
+            : I18n.s(R.string.ui_ef1aebd42c7a);
+        dnsHeader.setText(curDnsShow);
+        content.addView(dnsHeader);
+
+        final RadioGroup dnsGroup = new RadioGroup(this);
+        final RadioButton rbDnsAuto = new RadioButton(this);
+        rbDnsAuto.setId(View.generateViewId());
+        rbDnsAuto.setText(I18n.s(R.string.ui_1da381822229));
+        rbDnsAuto.setTextSize(13);
+        dnsGroup.addView(rbDnsAuto);
+
+        final RadioButton rbDnsDomestic = new RadioButton(this);
+        rbDnsDomestic.setId(View.generateViewId());
+        rbDnsDomestic.setText(I18n.s(R.string.ui_d64103c57e22));
+        rbDnsDomestic.setTextSize(13);
+        dnsGroup.addView(rbDnsDomestic);
+
+        final RadioButton rbDnsOverseas = new RadioButton(this);
+        rbDnsOverseas.setId(View.generateViewId());
+        rbDnsOverseas.setText(I18n.s(R.string.ui_d7691f5a1ba6));
+        rbDnsOverseas.setTextSize(13);
+        dnsGroup.addView(rbDnsOverseas);
+
+        final RadioButton rbDnsCustom = new RadioButton(this);
+        rbDnsCustom.setId(View.generateViewId());
+        rbDnsCustom.setText(I18n.s(R.string.ui_22e3ff6e9a54));
+        rbDnsCustom.setTextSize(13);
+        dnsGroup.addView(rbDnsCustom);
+
+        final LinearLayout dnsCustomBox = column();
+        dnsCustomBox.setPadding(dp(28), dp(2), 0, dp(6));
+        final EditText dnsCustomInput = new EditText(this);
+        dnsCustomInput.setSingleLine(true);
+        dnsCustomInput.setTextSize(15);
+        dnsCustomInput.setHint(I18n.s(R.string.ui_13f4f6afa2bb));
+        boolean isCustomDns = !"auto".equals(panel.netDns) && !"domestic".equals(panel.netDns)
+            && !"overseas".equals(panel.netDns) && !panel.netDns.isEmpty();
+        if (isCustomDns) dnsCustomInput.setText(panel.netDns);
+        dnsCustomBox.addView(dnsCustomInput);
+        dnsGroup.addView(dnsCustomBox);
+        content.addView(dnsGroup);
+
+        final TextView probeResultText = new TextView(this);
+        probeResultText.setTextSize(12);
+        probeResultText.setTypeface(Typeface.MONOSPACE);
+        probeResultText.setPadding(0, dp(8), 0, 0);
+        probeResultText.setVisibility(View.GONE);
+        content.addView(probeResultText);
+
+        Runnable syncSubOptions = () -> {
+            int checked = modeGroup.getCheckedRadioButtonId();
+            vpnBox.setVisibility(checked == rbVpn.getId() ? View.VISIBLE : View.GONE);
+            proxyBox.setVisibility(checked == rbProxy.getId() ? View.VISIBLE : View.GONE);
+            fixedBox.setVisibility(checked == rbFixed.getId() ? View.VISIBLE : View.GONE);
+            dnsCustomBox.setVisibility(dnsGroup.getCheckedRadioButtonId() == rbDnsCustom.getId() ? View.VISIBLE : View.GONE);
+        };
+        modeGroup.setOnCheckedChangeListener((g, checkedId) -> syncSubOptions.run());
+        dnsGroup.setOnCheckedChangeListener((g, checkedId) -> syncSubOptions.run());
+        if ("host_vpn_tun".equals(panel.netMode)) modeGroup.check(rbVpn.getId());
+        else if ("host_proxy".equals(panel.netMode)) modeGroup.check(rbProxy.getId());
+        else if ("fixed_uplink".equals(panel.netMode)) modeGroup.check(rbFixed.getId());
+        else modeGroup.check(rbFollow.getId());
+
+        if ("domestic".equals(panel.netDns)) dnsGroup.check(rbDnsDomestic.getId());
+        else if ("overseas".equals(panel.netDns)) dnsGroup.check(rbDnsOverseas.getId());
+        else if (isCustomDns) dnsGroup.check(rbDnsCustom.getId());
+        else dnsGroup.check(rbDnsAuto.getId());
+        syncSubOptions.run();
+
+        scroll.addView(content);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+            .setTitle(InstanceNames.title(panel.number) + I18n.s(R.string.ui_c681b7343000))
+            .setView(scroll)
+            .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787), null)
+            .setNeutralButton(I18n.s(R.string.ui_eaab5e4ec4c9), null)
+            .setPositiveButton(I18n.s(R.string.ui_fadf24dbc5a9), null)
+            .create();
+
+        dialog.setOnShowListener(d -> {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v -> {
+                probeResultText.setVisibility(View.VISIBLE);
+                probeResultText.setText(I18n.s(R.string.ui_5edba3beff4a));
+                Thread probeThread = new Thread(() -> {
+                    try {
+                        JSONObject resp = new JSONObject(new String(
+                            request("GET", "/network/probe?id=" + panel.id + "&test=1", 200, epoch, 18000), "UTF-8"));
+                        JSONObject hn = resp.optJSONObject("hostNetwork");
+                        String eff = resp.optString("effectiveUplink", "");
+                        String report = resp.optString("report", "");
+                        ui.post(() -> {
+                            if (hn != null) hostNetwork = hn;
+                            if (epoch == generation && resumed && dialog.isShowing()) {
+                                hostInfoText.setText(hostNetworkSummary(hn));
+                                currentEgressText.setText(String.format(java.util.Locale.ROOT, I18n.s(R.string.ui_c5b9ec8b7e9e),
+                                    panel.running ? (eff.isEmpty() ? "none" : eff) : I18n.s(R.string.ui_7b4c157a1308)));
+                                probeResultText.setText(I18n.s(R.string.ui_cfc55190390a) + report);
+                            }
+                        });
+                    } catch (Exception err) {
+                        ui.post(() -> {
+                            if (epoch == generation && resumed && dialog.isShowing()) {
+                                probeResultText.setText(I18n.s(R.string.ui_cd3c4683bb6c));
+                            }
+                        });
+                    }
+                }, "iris-net-probe");
+                probeThread.setDaemon(true);
+                probeThread.start();
+            });
+
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+                int checked = modeGroup.getCheckedRadioButtonId();
+                String mode = checked == rbVpn.getId() ? "host_vpn_tun" :
+                    checked == rbProxy.getId() ? "host_proxy" :
+                    checked == rbFixed.getId() ? "fixed_uplink" : "follow_host_uplink";
+                String iface = mode.equals("fixed_uplink") ? ifaceInput.getText().toString().trim() : "";
+                if (mode.equals("fixed_uplink") && !validNetIfaceInput(iface)) {
+                    ifaceInput.setError(I18n.s(R.string.ui_2cafefc6b8b6));
+                    return;
+                }
+                int port = panel.netPort > 0 && panel.netPort <= 65535 ? panel.netPort : 7890;
+                if (mode.equals("host_proxy")) {
+                    String portStr = portInput.getText().toString().trim();
+                    if (!portStr.matches("[1-9][0-9]{0,4}")) {
+                        portInput.setError(I18n.s(R.string.ui_2cafefc6b8b6));
+                        return;
+                    }
+                    port = Integer.parseInt(portStr);
+                    if (port < 1 || port > 65535) {
+                        portInput.setError(I18n.s(R.string.ui_2cafefc6b8b6));
+                        return;
+                    }
+                }
+                String fallback = vpnFailClosed.isChecked() ? "fail_closed" : "fallback_physical";
+                int dnsChecked = dnsGroup.getCheckedRadioButtonId();
+                String dns = "auto";
+                if (dnsChecked == rbDnsDomestic.getId()) dns = "domestic";
+                else if (dnsChecked == rbDnsOverseas.getId()) dns = "overseas";
+                else if (dnsChecked == rbDnsCustom.getId()) {
+                    dns = normalizeCustomDns(dnsCustomInput.getText().toString());
+                    if (dns == null) {
+                        dnsCustomInput.setError(I18n.s(R.string.ui_61431715c6f5));
+                        return;
+                    }
+                }
+                saveNetwork(panel, mode, iface, port, fallback, dns, expectedSession, epoch);
+                dialog.dismiss();
+            });
+        });
+        dialog.show();
+    }
+
+    /** 打开 HTTP 连接并配置 Bearer Token 与超时参数（默认 2500ms） */
     private HttpURLConnection open(String method, String path, int epoch) throws Exception {
+        return open(method, path, epoch, 2500);
+    }
+
+    /** 打开 HTTP 连接并配置 Bearer Token 与超时参数 */
+    private HttpURLConnection open(String method, String path, int epoch, int readTimeoutMs) throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(base + path).openConnection();
         connections.add(connection);
         // 先登记连接再校验 epoch：pauseNetwork 会遍历强断登记的连接，或此处校验拦截注册过迟的请求
@@ -1049,7 +1878,7 @@ public final class ListActivity extends Activity {
             throw new IOException("Page paused");
         }
         connection.setConnectTimeout(1500);
-        connection.setReadTimeout(2500);
+        connection.setReadTimeout(readTimeoutMs);
         connection.setInstanceFollowRedirects(false);
         connection.setRequestMethod(method);
         connection.setRequestProperty("Authorization", "Bearer " + brokerToken);
@@ -1058,7 +1887,17 @@ public final class ListActivity extends Activity {
 
     /** 发送 HTTP 请求并严格核验预期返回码，读取限制长度的内容 */
     private byte[] request(String method, String path, int expected, int epoch) throws Exception {
-        HttpURLConnection connection = open(method, path, epoch);
+        return request(method, path, expected, epoch, 2500);
+    }
+
+    /** 发送 HTTP 请求并允许指定读取超时（用于容器出网诊断等慢请求） */
+    private byte[] request(String method, String path, int expected, int epoch, int readTimeoutMs) throws Exception {
+        return request(method, path, expected, epoch, readTimeoutMs, 65536);
+    }
+
+    /** 发送 HTTP 请求并允许指定读取超时和最大响应体限制 */
+    private byte[] request(String method, String path, int expected, int epoch, int readTimeoutMs, int maxBytes) throws Exception {
+        HttpURLConnection connection = open(method, path, epoch, readTimeoutMs);
         try {
             if (method.equals("POST")) {
                 connection.setDoOutput(true);
@@ -1066,7 +1905,7 @@ public final class ListActivity extends Activity {
                 connection.getOutputStream().close();
             }
             if (connection.getResponseCode() != expected) throw new IOException("Request rejected");
-            return readBounded(connection, 65536);
+            return readBounded(connection, maxBytes);
         } finally {
             connection.disconnect();
             connections.remove(connection);
@@ -1133,7 +1972,7 @@ public final class ListActivity extends Activity {
         final ImageView image;
         final LinearLayout overlay;
         final ListView logScroll;
-        final Button start, stop, enter, settings, clock, files, logs, resolution, memory, reset, delete, applicationRoot;
+        final Button start, stop, enter, settings, clock, files, importApp, logs, monitor, resolution, memory, network, reset, delete, applicationRoot;
 
         // 日志分页拉取与滑动状态
         volatile String logKey = "";
@@ -1156,14 +1995,27 @@ public final class ListActivity extends Activity {
         // 内存状态
         final TextView memoryText;
         int memoryMiB = 1280;
+        int memoryMinMiB = 512;
+        int memoryMaxMiB = 2560;
+        int memoryDefaultMiB = 1280;
+        int hostTotalMiB = 0;
         boolean memoryAvailable;
+
+        // 网络出口策略与实时状态
+        final TextView networkText, perfText;
+        boolean netValid;
+        String netMode = "follow_host_uplink", netIface = "", netVpnFallback = "fallback_physical",
+            netDns = "auto", netEffectiveDns = "",
+            netEffectiveUplink = "", netEffectiveMode = "";
+        int netPort = 7890;
+        boolean netProxyApplied;
 
         // 运行时状态标志
         volatile String session = "";
         volatile boolean previewAllowed;
-        boolean ready, running, showLogs;
+        boolean ready, running, showLogs, openingScreen, displayingScreen;
         String stage = I18n.s(R.string.ui_09cb521a07d3), bootLog = "", operationError = "", previewMessage = I18n.s(R.string.ui_d9dce1b78d9e);
-        long bootElapsedMs, previewSequence, capturedAt;
+        long bootElapsedMs, previewSequence, capturedAt, openGraceUntil;
         Bitmap bitmap;
 
         Panel(int id, int number) {
@@ -1237,7 +2089,10 @@ public final class ListActivity extends Activity {
             previewInfo.addView(caption, new LinearLayout.LayoutParams(0, -2, 1));
             logs = button(I18n.s(R.string.ui_8ad868abbca6), "logs", () -> { showLogs = !showLogs; renderPreview(); });
             logs.setTextSize(12);
-            previewInfo.addView(logs, new LinearLayout.LayoutParams(dp(88), dp(36)));
+            previewInfo.addView(logs, new LinearLayout.LayoutParams(dp(84), dp(36)));
+            monitor = button(I18n.known("监控"), "monitor", () -> TelemetryUi.showLinuxMonitorDialog(ListActivity.this, brokerToken, id, number, stage));
+            monitor.setTextSize(12);
+            previewInfo.addView(monitor, new LinearLayout.LayoutParams(dp(64), dp(36)));
             root.addView(previewInfo);
 
             // 4. 核心主控制栏（进入全屏、启动、停止）
@@ -1260,6 +2115,15 @@ public final class ListActivity extends Activity {
             root.addView(resolutionText);
             memoryText = text(I18n.s(R.string.ui_a059ca83fc97), 12);
             root.addView(memoryText);
+            networkText = text(I18n.s(R.string.ui_8950be7d6600), 12);
+            networkText.setMaxLines(1);
+            networkText.setEllipsize(TextUtils.TruncateAt.END);
+            root.addView(networkText);
+            perfText = text(I18n.known("性能：实例未运行"), 11);
+            perfText.setTextColor(Color.rgb(156, 220, 176));
+            perfText.setMaxLines(1);
+            perfText.setEllipsize(TextUtils.TruncateAt.END);
+            root.addView(perfText);
 
             // 6. 快捷应用与配置栏（设置、时钟、文件、分辨率、内存）
             LinearLayout apps = new LinearLayout(ListActivity.this);
@@ -1275,12 +2139,21 @@ public final class ListActivity extends Activity {
             apps.addView(memory, new LinearLayout.LayoutParams(0, dp(38), 1));
             root.addView(apps);
 
-            // 7. 高级与数据维护栏（Root、重置数据、删除实例）
+            // 7. 高级与数据维护栏（网络出口、Root、导应用、重置数据、删除实例）
             LinearLayout data = new LinearLayout(ListActivity.this);
+            network = button(I18n.s(R.string.ui_c0164072e48e), "network", () -> network(this));
+            network.setTextSize(13);
+            data.addView(network, new LinearLayout.LayoutParams(0, dp(36), 1));
             applicationRoot = button(I18n.s(R.string.ui_b72827b39c61), "root", () -> applicationRoot(this));
+            applicationRoot.setTextSize(13);
             data.addView(applicationRoot, new LinearLayout.LayoutParams(0, dp(36), 1));
+            importApp = button(I18n.s(R.string.ui_0af9e5facfeb), "import-app", () -> importHostApp(this));
+            importApp.setTextSize(13);
+            data.addView(importApp, new LinearLayout.LayoutParams(0, dp(36), 1));
             reset = button(I18n.s(R.string.ui_b1dd040286c1), "reset", () -> clearData(this, "reset"));
+            reset.setTextSize(13);
             delete = button(I18n.s(R.string.ui_6e73a5ffa5cc), "delete", () -> clearData(this, "delete"));
+            delete.setTextSize(13);
             data.addView(reset, new LinearLayout.LayoutParams(0, dp(36), 1));
             data.addView(delete, new LinearLayout.LayoutParams(0, dp(36), 1));
             root.addView(data);
@@ -1315,8 +2188,9 @@ public final class ListActivity extends Activity {
             running = state.optBoolean("running");
             ready = state.optBoolean("ready");
             String busy = state.optString("busy", "");
-            boolean opening = state.optBoolean("opening") || busy.equals("open");
             boolean displaying = state.optBoolean("displaying");
+            if (displaying) openGraceUntil = 0;
+            boolean opening = state.optBoolean("opening") || busy.equals("open") || (!displaying && SystemClock.elapsedRealtime() < openGraceUntil);
 
             stage = state.optBoolean("cleanupPending") ? I18n.s(R.string.ui_389284dd8300) :
                 I18n.known(state.optString("stage", ready ? I18n.s(R.string.ui_594249700590) : running ? I18n.s(R.string.ui_6017dccf86b2) : I18n.s(R.string.ui_b2ba9634d9cf)));
@@ -1365,12 +2239,37 @@ public final class ListActivity extends Activity {
             JSONObject mem = state.optJSONObject("memory");
             memoryAvailable = mem != null;
             if (mem != null) {
+                memoryMinMiB = mem.optInt("minMiB", 512);
+                memoryMaxMiB = mem.optInt("maxMiB", 2560);
+                memoryDefaultMiB = mem.optInt("defaultMiB", 1280);
+                hostTotalMiB = mem.optInt("hostTotalMiB", 0);
                 memoryMiB = mem.optInt("mib", -1);
                 int effective = mem.optInt("effectiveMiB", 0);
                 memoryText.setText(effective > 0 ? I18n.s(R.string.ui_37a78c8dc0a6) + gib(effective) + " GiB" :
                     memoryMiB > 0 ? I18n.s(R.string.ui_3ea894a932dd) + gib(memoryMiB) + " GiB" : I18n.s(R.string.ui_3204497ae97d));
             }
             memory.setEnabled(!running && free && memoryAvailable);
+
+            JSONObject net = state.optJSONObject("network");
+            if (net != null) {
+                netValid = net.optBoolean("valid");
+                netMode = net.optString("mode", "follow_host_uplink");
+                netIface = net.optString("iface", "");
+                netPort = net.optInt("port", 7890);
+                netVpnFallback = net.optString("vpnFallback", "fallback_physical");
+                netDns = net.optString("dns", "auto");
+                netEffectiveDns = net.optString("effectiveDns", "");
+                netEffectiveUplink = net.optString("effectiveUplink", "");
+                netEffectiveMode = net.optString("effectiveMode", "");
+                netProxyApplied = net.optBoolean("proxyApplied");
+                networkText.setText(networkSummary(this));
+            } else {
+                netValid = false;
+                networkText.setText(I18n.s(R.string.ui_8950be7d6600));
+            }
+            network.setEnabled(net != null && free && !state.optBoolean("cleanupPending"));
+            perfText.setText(TelemetryUi.instanceBriefText(state.optJSONObject("perf")));
+            monitor.setEnabled(!brokerToken.isEmpty());
 
             JSONObject rt = state.optJSONObject("root");
             rootValid = rt != null && rt.optBoolean("valid");
@@ -1383,9 +2282,11 @@ public final class ListActivity extends Activity {
                 rootReady ? I18n.s(R.string.ui_95471e8317e2) : ready ? I18n.s(R.string.ui_edf72b391180) : I18n.s(R.string.ui_cd7761cd9dba));
             applicationRoot.setEnabled(rootValid && free && !state.optBoolean("cleanupPending"));
 
+            openingScreen = opening;
+            displayingScreen = displaying;
             previewAllowed = ready && validSession(session) && !opening && !displaying && !busy.equals("stop");
+            if (!running || !ready) clearImage();
             if (!running || !ready || opening || displaying) {
-                clearImage();
                 previewMessage = opening ? I18n.s(R.string.ui_4bd5dfa2f736) :
                     displaying ? I18n.s(R.string.ui_e1216a93fd24) :
                     running ? I18n.s(R.string.ui_dd920408cf5b) : I18n.s(R.string.ui_d9dce1b78d9e);
@@ -1397,6 +2298,7 @@ public final class ListActivity extends Activity {
             settings.setEnabled(ready && free);
             clock.setEnabled(ready && free);
             files.setEnabled(ready && free && validSession(session));
+            importApp.setEnabled(ready && free && validSession(session));
             image.setEnabled(enter.isEnabled());
 
             renderPreview();
@@ -1421,14 +2323,15 @@ public final class ListActivity extends Activity {
 
         /** 刷新小窗与覆盖层状态（控制日志与画面的层叠显示） */
         void renderPreview() {
-            if (bitmap != null && SystemClock.elapsedRealtime() - capturedAt > 15000) {
+            if (bitmap != null && !openingScreen && !displayingScreen && SystemClock.elapsedRealtime() - capturedAt > 15000) {
                 clearImage();
                 previewMessage = I18n.s(R.string.ui_aa135ad31231);
             }
             boolean picture = bitmap != null;
-            // 停机状态下默认不展示/加载日志历史；用户点击“上次日志”才展示，避免误以为正在点火
-            logVisible = showLogs || running && !picture;
-            overlay.setVisibility(showLogs || !picture ? View.VISIBLE : View.GONE);
+            boolean suppressingLogs = (openingScreen || displayingScreen) && !showLogs;
+            // 停机或正在切换全屏时默认不展示开机日志覆盖层，保留最后一帧缩略图避免弹日志闪屏
+            logVisible = showLogs || (running && !picture && !suppressingLogs);
+            overlay.setVisibility(showLogs || (!picture && !suppressingLogs) ? View.VISIBLE : View.GONE);
 
             boolean rows = logVisible && !logLines.isEmpty();
             logScroll.setVisibility(rows ? View.VISIBLE : View.GONE);
@@ -1448,11 +2351,13 @@ public final class ListActivity extends Activity {
 
             logs.setText(!running ? (showLogs ? I18n.s(R.string.ui_0d8fd3900016) : I18n.s(R.string.ui_984a52c7c7dc)) : showLogs && picture ? I18n.s(R.string.ui_5abb2c0afb2b) : I18n.s(R.string.ui_8ad868abbca6));
             logs.setEnabled(!logKey.isEmpty() || history.length() > 0 || !bootLog.isEmpty() || picture || !operationError.isEmpty());
-            caption.setText(picture ? I18n.s(R.string.ui_c941c5958c8c) + Math.max(0, (SystemClock.elapsedRealtime() - capturedAt) / 1000) + I18n.s(R.string.ui_4a22b12d9909) : previewMessage);
+            caption.setText((openingScreen || displayingScreen) ? previewMessage :
+                (picture ? I18n.s(R.string.ui_c941c5958c8c) + Math.max(0, (SystemClock.elapsedRealtime() - capturedAt) / 1000) + I18n.s(R.string.ui_4a22b12d9909) : previewMessage));
         }
 
         /** 禁用面板上的所有操作按钮（在异步请求发起或等待时调用） */
         void disable() {
+            network.setEnabled(false);
             applicationRoot.setEnabled(false);
             reset.setEnabled(false);
             delete.setEnabled(false);
@@ -1462,8 +2367,10 @@ public final class ListActivity extends Activity {
             settings.setEnabled(false);
             clock.setEnabled(false);
             files.setEnabled(false);
+            importApp.setEnabled(false);
             resolution.setEnabled(false);
             memory.setEnabled(false);
+            monitor.setEnabled(!brokerToken.isEmpty());
             image.setEnabled(false);
         }
 
@@ -1472,7 +2379,15 @@ public final class ListActivity extends Activity {
             session = "";
             ready = false;
             running = false;
+            openingScreen = false;
+            displayingScreen = false;
             memoryAvailable = false;
+            netValid = false;
+            netDns = "auto";
+            netEffectiveDns = "";
+            netEffectiveUplink = "";
+            netEffectiveMode = "";
+            netProxyApplied = false;
             rootValid = false;
             rootReady = false;
             applicationRoot.setText(I18n.s(R.string.ui_38ce86b1ada5));
@@ -1484,6 +2399,8 @@ public final class ListActivity extends Activity {
             status.setText(message);
             resolutionText.setText(I18n.s(R.string.ui_e96adf072c24));
             memoryText.setText(I18n.s(R.string.ui_ccdfdd38867f));
+            networkText.setText(I18n.s(R.string.ui_8950be7d6600));
+            perfText.setText(I18n.known("性能：实例未运行"));
             disable();
             renderPreview();
         }

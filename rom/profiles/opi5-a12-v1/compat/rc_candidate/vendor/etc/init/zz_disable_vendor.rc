@@ -1,0 +1,239 @@
+# IrisBox OPi5 (Android 12) 容器 Vendor 侧物理硬件与 OP-TEE 服务禁用清单
+
+# 1. OP-TEE 与依赖物理安全硬件的 HAL（KeyMint 改由 guest_vendor.rc 切至纯软件实现）
+service tee-supplicant /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.gatekeeper-1-0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.weaver-hal-1-0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.drm-widevine-hal-1-4 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.move_data_sh /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 2. 物理摄像头 / 传感器 / 蓝牙 / Wi-Fi / NPU / USB / 硬件编解码
+service vendor.camera-provider-2-4 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.camera-provider-2-4-ext /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.bluetooth-1-0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.wifi_hal_legacy /system/bin/true
+    override
+    disabled
+    oneshot
+
+service wpa_supplicant /system/bin/true
+    override
+    disabled
+    oneshot
+
+service hostapd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.cas-hal-1-2 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.rknn-1-0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.rockit-hal-1-0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service android-hardware-media-c2-hal-1-1 /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 3. Rockchip 板级私有守护与物理外设脚本
+service rknn_server /system/bin/true
+    override
+    disabled
+    oneshot
+
+service hdcp2_hdmi /system/bin/true
+    override
+    disabled
+    oneshot
+
+service rockchip.drmservice /system/bin/true
+    override
+    disabled
+    oneshot
+
+service rockchip_udc_detector /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor_flash_recovery /system/bin/true
+    override
+    disabled
+    oneshot
+
+service abc /system/bin/true
+    override
+    disabled
+    oneshot
+
+service displayd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service rk_store_keybox /system/bin/true
+    override
+    disabled
+    oneshot
+
+service flash_img /system/bin/true
+    override
+    disabled
+    oneshot
+
+service read_pcie_info /system/bin/true
+    override
+    disabled
+    oneshot
+
+service up_eth0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service pppoe_setup /system/bin/true
+    override
+    disabled
+    oneshot
+
+service pppoe_start /system/bin/true
+    override
+    disabled
+    oneshot
+
+service pppoe_stop /system/bin/true
+    override
+    disabled
+    oneshot
+
+service bplus_helper /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.insmod_sh /system/bin/true
+    override
+    disabled
+    oneshot
+
+service gpsd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service getbootmode /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.typec_usb2_sh /system/bin/true
+    override
+    disabled
+    oneshot
+
+service vendor.boot_start_sh /system/bin/true
+    override
+    disabled
+    oneshot
+
+service charger /system/bin/true
+    override
+    disabled
+    oneshot
+
+service watchdogd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service bugreport /system/bin/true
+    override
+    disabled
+    oneshot
+
+service wfd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service dhcpcd_wlan0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service dhcpcd_p2p /system/bin/true
+    override
+    disabled
+    oneshot
+
+service dhcpcd_bt-pan /system/bin/true
+    override
+    disabled
+    oneshot
+
+service dhcpcd_eth0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service iprenew_wlan0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service iprenew_eth0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service iprenew_p2p /system/bin/true
+    override
+    disabled
+    oneshot
+
+service iprenew_bt-pan /system/bin/true
+    override
+    disabled
+    oneshot

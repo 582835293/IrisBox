@@ -1,0 +1,170 @@
+# IrisBox OPi5 (Android 12) 容器 System 侧非必要服务禁用清单
+
+# 1. 性能追踪与剖析 (Perfetto / Atrace / Profcollect)
+service boottrace /system/bin/true
+    override
+    disabled
+    oneshot
+
+service traced /system/bin/true
+    override
+    disabled
+    oneshot
+
+service traced_probes /system/bin/true
+    override
+    disabled
+    oneshot
+
+service mm_events /system/bin/true
+    override
+    disabled
+    oneshot
+
+service profcollectd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service traced_perf /system/bin/true
+    override
+    disabled
+    oneshot
+
+service heapprofd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service heapprofd_secondary /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 2. 诊断转储与崩溃报告 (容器内禁用以避免干扰宿主)
+service dmesgd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service dumpstate /system/bin/true
+    override
+    disabled
+    oneshot
+
+service dumpstatez /system/bin/true
+    override
+    disabled
+    oneshot
+
+service bugreportd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service dump_kernel_panic /system/bin/true
+    override
+    disabled
+    oneshot
+
+service simple_bugreportd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service incidentd /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 3. 物理升级 / GSI / BCB / 废弃隧道 / 无关守护
+service gsid /system/bin/true
+    override
+    disabled
+    oneshot
+
+service logcatd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service lpdumpd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service mdnsd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service mtpd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service racoon /system/bin/true
+    override
+    disabled
+    oneshot
+
+service snapuserd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service uncrypt /system/bin/true
+    override
+    disabled
+    oneshot
+
+service setup-bcb /system/bin/true
+    override
+    disabled
+    oneshot
+
+service clear-bcb /system/bin/true
+    override
+    disabled
+    oneshot
+
+service usbd /system/bin/true
+    override
+    disabled
+    oneshot
+
+service blank_screen /system/bin/true
+    override
+    disabled
+    oneshot
+
+service llkd-0 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service llkd-1 /system/bin/true
+    override
+    disabled
+    oneshot
+
+service rss_hwm_reset /system/bin/true
+    override
+    disabled
+    oneshot
+
+service wificond /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 4. 传统媒体 DRM Server 与 MediaExtractor (按轻量策略收敛，保留 mediaserver & cameraserver)
+service drm /system/bin/true
+    override
+    disabled
+    oneshot
+
+service mediaextractor /system/bin/true
+    override
+    disabled
+    oneshot

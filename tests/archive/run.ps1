@@ -1,4 +1,4 @@
-param([string]$SdkDir="$env:LOCALAPPDATA\Android\Sdk",[string]$JdkDir='C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot')
+param([string]$SdkDir="$env:LOCALAPPDATA\Android\Sdk",[string]$JdkDir='C:\Program Files\Eclipse Adoptium\jdk-17.0.18.8-hotspot',[string]$Serial=$(if($env:IRISBOX_SERIAL){$env:IRISBOX_SERIAL}else{'DEVICE_SERIAL'}))
 $ErrorActionPreference='Stop'
 $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $taskBuild=Join-Path $taskRoot ('out\archive-tests-'+[DateTime]::Now.ToString('yyyyMMdd_HHmmss'))
@@ -18,6 +18,6 @@ try{ & "$taskTools\aapt.exe" add "$taskBuild\base.apk" classes.dex }finally{Pop-
 & "$taskTools\zipalign.exe" -f 4 "$taskBuild\base.apk" "$taskBuild\aligned.apk"
 & "$JdkDir\bin\java.exe" -jar "$taskTools\lib\apksigner.jar" sign --ks "$taskRoot\app\viewer\build\viewer-test.keystore" --ks-key-alias viewer-test --ks-pass pass:android --key-pass pass:android --out "$taskBuild\tests.apk" "$taskBuild\aligned.apk"
 if($LASTEXITCODE -ne 0){throw 'Test signing failed'}
-adb -s DEVICE_SERIAL install -r "$taskBuild\tests.apk"
+adb -s $Serial install -r "$taskBuild\tests.apk"
 if($LASTEXITCODE -ne 0){throw 'Test install failed'}
-adb -s DEVICE_SERIAL shell am instrument -w com.irisbox.tests/com.irisbox.viewer.ArchiveTests
+adb -s $Serial shell am instrument -w com.irisbox.tests/com.irisbox.viewer.ArchiveTests

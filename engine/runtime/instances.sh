@@ -99,12 +99,27 @@ create)
     while [ -e "$BASE/instances/$NEXT" ] || [ -e "$C/$NEXT.record" ]; do
         NEXT=$((NEXT+1));valid_instance_id "$NEXT" || { echo 'Instance ID space exhausted' >&2; exit 4; }
     done
-    if [ "$GOOGLE" = 1 ]; then sh "$BASE/google/a13_arm64/guest_layer.sh" verify 7 >/dev/null; fi
-    for K in resolution_v1 orientation_v1 memory_v1 graphics_v1 root_v1 rom_v1; do
+    ROM_GOOGLE_MODE=$(rom_google_mode "$ROM")
+    case "$ROM_GOOGLE_MODE" in
+        optional)
+            if [ "$GOOGLE" = 1 ]; then sh "$BASE/google/a13_arm64/guest_layer.sh" verify 7 >/dev/null; fi
+            ;;
+        builtin)
+            # 原生内置 GMS 的 ROM 默认即带 Google 服务，不校验亦不叠加外挂 A13 Google 层
+            GOOGLE=1
+            ;;
+        *)
+            if [ "$GOOGLE" = 1 ]; then
+                echo 'Selected ROM does not include Google Play components' >&2
+                exit 4
+            fi
+            ;;
+    esac
+    for K in resolution_v1 orientation_v1 memory_v1 graphics_v1 root_v1 rom_v1 network_v1; do
         [ ! -L "$BASE/config/$K" ] || exit 3
         "$BB" mkdir -p "$BASE/config/$K"
     done
-    for F in "$BASE/config/resolution_v1/$NEXT.profile" "$BASE/config/orientation_v1/$NEXT.mode" "$BASE/config/memory_v1/$NEXT.mib" "$BASE/config/graphics_v1/$NEXT.profile" "$BASE/config/root_v1/$NEXT.profile"; do
+    for F in "$BASE/config/resolution_v1/$NEXT.profile" "$BASE/config/orientation_v1/$NEXT.mode" "$BASE/config/memory_v1/$NEXT.mib" "$BASE/config/graphics_v1/$NEXT.profile" "$BASE/config/root_v1/$NEXT.profile" "$BASE/config/network_v1/$NEXT.conf"; do
         [ ! -e "$F" ] && [ ! -L "$F" ] || { echo 'Reserved instance configuration already exists' >&2; exit 3; }
     done
     [ -f "$ROM/rom.json" ] && [ -f "$ROM/system.img" ] && [ -f "$ROM/vendor.img" ] || {
@@ -118,12 +133,15 @@ create)
     "$BB" mkdir -m 0755 "$BASE/instances/$NEXT"
     : > "$BASE/instances/$NEXT/userns.pending"
     printf '960x540\n' > "$BASE/config/resolution_v1/$NEXT.profile"
-    DEFAULT_MEMORY=1280
-    [ "$GOOGLE" != 1 ] || DEFAULT_MEMORY=1536
+    DEFAULT_MEMORY=${MEM_DEFAULT_MIB:-1280}
+    if [ "$GOOGLE" = 1 ] && [ "$DEFAULT_MEMORY" -lt 1536 ]; then
+        if [ "${MEM_MAX_MIB:-2560}" -ge 1536 ]; then DEFAULT_MEMORY=1536
+        else DEFAULT_MEMORY=${MEM_MAX_MIB:-1536}; fi
+    fi
     printf '%s\n' "$DEFAULT_MEMORY" > "$BASE/config/memory_v1/$NEXT.mib"
     printf 'opengl\n' > "$BASE/config/graphics_v1/$NEXT.profile"
     printf '%s\n' "$ROOT_PROFILE" > "$BASE/config/root_v1/$NEXT.profile"
-    if [ "$GOOGLE" = 1 ]; then cp "$COMPAT/google/component.id" "$BASE/instances/$NEXT/google.core.enabled"; fi
+    if [ "$ROM_GOOGLE_MODE" = optional ] && [ "$GOOGLE" = 1 ]; then cp "$COMPAT/google/component.id" "$BASE/instances/$NEXT/google.core.enabled"; fi
     printf '%s\n' "$ROM_ID" > "$BASE/config/rom_v1/$NEXT.id"
     write_record "$NEXT"
     "$BASE/irisbox_userns" enable "$NEXT" >/dev/null
@@ -133,8 +151,8 @@ create)
 reset|delete)
     record
     [ ! -L "$RUN" ] && [ -d "$RUN" ] && [ ! -L "$RUN/lifecycle.lock" ] || exit 3
-    for K in resolution_v1 orientation_v1 memory_v1 graphics_v1 root_v1 rom_v1; do [ ! -L "$BASE/config/$K" ] || exit 3; done
-    for F in "$BASE/config/resolution_v1/$ID.profile" "$BASE/config/orientation_v1/$ID.mode" "$BASE/config/memory_v1/$ID.mib" "$BASE/config/graphics_v1/$ID.profile" "$BASE/config/root_v1/$ID.profile" "$RUN/google.core.enabled"; do [ ! -L "$F" ] || exit 3; done
+    for K in resolution_v1 orientation_v1 memory_v1 graphics_v1 root_v1 rom_v1 network_v1; do [ ! -L "$BASE/config/$K" ] || exit 3; done
+    for F in "$BASE/config/resolution_v1/$ID.profile" "$BASE/config/orientation_v1/$ID.mode" "$BASE/config/memory_v1/$ID.mib" "$BASE/config/graphics_v1/$ID.profile" "$BASE/config/root_v1/$ID.profile" "$BASE/config/network_v1/$ID.conf" "$RUN/google.core.enabled"; do [ ! -L "$F" ] || exit 3; done
     if [ "${IRIS_INSTANCE_DATA_LOCKED:-}" != 1 ]; then
         exec "$BB" flock -x "$RUN/lifecycle.lock" "$BB" env IRIS_INSTANCE_DATA_LOCKED=1 sh "$BASE/instances.sh" "$@"
     fi
@@ -181,7 +199,7 @@ reset|delete)
         "$BB" rm -f "$PENDING"
         echo INSTANCE_RESET=$ID
     else
-        for F in "$BASE/config/resolution_v1/$ID.profile" "$BASE/config/orientation_v1/$ID.mode" "$BASE/config/memory_v1/$ID.mib" "$BASE/config/graphics_v1/$ID.profile" "$BASE/config/root_v1/$ID.profile" "$BASE/config/rom_v1/$ID.id"; do
+        for F in "$BASE/config/resolution_v1/$ID.profile" "$BASE/config/orientation_v1/$ID.mode" "$BASE/config/memory_v1/$ID.mib" "$BASE/config/graphics_v1/$ID.profile" "$BASE/config/root_v1/$ID.profile" "$BASE/config/rom_v1/$ID.id" "$BASE/config/network_v1/$ID.conf" "$BASE/config/userns_v1/$ID.map"; do
             [ ! -L "$F" ] || exit 3
             "$BB" rm -f "$F"
         done

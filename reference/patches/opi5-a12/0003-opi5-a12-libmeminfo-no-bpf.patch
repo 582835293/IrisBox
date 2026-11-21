@@ -1,0 +1,17 @@
+diff --git a/sysmeminfo.cpp b/sysmeminfo.cpp
+index 2dabea8..6ab3ea7 100644
+--- a/sysmeminfo.cpp
++++ b/sysmeminfo.cpp
+@@ -322,6 +322,12 @@ bool ReadDmabufHeapTotalExportedKb(uint64_t* size, const std::string& dma_heap_r
+ 
+ bool ReadGpuTotalUsageKb(uint64_t* size) {
+ #if defined(__ANDROID__) && !defined(__ANDROID_APEX__) && !defined(__ANDROID_VNDK__)
++    // IrisBox Guest has a private empty bpffs without GPU accounting map.
++    if (getenv("IRIS_GUEST_NO_BPF") != nullptr || getenv("IRIS_NETD_NO_BPF") != nullptr) {
++        if (size) *size = 0;
++        return false;
++    }
++
+     static constexpr const char kBpfGpuMemTotalMap[] =
+         "/sys/fs/bpf/map_gpu_mem_gpu_mem_total_map";
+     static constexpr uint64_t kBpfKeyGpuTotalUsage = 0;

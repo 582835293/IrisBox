@@ -1,0 +1,68 @@
+{
+  "formatVersion": 1,
+  "profile": "rpi4-a13-v1",
+  "displayName": "树莓派4 · AOSP13 · ARM64",
+  "displayNameEn": "Raspberry Pi 4 · AOSP 13 · ARM64",
+  "preflightLabel": "支持配置：树莓派4 / ARM64 / rpi4-a13-v1",
+  "verified": true,
+  "host": {
+    "devices": [
+      "rpi4"
+    ],
+    "abi": "arm64-v8a",
+    "androidApi": 33,
+    "fingerprints": [
+      "Raspberry/aosp_rpi4/rpi4:13/TQ3A.230901.001/eng.lijiaq.20260916.141216:userdebug/test-keys"
+    ],
+    "requiredDevices": [
+      "/dev/dri/renderD128"
+    ],
+    "uplinks": [
+      "wlan0"
+    ],
+    "bpfMode": "a13-legacy-single",
+    "stockBpfProg": "/sys/fs/bpf/netd_shared/prog_netd_cgroupsock_inet_create",
+    "stockBpfMap": "/sys/fs/bpf/netd_shared/map_netd_uid_permission_map"
+  },
+  "guest": {
+    "hardwareName": "rpi4",
+    "fstabName": "fstab.rpi4",
+    "gpu": {
+      "driver": "mesa-v3d",
+      "devDirs": [
+        "dri",
+        "dma_heap"
+      ],
+      "devNodes": [],
+      "vendorGrallocPayload": "libminigbm_gralloc_gbm_mesa_guest_ids.so",
+      "vendorGrallocTarget": "/vendor/lib64/libminigbm_gralloc_gbm_mesa.so",
+      "vulkanRemoveFiles": [
+        "lib/hw/vulkan.broadcom.so",
+        "lib64/hw/vulkan.broadcom.so",
+        "etc/permissions/android.hardware.vulkan.level.xml",
+        "etc/permissions/android.hardware.vulkan.version.xml",
+        "etc/permissions/android.software.vulkan.deqp.level.xml"
+      ],
+      "expectedStockGlesVersion": "196609",
+      "openglModeGlesVersion": "196608",
+      "openglEnv": "MESA_GLES_VERSION_OVERRIDE=3.0"
+    },
+    "media": {
+      "removeCodecIncludes": [
+        "media_codecs_v4l2_c2_video.xml"
+      ]
+    },
+    "memory": {
+      "minMiB": 512,
+      "maxMiB": 2560,
+      "defaultMiB": 1280,
+      "hostReserveMiB": 256,
+      "hostStopBelowKiB": 524288,
+      "maxTasks": 1536,
+      "googleMaxTasks": 3072
+    }
+  },
+  "rom": {
+    "compatDir": "rom/compat"
+  }
+}

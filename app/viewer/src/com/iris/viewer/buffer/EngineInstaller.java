@@ -8,7 +8,7 @@ import java.util.UUID;
 import java.nio.charset.StandardCharsets;
 
 final class EngineInstaller {
-    static final String VERSION = "0.1.6-e27";
+    static final String VERSION = "0.2.1-e40";
     static String preflight(Context c) throws Exception {
         HostTools.ensure(c);
         String script;
@@ -29,10 +29,12 @@ final class EngineInstaller {
     }
     static void install(Context c, PackageArchive.Progress progress) throws Exception {
         progress.update(I18n.s(R.string.ui_79b3bc1a9795)); preflight(c);
+        BoardSpec board = BoardSpec.matchHost(c);
         File work = work(c); String stage = "/data/irisbox/.engine-"+work.getName();
         try {
             progress.update(I18n.s(R.string.ui_c89faf618244));
-            JSONObject manifest = PackageArchive.extract(c.getAssets().open("engine.zip"), work, "engine.json", false, progress);
+            JSONObject manifest = PackageArchive.extract(c.getAssets().open("engine.zip"), work, "engine.json", false,
+                board.profile, null, 0, null, progress);
             if (!manifest.getString("version").equals(VERSION)) throw new IOException(I18n.s(R.string.ui_7974c4e8615f));
             String fingerprint = PackageArchive.hash(new File(work,"files.sha256"));
             progress.update(I18n.s(R.string.ui_ee42ae7c12d7));
@@ -49,15 +51,17 @@ final class EngineInstaller {
     }
     static String importRom(Context c, Uri uri, PackageArchive.Progress progress) throws Exception {
         progress.update(I18n.s(R.string.ui_79eff70947fd)); preflight(c);
+        BoardSpec board = BoardSpec.matchHost(c);
         RootShell.run("test -f /data/irisbox/runtime/engine.version", 10);
         File work = work(c); String stage = "/data/irisbox/.rom-" + work.getName();
         try {
             JSONObject manifest;
             try (InputStream in = c.getContentResolver().openInputStream(uri)) {
                 if (in == null) throw new IOException(I18n.s(R.string.ui_0d1f7519216b));
-                manifest = PackageArchive.extract(in, work, "rom.json", true, progress);
+                manifest = PackageArchive.extract(in, work, "rom.json", true,
+                    board.profile, board.abi, board.androidApi, board.fingerprints, progress);
             }
-            try (InputStream in = c.getAssets().open("rom-profile.json")) {
+            try (InputStream in = c.getAssets().open(board.romProfileAssetPath())) {
                 ByteArrayOutputStream bytes = new ByteArrayOutputStream(); byte[] b=new byte[4096];int n;
                 while((n=in.read(b))!=-1) bytes.write(b,0,n);
                 JSONObject profile = new JSONObject(new String(bytes.toByteArray(),StandardCharsets.UTF_8));
@@ -76,8 +80,9 @@ final class EngineInstaller {
             progress.update(I18n.s(R.string.ui_33742d3f06d1));
             String script = "[ ! -L " + RootShell.quote(dest) + " ]\n"+
                 "if [ -d " + RootShell.quote(dest) + " ]; then\n[ \"$(/data/irisbox/host/bin/busybox sha256sum " + RootShell.quote(dest+"/rom.json") + " | cut -d ' ' -f1)\" = " + RootShell.quote(manifestHash) + " ] || { echo '同名 ROM 已存在，摘要不同，拒绝覆盖'; exit 4; }\nelse\n"+
-                "FREE=$(/data/irisbox/host/bin/busybox df -Pk /data | /data/irisbox/host/bin/busybox awk 'NR==2 {print $4}')\n[ \"$FREE\" -ge " + neededKiB + " ] || { echo 'ROM 库空间不足'; exit 4; }\n"+
+                "FREE=$(/data/irisbox/host/bin/busybox df -Pk /data/irisbox | /data/irisbox/host/bin/busybox awk 'NR==2 {print $4}')\n[ \"$FREE\" -ge " + neededKiB + " ] || { echo 'ROM 库空间不足'; exit 4; }\n"+
                 copyScript(work,stage) + "\nfind . -type d -exec chmod 0755 {} \\;\nfind . -type f -exec chmod 0644 {} \\;\nchmod 0755 compat/iris_init compat/payload/netd_no_bpf\n"+
+                "for B in compat/payload/vold compat/payload/android.hardware.security.keymint-service.soft compat/payload/iris_buffer_producer; do [ ! -f \"$B\" ] || chmod 0755 \"$B\"; done\n"+
                 "chcon -R u:object_r:system_file:s0 compat\n"+
                 "if [ -d compat/google/rootfs ]; then\nfor D in compat/google/rootfs/system/product/lib compat/google/rootfs/system/product/lib64; do\n[ ! -d \"$D\" ] || chcon -R u:object_r:system_lib_file:s0 \"$D\"\ndone\nfi\n"+
                 "sync\ncd /\nmv " + RootShell.quote(stage) + " " + RootShell.quote(dest) + "\nfi\n"+

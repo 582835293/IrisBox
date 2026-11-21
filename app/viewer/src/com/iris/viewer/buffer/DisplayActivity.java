@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.hardware.input.InputManager;
 import android.net.LocalSocket;
 import android.net.LocalSocketAddress;
@@ -13,7 +14,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -23,9 +26,11 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -52,12 +57,14 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
     static { System.loadLibrary("irisbufferviewer"); }
     private static native long nativeStart(Surface surface,int fd,int id,int pid,long tick,int seconds,int width,int height);
     private static native String nativeStats(long handle);
+    private static native long[] nativeMetrics(long handle);
     private static native long[] nativeGeometry(long handle);
     private static native void nativeResize(long handle,int width,int height);
     private static native void nativeStop(long handle);
     static native boolean nativeInputTypeIsStream(int fd);
     private final Handler ui=new Handler(Looper.getMainLooper());
     private final ExecutorService control=Executors.newSingleThreadExecutor();
+    private final ExecutorService telemetryWorker=Executors.newSingleThreadExecutor();
     private final ScheduledExecutorService hardDeadline=Executors.newSingleThreadScheduledExecutor();
     private final AtomicBoolean closing=new AtomicBoolean();
     private volatile long handle;
@@ -70,9 +77,11 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
     private long tick,displayStartedAt;
     private long pointerWidth,pointerHeight,pointerRotation=-1;
     private SurfaceView surface;
-    private TextView status;
-    private Button guestHome,guestBack,pointerMode,orientationButton;
-    private volatile boolean orientationBusy;
+    private TextView status,hudView;
+    private Button guestHome,guestRecents,guestBack,pointerMode,orientationButton,hudToggle;
+    private volatile boolean orientationBusy,hudVisible,hudFetching;
+    private volatile long lastTelemetryAt;
+    private volatile JSONObject lastHostTel,lastInstTel;
     private volatile boolean touchMode;
     private final HashMap<Integer,Integer> keyboardDevices=new HashMap<>();
     private InputManager devices;
@@ -91,11 +100,19 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
             boolean ready=problem.isEmpty()&&link!=null&&link.healthy()&&!orientationBusy;
             if(ready)followGeometry(g);else if(down)cancelPointer();
             guestHome.setEnabled(ready);guestBack.setEnabled(ready);
+            boolean brokerReady=ready&&GuestOrientation.validToken(brokerToken);
+            guestRecents.setEnabled(brokerReady);
             pointerMode.setEnabled(ready);
-            orientationButton.setEnabled(ready&&GuestOrientation.validToken(brokerToken));
+            orientationButton.setEnabled(brokerReady);
             long left=Math.max(0,seconds-(SystemClock.elapsedRealtime()-displayStartedAt)/1000);
             String remaining=String.format(java.util.Locale.US,"%d:%02d",left/60,left%60);
             status.setText(InstanceNames.title(number)+" · "+(ready?(touchMode?I18n.s(R.string.ui_3d4cf10d60ad):I18n.s(R.string.ui_8bf7092bfac6)):problem.isEmpty()?I18n.s(R.string.ui_7570be66f8ac):I18n.known(problem))+(seconds>0?I18n.s(R.string.ui_a005d2b0e33d)+remaining+(left<=20?I18n.s(R.string.ui_43d8ec69b3ed):""):""));
+            if(hudVisible) {
+                long[] m=nativeMetrics(current);
+                hudView.setText(TelemetryUi.fullscreenHudText(m,lastHostTel,lastInstTel,lastInstTel==null));
+                long now=SystemClock.elapsedRealtime();
+                if(GuestOrientation.validToken(brokerToken)&&!hudFetching&&now-lastTelemetryAt>=1000)refreshHudTelemetry();
+            }
             if(!geometryLogged&&ready) {
                 int[] position=new int[2];surface.getLocationOnScreen(position);
                 Log.i("IrisBufferViewer","IRIS_BUFFER_VISIBLE_GEOMETRY id="+id+" session="+session+" surfaceScreen="+Arrays.toString(position)+" geometry="+Arrays.toString(g));
@@ -111,24 +128,36 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY|View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION|View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.BLACK);
         LinearLayout tools=new LinearLayout(this);tools.setBackgroundColor(Color.rgb(24,28,34));
-        status=new TextView(this);status.setTextColor(Color.WHITE);status.setTextSize(14);status.setGravity(17);
+        status=new TextView(this);status.setTextColor(Color.WHITE);status.setTextSize(13);status.setGravity(17);status.setMaxLines(1);status.setEllipsize(TextUtils.TruncateAt.END);
         tools.addView(status,new LinearLayout.LayoutParams(0,-1,1));
         pointerMode=button(I18n.s(R.string.ui_eaa5b90e3aa4),"pointer-mode",this::togglePointerMode);tools.addView(pointerMode);pointerMode.setEnabled(false);
+        hudToggle=button(I18n.known("性能"),"display-hud",this::toggleHud);tools.addView(hudToggle);
         orientationButton=button(I18n.known("横竖屏"),"guest-orientation",this::chooseOrientation);tools.addView(orientationButton);orientationButton.setEnabled(false);
         guestHome=button(I18n.s(R.string.ui_428cbfb8a4e1),"guest-home",()->key("HOME"));tools.addView(guestHome);
+        guestRecents=button(I18n.known("后台"),"guest-recents",this::openRecents);tools.addView(guestRecents);
         guestBack=button(I18n.s(R.string.ui_870379d0d76d),"guest-back",()->key("BACK"));tools.addView(guestBack);
         tools.addView(button(I18n.s(R.string.ui_53505b1fcd1a),"return-list",this::returnToList));
-        guestHome.setEnabled(false);guestBack.setEnabled(false);
+        guestHome.setEnabled(false);guestRecents.setEnabled(false);guestBack.setEnabled(false);
         root.addView(tools,new LinearLayout.LayoutParams(-1,dp(48)));
+        FrameLayout stage=new FrameLayout(this);
         surface=new SurfaceView(this);surface.setContentDescription("guest-display");surface.getHolder().addCallback(this);
         surface.setFocusable(true);surface.setFocusableInTouchMode(true);
         surface.setOnTouchListener((view,event)->pointer(event));surface.setOnGenericMotionListener((view,event)->pointer(event));
-        root.addView(surface,new LinearLayout.LayoutParams(-1,0,1));setContentView(root);
+        stage.addView(surface,new FrameLayout.LayoutParams(-1,-1));
+        hudView=new TextView(this);
+        hudView.setTextColor(Color.rgb(124,252,168));hudView.setTextSize(11);hudView.setTypeface(Typeface.MONOSPACE);
+        hudView.setBackgroundColor(Color.argb(180,16,20,26));
+        hudView.setPadding(dp(10),dp(6),dp(10),dp(6));
+        hudView.setClickable(false);hudView.setFocusable(false);hudView.setVisibility(View.GONE);
+        FrameLayout.LayoutParams hudLp=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.START);
+        hudLp.setMargins(dp(10),dp(10),dp(10),dp(10));
+        stage.addView(hudView,hudLp);
+        root.addView(stage,new LinearLayout.LayoutParams(-1,0,1));setContentView(root);
         surface.requestFocus();devices=(InputManager)getSystemService(INPUT_SERVICE);devices.registerInputDeviceListener(deviceListener,ui);
         load(getIntent());
     }
     private Button button(String label,String description,Runnable action) {
-        Button b=new Button(this);b.setText(label);b.setTextSize(13);b.setContentDescription(description);b.setOnClickListener(v->action.run());return b;
+        Button b=new Button(this);b.setText(label);b.setTextSize(12);b.setMinWidth(0);b.setMinimumWidth(0);b.setPadding(dp(7),0,dp(7),0);b.setContentDescription(description);b.setOnClickListener(v->action.run());return b;
     }
     private int dp(int value) { return Math.round(value*getResources().getDisplayMetrics().density); }
     private void load(Intent intent) {
@@ -138,6 +167,9 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
         id=intent.getIntExtra("instanceId",0);number=intent.getIntExtra("instanceNumber",0);seconds=intent.getIntExtra("seconds",0);
         touchMode=getSharedPreferences("pointer_modes",MODE_PRIVATE).getBoolean("touch_"+id,false);
         pointerMode.setText(touchMode?I18n.s(R.string.ui_b69bd19456b6):I18n.s(R.string.ui_eaa5b90e3aa4));
+        hudVisible=getSharedPreferences("display_hud",MODE_PRIVATE).getBoolean("enabled",false);
+        hudView.setVisibility(hudVisible?View.VISIBLE:View.GONE);
+        hudToggle.setTextColor(hudVisible?Color.rgb(124,252,168):Color.WHITE);
         inputWidth=intent.getIntExtra("inputWidth",1920);inputHeight=intent.getIntExtra("inputHeight",1080);
         if(gatewayName==null||!gatewayName.matches("[A-Za-z0-9_.-]{1,90}")||gatewayToken==null||!gatewayToken.matches("[a-f0-9]{64}")||session==null||!session.matches("[1-9][0-9]*:[1-9][0-9]*")||(id<7||id>65535)||!InstanceNames.valid(number)||seconds<0||seconds>900||inputWidth<1||inputWidth>4096||inputHeight<1||inputHeight>4096) {
             gatewayName="";status.setText(I18n.s(R.string.ui_28c63e19176b));return;
@@ -152,7 +184,7 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
     @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent);stopDisplay(); }
     @Override protected void onResume(){super.onResume();resumed=true;ui.post(update);scheduleConnect();}
     @Override protected void onPause(){resumed=false;ui.removeCallbacks(update);stopDisplay();super.onPause();}
-    @Override protected void onDestroy(){if(devices!=null)devices.unregisterInputDeviceListener(deviceListener);stopDisplay();super.onDestroy();}
+    @Override protected void onDestroy(){if(devices!=null)devices.unregisterInputDeviceListener(deviceListener);telemetryWorker.shutdownNow();stopDisplay();super.onDestroy();}
     @Override public void onWindowFocusChanged(boolean focused) {
         super.onWindowFocusChanged(focused);if(!focused){cancelKeyboard();if(down)cancelPointer();}
     }
@@ -188,8 +220,8 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
     @Override public void surfaceCreated(SurfaceHolder holder){surfaceReady=true;Canvas c=null;try{c=holder.lockCanvas();if(c!=null)c.drawColor(Color.BLACK);}catch(Exception ignored){}finally{if(c!=null)try{holder.unlockCanvasAndPost(c);}catch(Exception ignored){}}scheduleConnect();}
     @Override public void surfaceChanged(SurfaceHolder holder,int format,int width,int height){surfaceReady=true;long current=handle;if(current!=0){cancelPointer();nativeResize(current,width,height);}scheduleConnect();}
     @Override public void surfaceDestroyed(SurfaceHolder holder){surfaceReady=false;stopDisplay();}
-    private void scheduleConnect(){surface.postDelayed(()->{if(resumed&&surfaceReady&&surface.getWidth()>0&&surface.getHeight()>0)connect();},160);}
-    /** 只在Surface就绪且页面前台时接一次固定会话；握手同时核id/session/token及两FD数量。
+    private void scheduleConnect(){if(resumed&&surfaceReady&&surface.getWidth()>0&&surface.getHeight()>0)connect();else surface.post(()->{if(resumed&&surfaceReady&&surface.getWidth()>0&&surface.getHeight()>0)connect();});}
+    /** 只在Surface就绪且页面前台时接一次固定会话；网关刚并行启动时允许短间隔重连。
      */
     private void connect() {
         if(attempted||closing.get()||!resumed||!surfaceReady||gatewayName.isEmpty())return;
@@ -200,9 +232,25 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
         }else Log.i("IrisBufferViewer","IRIS_BUFFER_NO_EXPIRY id="+id+" session="+session);
         control.execute(()->{
             ArrayList<FileDescriptor> passed=new ArrayList<>();
-            try(LocalSocket link=new LocalSocket()) {
-                if(closing.get())return;
-                gateway=link;link.connect(new LocalSocketAddress(gatewayName,LocalSocketAddress.Namespace.ABSTRACT));link.setSoTimeout(3000);
+            LocalSocket link=null;
+            try {
+                long deadline=SystemClock.elapsedRealtime()+4500L;
+                while(true) {
+                    if(closing.get())throw new IOException("Display cancelled");
+                    LocalSocket attempt=new LocalSocket();
+                    gateway=attempt;
+                    try {
+                        attempt.connect(new LocalSocketAddress(gatewayName,LocalSocketAddress.Namespace.ABSTRACT));
+                        link=attempt;
+                        break;
+                    } catch(IOException connectError) {
+                        try{attempt.close();}catch(Exception ignored){}
+                        if(closing.get()||SystemClock.elapsedRealtime()>=deadline)throw connectError;
+                        SystemClock.sleep(25);
+                    }
+                }
+                if(closing.get())throw new IOException("Display cancelled");
+                link.setSoTimeout(5000);
                 link.getOutputStream().write(("HELLO 2 "+id+" "+session+" "+gatewayToken+"\n").getBytes(StandardCharsets.US_ASCII));link.getOutputStream().flush();
                 if(!line(link,passed).equals("OK 2 "+id+" "+session)||passed.size()!=2)throw new IOException("Gateway identity or two-FD response mismatch");
                 if(closing.get())throw new IOException("Display cancelled");
@@ -218,13 +266,14 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
                 ui.post(()->{status.setText(I18n.s(R.string.ui_2c23c90e1f3a));returnToList();});
             } finally {
                 gateway=null;
+                if(link!=null)try{link.close();}catch(Exception ignored){}
                 for(FileDescriptor fd:passed)try{android.system.Os.close(fd);}catch(Exception ignored){}
             }
         });
     }
     private void returnToList() {
-        if(!closing.get())startActivity(new Intent(this,ListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP));
-        stopDisplay();finish();
+        if(!closing.get()){startActivity(new Intent(this,ListActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP|Intent.FLAG_ACTIVITY_NO_ANIMATION));overridePendingTransition(0,0);}
+        stopDisplay();finish();overridePendingTransition(0,0);
     }
     /** 先让InputLink释放键鼠，再nativeStop；native会退出本display进程，顺序颠倒会留按下状态。
      */
@@ -292,6 +341,40 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
         if(!inputReady(geometry()))return;down=false;cancelled=true;
         keyboardDevices.clear();
         input.offer(new InputQueue.Command('K',0,0,0,0,0,name));
+    }
+    private void openRecents() {
+        if(!inputReady(geometry())||!GuestOrientation.validToken(brokerToken))return;
+        down=false;cancelled=true;keyboardDevices.clear();
+        telemetryWorker.execute(()->{
+            try{TelemetryUi.triggerRecents(brokerToken,id,session);}
+            catch(Exception e){Log.w("IrisBufferViewer","RECENTS_ERROR "+e.getClass().getSimpleName());}
+        });
+    }
+    private void toggleHud() {
+        hudVisible=!hudVisible;
+        getSharedPreferences("display_hud",MODE_PRIVATE).edit().putBoolean("enabled",hudVisible).apply();
+        hudView.setVisibility(hudVisible?View.VISIBLE:View.GONE);
+        hudToggle.setTextColor(hudVisible?Color.rgb(124,252,168):Color.WHITE);
+        if(hudVisible) {
+            long current=handle;
+            long[] m=current!=0?nativeMetrics(current):null;
+            hudView.setText(TelemetryUi.fullscreenHudText(m,lastHostTel,lastInstTel,lastInstTel==null));
+            if(GuestOrientation.validToken(brokerToken)&&!hudFetching)refreshHudTelemetry();
+        }
+        surface.requestFocus();
+    }
+    private void refreshHudTelemetry() {
+        hudFetching=true;
+        telemetryWorker.execute(()->{
+            try {
+                JSONObject data=TelemetryUi.fetchTelemetry(brokerToken,id,true);
+                lastHostTel=data.optJSONObject("host");
+                lastInstTel=data.optJSONObject("instance");
+                lastTelemetryAt=SystemClock.elapsedRealtime();
+            } catch(Exception ignored) {
+                lastTelemetryAt=SystemClock.elapsedRealtime();
+            } finally { hudFetching=false; }
+        });
     }
     private void cancelPointer() { down=false;cancelled=true;InputLink link=input;if(link!=null)link.offer(InputQueue.Command.simple('U')); }
     /** 使用已完成画面的矩形/逻辑尺寸，拒绝黑边；命令携带同帧几何，Guest再核旋转。

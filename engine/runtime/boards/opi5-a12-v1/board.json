@@ -1,0 +1,79 @@
+{
+  "formatVersion": 1,
+  "profile": "opi5-a12-v1",
+  "displayName": "香橙派5 RK3588S · Android 12 · ARM64",
+  "displayNameEn": "Orange Pi 5 RK3588S · Android 12 · ARM64",
+  "preflightLabel": "支持配置：香橙派5 / ARM64 / opi5-a12-v1",
+  "verified": true,
+  "host": {
+    "devices": [
+      "rk3588s_s",
+      "orangepi5",
+      "rk3588_s",
+      "rk3588"
+    ],
+    "abi": "arm64-v8a",
+    "androidApi": 32,
+    "fingerprints": [
+      "rockchip/rk3588s_s/rk3588s_s:12/SQ3A.220705.003.A1/eng.orangepi.20261029:userdebug/release-keys"
+    ],
+    "requiredDevices": [
+      "/dev/mali0"
+    ],
+    "uplinks": [
+      "eth0",
+      "wlan0"
+    ],
+    "bpfMode": "a12-legacy-single",
+    "stockBpfProg": "/sys/fs/bpf/prog_netd_cgroupsock_inet_create",
+    "stockBpfMap": "/sys/fs/bpf/map_netd_uid_permission_map",
+    "requireExternalMount": true
+  },
+  "guest": {
+    "hardwareName": "rk30board",
+    "fstabName": "fstab.rk30board",
+    "gpu": {
+      "driver": "mali-g610",
+      "devDirs": [
+        "dma_heap"
+      ],
+      "devNodes": [
+        "/dev/mali0"
+      ],
+      "vendorGrallocPayload": "",
+      "vendorGrallocTarget": "",
+      "vulkanRemoveFiles": [
+        "lib/hw/vulkan.rk3588.so",
+        "lib64/hw/vulkan.rk3588.so",
+        "etc/permissions/android.hardware.vulkan.compute-0.xml",
+        "etc/permissions/android.hardware.vulkan.level-0.xml",
+        "etc/permissions/android.hardware.vulkan.level-1.xml",
+        "etc/permissions/android.hardware.vulkan.version-1_0_3.xml",
+        "etc/permissions/android.hardware.vulkan.version-1_1.xml",
+        "etc/permissions/android.software.vulkan.deqp.level-2019-03-01.xml",
+        "etc/permissions/android.software.vulkan.deqp.level-2020-03-01.xml",
+        "etc/permissions/android.software.vulkan.deqp.level-2021-03-01.xml"
+      ],
+      "expectedStockGlesVersion": "196610",
+      "openglModeGlesVersion": "196608",
+      "openglEnv": ""
+    },
+    "media": {
+      "removeCodecIncludes": [
+        "media_codecs_c2_base.xml"
+      ]
+    },
+    "memory": {
+      "minMiB": 1024,
+      "maxMiB": 12288,
+      "defaultMiB": 4096,
+      "hostReserveMiB": 512,
+      "hostStopBelowKiB": 1048576,
+      "maxTasks": 4096,
+      "googleMaxTasks": 6144
+    }
+  },
+  "rom": {
+    "compatDir": "rom/profiles/opi5-a12-v1/compat"
+  }
+}

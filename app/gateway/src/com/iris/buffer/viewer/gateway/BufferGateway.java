@@ -128,6 +128,12 @@ public final class BufferGateway {
                 if(!Files.readSymbolicLink(Paths.get("/proc",Integer.toString(peerPid),"ns",ns)).equals(Files.readSymbolicLink(Paths.get("/proc/1/ns",ns))))throw new IOException("Display Host namespace required");
             String[] hello=line(app.getInputStream(),160).split(" ");
             if(hello.length!=5||!hello[0].equals("HELLO")||!hello[1].equals("2")||!hello[2].equals(args[0])||!hello[3].equals(expected)||!hello[4].equals(token))throw new IOException("Handshake rejected");
+            // 网关与输入/生产者并发启动时，等到各自 socket 与 input.ready 就绪后再桥接。
+            long waitDeadline=SystemClock.elapsedRealtime()+4500L;
+            while(!(Files.exists(graphicsPath,LinkOption.NOFOLLOW_LINKS)&&Files.exists(inputDir.resolve("input.ready"),LinkOption.NOFOLLOW_LINKS)&&Files.exists(inputDir.resolve("input.identity"),LinkOption.NOFOLLOW_LINKS))) {
+                if(SystemClock.elapsedRealtime()>=waitDeadline)throw new IOException("Guest endpoints not ready before handoff");
+                Thread.sleep(25);
+            }
             if(!expected.equals(session(id)))throw new IOException("Guest changed before handoff");
             FileDescriptor[] pair=connectMapped(id,expected,width,height,deadline);
             try {

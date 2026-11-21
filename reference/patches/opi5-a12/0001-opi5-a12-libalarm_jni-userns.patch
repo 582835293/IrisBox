@@ -1,0 +1,31 @@
+diff --git a/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp b/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp
+index 8f9e187a..3efb5184 100644
+--- a/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp
++++ b/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp
+@@ -277,6 +277,26 @@ static jlong android_server_alarm_AlarmManagerService_init(JNIEnv*, jobject)
+ 
+     for (size_t i = 0; i < fds.size(); i++) {
+         fds[i] = timerfd_create(android_alarm_to_clockid[i], TFD_NONBLOCK);
++        // IrisBox mapped Guest cannot wake physical Host; fall back to non-waking clock.
++        if (fds[i] < 0 && errno == EPERM &&
++            (android_alarm_to_clockid[i] == CLOCK_REALTIME_ALARM ||
++             android_alarm_to_clockid[i] == CLOCK_BOOTTIME_ALARM)) {
++            std::string map;
++            unsigned inside, outside, count;
++            char extra;
++            if (android::base::ReadFileToString("/proc/self/uid_map", &map) &&
++                sscanf(map.c_str(), "%u %u %u %c", &inside, &outside, &count, &extra) == 3 &&
++                inside == 0 && outside >= 2000000000U && outside < 2012800000U &&
++                outside % 100000U == 0 && count == 100000U) {
++                const clockid_t clock = android_alarm_to_clockid[i] == CLOCK_REALTIME_ALARM
++                        ? CLOCK_REALTIME
++                        : CLOCK_BOOTTIME;
++                fds[i] = timerfd_create(clock, TFD_NONBLOCK);
++                if (fds[i] >= 0) {
++                    ALOGI("Iris mapped Guest: non-waking alarm clock %d", clock);
++                }
++            }
++        }
+         if (fds[i] < 0) {
+             log_timerfd_create_error(android_alarm_to_clockid[i]);
+             close(epollfd);

@@ -14,11 +14,11 @@ import java.security.NoSuchAlgorithmException;
  * Small, Android-independent validation and streaming rules for the exchange API.
  */
 public final class ExchangeProtocol {
-    public static final long MAX_FILE_BYTES = 128L * 1024 * 1024;
+    public static final long MAX_FILE_BYTES = 4L * 1024 * 1024 * 1024;
     public static final int MAX_FILES = 128;
     public static final int MAX_NAME_UTF8_BYTES = 128;
     public static final int BLOCK_BYTES = 64 * 1024;
-    public static final int TRANSFER_SECONDS = 120;
+    public static final int TRANSFER_SECONDS = 1800;
     public static final int IDLE_SECONDS = 15;
     public static final String DIRECTORY = "Download/IrisExchange";
 
@@ -67,8 +67,8 @@ public final class ExchangeProtocol {
             throw new Failure(400, "INVALID_LENGTH", "文件大小格式不正确");
         long size;
         try { size = Long.parseLong(value); }
-        catch (NumberFormatException error) { throw new Failure(413, "FILE_TOO_LARGE", "单个文件不能超过 128 MiB"); }
-        if (size > MAX_FILE_BYTES) throw new Failure(413, "FILE_TOO_LARGE", "单个文件不能超过 128 MiB");
+        catch (NumberFormatException error) { throw new Failure(413, "FILE_TOO_LARGE", "单个文件不能超过 4 GiB"); }
+        if (size > MAX_FILE_BYTES) throw new Failure(413, "FILE_TOO_LARGE", "单个文件不能超过 4 GiB");
         return size;
     }
 
@@ -98,7 +98,7 @@ public final class ExchangeProtocol {
     public static Copied copyExactly(InputStream input, OutputStream output, long expected, Guard guard)
             throws IOException {
         if (expected < 0) throw new Failure(400, "INVALID_LENGTH", "文件大小不正确");
-        if (expected > MAX_FILE_BYTES) throw new Failure(413, "FILE_TOO_LARGE", "单个文件不能超过 128 MiB");
+        if (expected > MAX_FILE_BYTES) throw new Failure(413, "FILE_TOO_LARGE", "单个文件不能超过 4 GiB");
         MessageDigest digest;
         try { digest = MessageDigest.getInstance("SHA-256"); }
         catch (NoSuchAlgorithmException impossible) { throw new IOException("SHA-256 unavailable", impossible); }

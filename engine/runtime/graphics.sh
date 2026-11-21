@@ -48,10 +48,7 @@ apply)
     saved
     # Removing files here creates only private overlay whiteouts. Native mode
     # restores those same files from the fixed ROM, including the XML features.
-    for F in lib/hw/vulkan.broadcom.so lib64/hw/vulkan.broadcom.so \
-        etc/permissions/android.hardware.vulkan.level.xml \
-        etc/permissions/android.hardware.vulkan.version.xml \
-        etc/permissions/android.software.vulkan.deqp.level.xml; do
+    for F in $BOARD_VULKAN_REMOVE_FILES; do
         SOURCE=$ROM/vendor.lower/$F;TARGET=$ROOT/vendor/$F
         [ -f "$SOURCE" ] && [ ! -L "$SOURCE" ] && [ ! -L "$TARGET" ] || exit 3
         if [ "$PROFILE" = opengl ]; then "$BB" rm -f "$TARGET"
@@ -65,13 +62,20 @@ apply)
     STOCK_COUNT=$($BB grep -c '^ro.opengles.version=' "$ROM/vendor.lower/build.prop")
     [ "$STOCK_COUNT" = 1 ] && [ ! -L "$PROP" ] && [ ! -L "$RUN/graphics.env" ] || exit 3
     STOCK_VERSION=$($BB sed -n 's/^ro.opengles.version=//p' "$ROM/vendor.lower/build.prop")
-    [ "$STOCK_VERSION" = 196609 ] || { echo 'Unsupported ROM GLES declaration' >&2;exit 3; }
+    [ -z "$BOARD_EXPECTED_STOCK_GLES" ] || [ "$STOCK_VERSION" = "$BOARD_EXPECTED_STOCK_GLES" ] || { echo 'Unsupported ROM GLES declaration' >&2;exit 3; }
     VERSION=$STOCK_VERSION
     if [ "$PROFILE" = opengl ]; then
-        VERSION=196608
-        printf 'export MESA_GLES_VERSION_OVERRIDE=3.0\n' > "$RUN/graphics.env"
+        VERSION=${BOARD_OPENGL_MODE_GLES:-$STOCK_VERSION}
+    fi
+    if [ -n "$BOARD_GLES_OVERRIDE_ENV" ]; then
+        GLES_KEY=${BOARD_GLES_OVERRIDE_ENV%%=*}
+        if [ "$PROFILE" = opengl ]; then
+            printf 'export %s\n' "$BOARD_GLES_OVERRIDE_ENV" > "$RUN/graphics.env"
+        else
+            printf 'unset %s\n' "$GLES_KEY" > "$RUN/graphics.env"
+        fi
     else
-        printf 'unset MESA_GLES_VERSION_OVERRIDE\n' > "$RUN/graphics.env"
+        : > "$RUN/graphics.env"
     fi
     "$BB" chmod 0600 "$RUN/graphics.env"
     "$BB" sed -i "s/^ro.opengles.version=.*/ro.opengles.version=$VERSION/" "$PROP"

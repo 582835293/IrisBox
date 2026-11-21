@@ -69,7 +69,8 @@ bool preflightAHB(int fd,uint32_t width,uint32_t height,uint32_t format) {
     Packet p;
     if(!packet(fd,p,MAX_AHB_PACKET,true)||p.size<52||p.fdCount<1)return false;
     uint32_t words[13]{};memcpy(words,p.data,sizeof(words));
-    if(words[0]!=0x47423031U||words[1]!=width||words[2]!=height||words[3]<width||words[4]!=format||words[5]!=1)return false;
+    // ARM Mali-G610 Bifrost Gralloc4 对 AFBC/非锁定的 GPU-sampled 缓冲区会将 stride 上报为 0
+    if(words[0]!=0x47423031U||words[1]!=width||words[2]!=height||(words[3]!=0&&words[3]<width)||words[4]!=format||words[5]!=1)return false;
     uint32_t nfds=words[10],nints=words[11];
     return nfds==p.fdCount&&nfds<=MAX_FDS&&nints<=4096-13&&p.size==(13+size_t(nints))*4;
 }
@@ -87,6 +88,7 @@ struct State:std::enable_shared_from_this<State> {
     std::mutex mu,ackMu;std::condition_variable completed,ackChanged;
     std::deque<Ack> acks;std::map<uint64_t,AHardwareBuffer*> buffers;std::deque<uint64_t> retired;
     uint64_t submitted=0,completedSequence=0,received=0,presented=0,uniqueLatch=0,lastLatch=0,withFence=0,lastPts=0,lastLog=0,sampledReceived=0,sampledPresented=0;
+    uint64_t liveSampleAt=0,liveSampleReceived=0,liveSamplePresented=0,liveReceivedFpsX10=0,liveCompletedFpsX10=0;
     bool clearComplete=false;std::string failure;
     Header visibleFrame{};ARect visibleDestination{};int visibleViewWidth=0,visibleViewHeight=0;uint64_t visibleSequence=0;
     std::thread reader,sender,watchdog;
@@ -189,7 +191,7 @@ struct State:std::enable_shared_from_this<State> {
             AHardwareBuffer* buffer=nullptr;operationAt=nowNs();int imported=AHardwareBuffer_recvHandleFromUnixSocket(fd,&buffer);operationAt=0;
             if(imported!=0||!buffer)fatal("AHB import failed; process exits to reclaim library-owned resources",61);
             AHardwareBuffer_Desc description{};AHardwareBuffer_describe(buffer,&description);
-            if(description.width!=h.width||description.height!=h.height||description.layers!=1||description.format!=h.format||description.stride<h.width||(description.usage&AHARDWAREBUFFER_USAGE_PROTECTED_CONTENT)||!(description.usage&AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE)){AHardwareBuffer_release(buffer);stop("AHB descriptor mismatch, non-sampleable or protected content");ok=false;break;}
+            if(description.width!=h.width||description.height!=h.height||description.layers!=1||description.format!=h.format||(description.stride!=0&&description.stride<h.width)||(description.usage&AHARDWAREBUFFER_USAGE_PROTECTED_CONTENT)||!(description.usage&AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE)){AHardwareBuffer_release(buffer);stop("AHB descriptor mismatch, non-sampleable or protected content");ok=false;break;}
             if(previous==0)__android_log_print(ANDROID_LOG_INFO,TAG,"IRIS_BUFFER_IMPORT id=%d session=%d:%llu socketType=SEQPACKET width=%u height=%u stride=%u format=%u usage=0x%llx guestBufferId=%llu acquireFence=%s",id,pid,(unsigned long long)tick,description.width,description.height,description.stride,description.format,(unsigned long long)description.usage,(unsigned long long)h.bufferId,p.fdCount?"yes":"no");
             int acquire=p.takeFence();
             if(!display(buffer,acquire,h)){if(buffers.find(h.sequence)==buffers.end())AHardwareBuffer_release(buffer);ok=false;break;}
@@ -212,6 +214,19 @@ struct State:std::enable_shared_from_this<State> {
         std::ostringstream out;out<<"实例 "<<id<<" · 缓冲区 "<<received<<" · 事务完成 "<<presented<<" · latch "<<uniqueLatch;
         if(!failure.empty())out<<" · "<<failure;return out.str();
     }
+    void liveMetrics(jlong values[7]) {
+        std::lock_guard<std::mutex> l(mu);uint64_t now=nowNs();
+        if(liveSampleAt==0)liveSampleAt=now;
+        double seconds=(now-liveSampleAt)/1e9;
+        if(seconds>=0.5){
+            liveReceivedFpsX10=uint64_t(((received-liveSampleReceived)/seconds)*10.0+0.5);
+            liveCompletedFpsX10=uint64_t(((presented-liveSamplePresented)/seconds)*10.0+0.5);
+            liveSampleAt=now;liveSampleReceived=received;liveSamplePresented=presented;
+        }
+        values[0]=jlong(received);values[1]=jlong(presented);values[2]=jlong(uniqueLatch);values[3]=jlong(withFence);
+        values[4]=jlong(lastPts&&now>lastPts?(now-lastPts)/1000000ULL:0);
+        values[5]=jlong(liveReceivedFpsX10);values[6]=jlong(liveCompletedFpsX10);
+    }
 };
 std::mutex registryLock;std::map<jlong,std::shared_ptr<State>> registry;jlong nextHandle=1;bool everStarted=false;
 std::shared_ptr<State> find(jlong handle){std::lock_guard<std::mutex> l(registryLock);auto it=registry.find(handle);return it==registry.end()?nullptr:it->second;}
@@ -228,13 +243,17 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_irisbox_viewer_DisplayActivity_nativ
     s->window=ANativeWindow_fromSurface(env,surface);if(!s->window)return 0;
     s->layer=ASurfaceControl_createFromWindow(s->window,"IrisGuestBufferViewer");if(!s->layer)return 0;
     // Zero removes the session expiry; the operation watchdog stays active.
-    s->id=id;s->pid=pid;s->tick=uint64_t(tick);s->viewWidth=width;s->viewHeight=height;s->lastLog=nowNs();s->deadline=seconds==0 ? 0 : nowNs()+uint64_t(seconds)*1000000000ULL;
+    s->id=id;s->pid=pid;s->tick=uint64_t(tick);s->viewWidth=width;s->viewHeight=height;s->lastLog=nowNs();s->liveSampleAt=s->lastLog;s->deadline=seconds==0 ? 0 : nowNs()+uint64_t(seconds)*1000000000ULL;
     jlong handle=nextHandle++;registry.emplace(handle,s);
     s->sender=std::thread([s]{s->sendLoop();});s->reader=std::thread([s]{s->run();});
     s->watchdog=std::thread([s]{while(!s->finished){uint64_t now=nowNs(),began=s->operationAt;if((began&&now>=began&&now-began>4000000000ULL)||(s->deadline&&now>s->deadline+7000000000ULL))fatal("Receiver hard watchdog expired",63);std::this_thread::sleep_for(std::chrono::milliseconds(100));}});
     return handle;
 }
 extern "C" JNIEXPORT jstring JNICALL Java_com_irisbox_viewer_DisplayActivity_nativeStats(JNIEnv* env,jclass,jlong handle){auto s=find(handle);std::string text=s?s->stats():"显示连接已关闭";return env->NewStringUTF(text.c_str());}
+extern "C" JNIEXPORT jlongArray JNICALL Java_com_irisbox_viewer_DisplayActivity_nativeMetrics(JNIEnv* env,jclass,jlong handle){
+    jlong values[7]{};auto s=find(handle);if(s)s->liveMetrics(values);
+    jlongArray result=env->NewLongArray(7);if(result)env->SetLongArrayRegion(result,0,7,values);return result;
+}
 extern "C" JNIEXPORT void JNICALL Java_com_irisbox_viewer_DisplayActivity_nativeResize(JNIEnv*,jclass,jlong handle,jint width,jint height){auto s=find(handle);if(s){s->viewWidth=width;s->viewHeight=height;}}
 extern "C" JNIEXPORT void JNICALL Java_com_irisbox_viewer_DisplayActivity_nativeStop(JNIEnv*,jclass,jlong handle){auto s=find(handle);if(!s)return;s->stop("Host stopped display");if(s->reader.joinable())s->reader.join();if(s->watchdog.joinable())s->watchdog.join();std::lock_guard<std::mutex> l(registryLock);registry.erase(handle);}
 

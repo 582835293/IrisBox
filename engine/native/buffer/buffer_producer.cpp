@@ -170,7 +170,12 @@ static int previewOnce(const Options& option) {
     if(getuid()!=0||!guestIdentity(option.initTick)||option.width!=640||option.height!=360)return 3;
     ProcessState::self()->setThreadPoolMaxThreadCount(0);ProcessState::self()->startThreadPool();
     auto id=SurfaceComposerClient::getInternalDisplayId();if(!id)return 4;
-    gui::DisplayCaptureArgs args;args.displayToken=SurfaceComposerClient::getPhysicalDisplayToken(*id);
+#ifdef IRIS_AOSP_12
+    DisplayCaptureArgs args;
+#else
+    gui::DisplayCaptureArgs args;
+#endif
+    args.displayToken=SurfaceComposerClient::getPhysicalDisplayToken(*id);
     args.width=option.width;args.height=option.height;if(!args.displayToken)return 4;
     sp<SyncScreenCaptureListener> listener=new SyncScreenCaptureListener();
     if(ScreenshotClient::captureDisplay(args,listener)!=NO_ERROR)return 5;
@@ -321,7 +326,11 @@ public:
         if(state!=OK||source.layerStackSpaceRect.getWidth()<=0||source.layerStackSpaceRect.getHeight()<=0)return 6;
         logicalWidth=uint32_t(source.layerStackSpaceRect.getWidth());logicalHeight=uint32_t(source.layerStackSpaceRect.getHeight());
         printf("IGB_SOURCE {\"logicalWidth\":%u,\"logicalHeight\":%u,\"layerStack\":%u,\"orientation\":%u,\"captureCalls\":0,\"pixelLockCalls\":0}\n",
+#ifdef IRIS_AOSP_12
+            logicalWidth,logicalHeight,source.layerStack,unsigned(source.orientation));fflush(stdout);
+#else
             logicalWidth,logicalHeight,source.layerStack.id,unsigned(source.orientation));fflush(stdout);
+#endif
         if(option.mode=="capture")return capture();return virtualOutput();
     }
     void report(int result) const {
@@ -339,7 +348,13 @@ private:
     uint32_t logicalWidth=0,logicalHeight=0;uint64_t sentFrames=0,presentAcks=0,releaseAcks=0,captureCalls=0,lastFrameNumber=0;size_t maximumInFlight=0;
     bool captureReleased=false,cleaned=false,requestedStop=false;
     int capture() {
-        sp<CaptureListener> callback=new CaptureListener();gui::DisplayCaptureArgs args;args.displayToken=sourceToken;
+        sp<CaptureListener> callback=new CaptureListener();
+#ifdef IRIS_AOSP_12
+        DisplayCaptureArgs args;
+#else
+        gui::DisplayCaptureArgs args;
+#endif
+        args.displayToken=sourceToken;
         args.width=option.width;args.height=option.height;args.pixelFormat=ui::PixelFormat::RGBA_8888;args.dataspace=ui::Dataspace::V0_SRGB;
         armOperation();++captureCalls;const status_t requested=ScreenshotClient::captureDisplay(args,callback);disarmOperation();
         if(requested!=OK)return 7;gui::ScreenCaptureResults result;if(!callback->wait(&result)||result.result!=OK||!result.buffer)return 7;

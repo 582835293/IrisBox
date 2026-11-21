@@ -1,0 +1,25 @@
+# IrisBox OPi5 (Android 12) 容器 System 侧核心兼容叠加脚本
+# 由 inner.sh 复制到 /system/etc/init/zz_iris_guest.rc
+on early-init
+    setprop ro.zygote.disable_gl_preload true
+
+on fs
+    # /data 由宿主机私有绑定挂载提供，Guest 内不存在物理加密块设备
+    setprop ro.crypto.state unsupported
+    setprop ro.crypto.type none
+
+on boot
+    trigger nonencrypted
+
+# Guest 不加载宿主机全局 BPF 程序；由 netd_no_bpf + libnetdbpf_no_bpf.so 兼容并保留私有 UID 表
+service bpfloader /system/bin/true
+    override
+    disabled
+    oneshot
+
+# 设备节点由容器启动器隔离制备，禁止核心类拉起物理 ueventd
+service ueventd /system/bin/ueventd
+    override
+    disabled
+    oneshot
+    seclabel u:r:ueventd:s0

@@ -15,13 +15,13 @@ if [ -f "$DIR/input.identity" ]; then
         kill -TERM "$PID"
     fi
 fi
-for N in $($BB seq 1 5); do
+for N in $($BB seq 1 150); do
     if "$BB" flock -n "$DIR/input.lock" "$BB" true; then
         rm -f "$DIR/input.sock" "$DIR/input.ready"
         echo "Guest input stopped; session $SESSION"
         exit 0
     fi
-    "$BB" sleep 1
+    "$BB" usleep 30000
 done
 echo 'Guest input lock did not release' >&2
 exit 7

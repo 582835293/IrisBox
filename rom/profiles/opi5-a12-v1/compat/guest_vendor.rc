@@ -1,0 +1,25 @@
+# IrisBox OPi5 (Android 12) 容器 Vendor 侧兼容叠加脚本
+# 由 inner.sh 复制到 /vendor/etc/init/zz_iris_guest_vendor.rc
+
+# 使用容器纯虚拟 HWC2 模块，避免触碰宿主 /dev/dri/card0 与 /dev/graphics/fb0
+on early-init
+    setprop ro.hardware.hwcomposer iris
+
+on late-fs
+    start vendor.hwcomposer-2-1
+
+# 用纯软件 KeyMint 服务替换 OP-TEE KeyMint，使 keystore2 / credstore 不触碰物理 TEE
+service vendor.keymint-default /system/bin/hw/android.hardware.security.keymint-service.soft
+    override
+    class early_hal
+    user nobody
+    seclabel u:r:hal_keymint_default:s0
+
+# 保留原厂 OMX 编解码提供方（仅加载 Google 软解音频/视频 XML）
+service vendor.media.omx /vendor/bin/hw/android.hardware.media.omx@1.0-service
+    override
+    class main
+    user mediacodec
+    group camera drmrpc mediadrm
+    ioprio rt 4
+    writepid /dev/cpuset/foreground/tasks

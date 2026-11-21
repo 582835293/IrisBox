@@ -1,92 +1,87 @@
 # IrisBox · Android Container
 
-[简体中文](README.zh-CN.md) · **English** · [Downloads & SHA-256](DOWNLOADS.md) · [GitHub Releases](https://github.com/582835293/IrisBox/releases)
+[简体中文](README.zh-CN.md) · English
 
-**IrisBox (虹膜空间)** runs multiple isolated Android userspaces inside a rooted Raspberry Pi 4 Android host. Instances share the host Linux kernel while maintaining separate namespaces (User / Mount / PID / Network / IPC / UTS / Cgroup), private BinderFS instances, OverlayFS write layers, and independent app data.
+IrisBox (**虹膜空间**) is a container manager that runs multiple isolated Android userspaces simultaneously on a rooted ARM64 Android host using Linux namespaces (all 7 namespaces with unprivileged User-namespace UID mapping), private BinderFS, and OverlayFS. Workflow: **Install APK → Grant host Magisk root → Install built-in engine → Import compatible ROM → Create instance → Start**.
 
-> [!IMPORTANT]
-> **Preview Scope & Upgrade Requirements (v0.1.6 / Engine e27)**
-> - **Matched Host Profile Only**: Requires a **Raspberry Pi 4 (ARM64, ~4 GiB RAM)** running the exact matched **Raspberry Vanilla AOSP 13** build with Wi-Fi and an already configured **Permissive** SELinux environment. Root access alone does not make other boards or arbitrary Android ROMs compatible.
-> - **User-Installed Host Magisk**: Install host Magisk yourself following upstream instructions and the board's boot partition layout. IrisBox never installs or patches host Magisk.
-> - **Mandatory Migrations for Existing Users**:
->   - Existing `0.1.4 / e21` installations must complete the stopped-state [0.1.5 Namespace Migration and Recovery](docs/en/namespace-migration.md) and grant normal host root to the new `com.irisbox.viewer` package.
->   - Existing `0.1.2 / e13` installations must complete the stopped-state [User Namespace Isolation and Migration](docs/en/userns.md) before starting instances.
+Version **`0.3.0`** (engine **`0.3.0-e41`**) runs on a unified **ARM64 container core + declarative Board Profiles (`board.json`)** across two verified host platforms:
 
----
+- **Raspberry Pi 4B (`rpi4-a13-v1`)**: Raspberry Vanilla AOSP 13 (Linux 5.15 / Mesa V3D), with a public AOSP `.irisrom` and clean USB host image preview.
+- **Orange Pi 5 (`opi5-a12-v1`)**: RK3588S Android 12 (Linux 5.10 / Mali-G610), featuring enforced external NVMe/USB SSD isolation (`/data/irisbox` UUID binding + boot restoration). No proprietary/GMS ROM is redistributed for Orange Pi 5.
 
-## Key Capabilities
+Instances share the host Linux kernel (no CPU emulation, no guest kernel boot). Apps, accounts, writable overlays, and configs stay isolated per instance; arbitrary phone ROMs cannot be imported.
 
-| Area | Summary |
-| :--- | :--- |
-| **Multi-Instance Isolation** | Independent app data, configurable memory ceilings (`0.5`–`2.5 GiB`), resolution presets, live orientation switching (`Follow app` / `Landscape` / `Portrait`), and lifecycle controls. |
-| **User Namespace Identity** | Every instance runs in a dedicated User namespace (`0.1.3+`). Guest `root (UID 0)` maps to an unprivileged host UID block (`2000000000+`) with **no Host-UID0 fallback**. |
-| **Verified ROM Import** | Enforces path safety, size bounds, manifest structure, and per-file SHA-256 checks. Extracts regular files only—no installer scripts from ROM archives are ever executed. |
-| **Host Swap Control (v0.1.6)** | App-managed shared host swap (`Off` / `1 GiB` / `2 GiB` / `4 GiB`) with optional automatic restoration across host reboots via user-installed host Magisk. |
-| **Display, Input & Media** | ~1 fps live list previews; shared-buffer fullscreen rendering with fence synchronization; mouse/keyboard/touch input modes; per-instance 48 kHz PCM audio playback and software video decoding. |
-| **File Exchange & Localization** | Per-instance SAF file import/export (`Downloads/IrisExchange`); persistent host App UI language selector (`System default` / `English` / `简体中文`) independent of guest Android locales. |
-| **Optional Guest Root & Google** | **Guest Root (Magisk)**: Bundled adapted component with per-instance toggle and rescue startup mode (separate from host Magisk).<br>**Google Layer**: The public AOSP ROM excludes Google apps and accounts. Optional Google support accepts separately supplied, properly licensed matching components; existing private Google instances retain their ROM and sign-in state. |
+## Get started
 
----
+1. Read the [host and installation guide](docs/en/installation.md) and [release/image boundaries](docs/08_国际化与发布.md) to verify kernel support, GPU nodes, Wi-Fi, and Permissive setup (Orange Pi 5 additionally requires binding an external SSD under `/data/irisbox`).
+2. **Install host Magisk yourself** per its upstream guide for your board. IrisBox never installs host Magisk or modifies host partitions/SELinux.
+3. Install `IrisBox-0.3.0.apk`, tap **Authorize and check**, then **Install engine**.
+4. On Raspberry Pi 4, import `IrisBox-rpi4-a13-aosp.irisrom` and create/start an instance. On Orange Pi 5, prepare a matching local ROM per [the OPi5 adaptation notes](docs/14_香橙派5内核与存储适配记录.md).
+5. Use **EN / 中文** to switch System default, English, or 简体中文 for the host UI without altering guest locales or data.
 
-## Quick Start
+[Downloads and SHA-256](DOWNLOADS.md) · [GitHub Releases](https://github.com/582835293/IrisBox/releases)
 
 ![IrisBox illustrated usage workflow](docs/images/usage.en.svg)
 
-*Note: The diagram above illustrates the workflow and contains no account or device data.*
+The diagram illustrates the workflow and contains no account or device data.
 
-1. **Verify the Host**: Read the [Installation and Host Image Guide](docs/en/installation.md) to confirm the matched build fingerprint, kernel namespaces, GPU stack, Wi-Fi, and Permissive setup.
-2. **Prepare Host Root**: Install **host Magisk yourself** according to the Raspberry Pi boot partition layout.
-3. **Install the Engine**: Install `IrisBox-0.1.6.apk`, open IrisBox, and select **1 · Authorize and check**, then **2 · Install engine**.
-4. **Import a Compatible ROM**: Select **3 · Import ROM** and pick `IrisBox-rpi4-a13-aosp.irisrom`.
-5. **Create & Launch an Instance**: Open **4 · Manage instances** → **New instance** → **Start**, wait for **Desktop ready**, and select **Enter**.
+Existing `0.1.5`–`0.2.1` installations can upgrade the engine in place while preserving instance data via `tools/upgrade_engine.py --apply` (no repeated UID remapping needed). Earlier `0.1.4/e21` setups must first follow the stopped-state [namespace migration guide](docs/en/namespace-migration.md).
 
----
+## Key capabilities & 0.3.0 highlights
 
-## Device Captures & Validation Highlights
+- **Board decoupling (`0.2.0`+)**: `engine/boards/<profile>/board.json` + `tools/board_profiles.py` synchronize SoC parameters, Android 12/13 BPF modes, memory ceilings, and media filters from a single source. Orange Pi 5 enforces dedicated external SSD mounting (`storage_ssd.sh` + Magisk `service.d` auto-restore) to keep host internal flash clean.
+- **Identity isolation & safe ROM import**: Dedicated 7-namespace isolation with disjoint non-root Host UID ranges and zero Host-UID0 fallback ([UserNS guide](docs/en/userns.md)); ROM imports verify paths, sizes, and per-file SHA-256 without executing archive scripts.
+- **Dynamic uplink probing & egress control (`0.2.1`+)**: Tracks active physical uplinks (`wlan0` / `eth0`) and VPN `tun` interfaces, with per-guest direct/proxy egress and live `auto` / `domestic` / `overseas` / custom DNS switching while preserving shared eBPF `INTERNET` permission enforcement.
+- **Sub-second fullscreen handoff & audio/video bridge**: Direct shared-buffer GPU output, live orientation switching, parallelized display handoff (~`0.65s–0.85s` observed on Orange Pi 5, `~0.93s` on Raspberry Pi 4), 48 kHz PCM `AudioBridge`, touch/keyboard/mouse input, and fullscreen Recents button.
+- **Live Linux/Cgroup/FPS telemetry & swap protection**: Zero-fork `LinuxTelemetry` reads hierarchical memcg `total_rss`/`total_cache`/`Swap`/`majfault`, PSI, 7 namespaces, and 500ms sliding-window FPS/composition rate/Fence latency into card bars, an auto-refreshing monitor dialog, and a persistent fullscreen performance HUD. Retains 1/2/4 GiB host swap and available-RAM guardrails.
+- **Cross-instance migration & safety gate (`0.3.0`)**: Host-to-guest APK installs and guest-to-guest migration (`APK` / `Android/data` / optional `/data/data` with UID/SELinux relabeling). Because migrating social session data across different container fingerprints can trigger vendor risk bans, `0.3.0` enforces an explicit typed-phrase gate before unlocking `/data/data` migration and blocks `/data/data` migration for high-risk messaging apps (WeChat / QQ / TIM / WeWork).
 
-> [!NOTE]
-> All screenshots below are real device captures cropped and privacy-redacted with the owner's permission (no AI redraw). See [Device Captures Details](docs/images/README.md) and the [Validation Report](docs/en/validation.md) for full test conditions and boundaries.
+Public ROMs contain AOSP and compatibility overlays **without Google apps or accounts**. Optional Google support requires user-supplied matching components; guest Magisk remains per-instance and separate from host Magisk.
 
-### 1. Simultaneous Instances & Dual Heavy Games (v0.1.6 / e27)
+## Validation summary
 
-| Dual Running Instances (768 MiB + 2048 MiB) | Simultaneous Games: Clash of Clans (1024 MiB) + Angry Birds 2 (2048 MiB) |
-| :---: | :---: |
-| ![Two simultaneously running instances](docs/images/dual-instances.png) | ![Two games running together: Clash village and Angry Birds 2 tutorial result](docs/images/dual-games.png) |
+Real-hardware verification highlights across `0.1.4`–`0.3.0` (full logs, conditions, and boundaries are in [the Chinese validation log](docs/06_验收记录.md) and [English summary](docs/en/validation.md)):
 
-- **Test Conditions**: Tested on a 4 GB Raspberry Pi 4 with **2 GiB shared host swap**, running a `1024 MiB` ordinary guest (Clash of Clans tutorial village) alongside a `2048 MiB` Google + Magisk guest (Angry Birds 2).
-- **Observed Results**: Real fullscreen Viewer interaction passed in both games, including Angry Birds 2 tutorial slingshot launches, target destruction, Red's ability activation, and tutorial completion at **203,332 points**. Clash of Clans recovered from a normal idle disconnect via its built-in `Reload Game` flow prior to the dual capture.
-- **Scope Boundary**: This validates short tutorial interaction only and is **not a guarantee of long-duration battles, clan wars, or stable frame rates**.
+- **Raspberry Pi 4B (AOSP 13 / 3.69 GiB)**: `0.2.1-e40` in-place upgrade verified; `1010` (2048 MiB Google+Magisk) booted in `85.9s` with `eth0` connectivity, live DNS switching, `Via`/`OpenSudoku`/`Calculator`/`Magisk Manager`, and RPi4 telemetry; earlier `0.1.6` validated simultaneous Clash + Angry Birds 2, YouTube playback, and host-reboot 2 GiB swap restoration (Play device certification remains unmet).
+- **Orange Pi 5 (RK3588S / Android 12)**: Enforced `114 GB` external SSD isolation + reboot auto-mount verified; dual instances, 60fps HUD, Douyin (`FPS 33.8–33.9` + AudioBridge) & Bilibili (`FPS 29.9`) playback, `3.70 GB` `1007 -> 1010` streaming migration, and the `0.3.0` `/data/data` safety-gate warning dialog passed on device.
 
-### 2. Play Store Downloads, Media & Host Swap
+### Early device captures (Raspberry Pi 4 archive)
 
-| Play Installation in Progress | Installed from Play | Tiantian Xiangqi Puzzle Board |
-| :---: | :---: | :---: |
+| Play installation in progress | Installed from Play | Tiantian Xiangqi running |
+|---|---|---|
 | ![Actual Play installation](docs/images/play-download.png) | ![Installed calculator with Open button](docs/images/play-installed.png) | ![Actual game puzzle board](docs/images/game-running.png) |
 
-| Clash of Clans Tutorial Village | YouTube Video Playback | Angry Birds 2 Target Destruction | Host Swap Settings (English) |
-| :---: | :---: | :---: | :---: |
+![Two simultaneously running instances](docs/images/dual-instances.png)
+
+![Two games running together: Clash village and Angry Birds 2 tutorial result](docs/images/dual-games.png)
+
+| Clash of Clans tutorial village | YouTube video playback | Angry Birds 2 actual target destruction | Swap settings |
+|---|---|---|---|
 | ![Clash village and tutorial](docs/images/clash-village.png) | ![YouTube playback](docs/images/youtube-playback.png) | ![Actual Angry Birds 2 shot](docs/images/angry-gameplay.png) | ![English swap settings](docs/images/swap-settings-en.png) |
 
-- **Play Store vs. Device Certification**: Version `0.1.4` restored the Play Store catalog and installed Open Sudoku and Google Calculator directly from Play, but **Play Protect device certification (`Device is not certified`) has still not passed**. Custom-ROM GSF registration does not establish device certification; see [Google Play Recovery and Certification](docs/en/google-recovery.md).
-- **QR Login Confirmation**: The Tiantian Xiangqi capture shows a puzzle board; the device owner separately confirmed WeChat and QQ QR login and gameplay (the static board capture alone does not prove an online match).
+Above captures are early owner-approved crops/redactions with no AI redraw; newer OPi5 and RPi4 raw screenshots remain private per project rules. [Image details](docs/images/README.md).
 
----
+## Documentation
 
-## Documentation Index
+| English | 简体中文 |
+|---|---|
+| [Architecture and isolation](docs/en/architecture.md) | [技术架构与隔离边界](docs/02_技术架构.md) |
+| [Comparison and learning route](docs/en/comparison.md) | [对比与学习](docs/05_对比与学习.md) |
+| [Build, maintenance and recovery](docs/en/building.md) | [构建、升级与维护](docs/04_构建与维护.md) |
+| [Validation and limitations](docs/en/validation.md) | [详细验收记录](docs/06_验收记录.md)、[登录后回归](docs/07_登录后回归与修复.md) |
+| [Installation and clean host image](docs/en/installation.md) | [安装与使用](docs/01_安装与使用.md)、[发布与镜像](docs/08_国际化与发布.md) |
+| [User namespace isolation](docs/en/userns.md) | [User namespace 隔离与迁移](docs/09_User_namespace隔离与迁移.md) |
+| [0.1.5 namespace migration](docs/en/namespace-migration.md) | [Iris 命名迁移](docs/11_Iris命名迁移.md) |
+| [Swap, low memory and recovery](docs/en/low-memory.md) | [交换空间与低内存恢复](docs/12_低内存与临时交换空间.md) |
+| [ROM format](docs/en/rom-format.md) | [ROM 规范](docs/03_ROM规范.md) |
+| [Google Play recovery and certification](docs/en/google-recovery.md) | [Google 商店恢复与认证说明](docs/10_Google商店恢复与认证说明.md) |
+| — | [网络上行探测与出口策略设计](docs/13_网络上行探测与出口策略设计.md) |
+| — | [香橙派 5 内核与存储适配记录](docs/14_香橙派5内核与存储适配记录.md) |
 
-| Topic | English | 简体中文 |
-| :--- | :--- | :--- |
-| **Installation & Host Image** | [Installation and Clean Host Image](docs/en/installation.md) | [安装与使用](docs/01_安装与使用.md) · [国际化、发布与干净镜像](docs/08_国际化与发布.md) |
-| **Architecture & ROM Spec** | [Architecture and Isolation Boundaries](docs/en/architecture.md) · [ROM Format v1](docs/en/rom-format.md) | [技术架构与隔离边界](docs/02_技术架构.md) · [ROM 包规范 v1](docs/03_ROM规范.md) |
-| **Namespace & Identity Migration** | [0.1.5 Namespace Migration](docs/en/namespace-migration.md) · [User Namespaces](docs/en/userns.md) | [0.1.5 Iris 命名迁移与恢复](docs/11_Iris命名迁移.md) · [User Namespace 隔离与迁移](docs/09_User_namespace隔离与迁移.md) |
-| **Swap & Google Play** | [Swap, Low Memory and Recovery](docs/en/low-memory.md) · [Google Play Recovery](docs/en/google-recovery.md) | [交换空间与低内存恢复](docs/12_低内存与临时交换空间.md) · [Google 商店恢复与认证说明](docs/10_Google商店恢复与认证说明.md) |
-| **Build & Engineering** | [Building and Maintenance](docs/en/building.md) · [Comparison and Learning Route](docs/en/comparison.md) | [构建、恢复与维护](docs/04_构建与维护.md) · [与旧项目对比及学习路线](docs/05_对比与学习.md) |
-| **Validation Records** | [Validation and Limitations](docs/en/validation.md) | [首次验收与历次回归](docs/06_验收记录.md) · [登录后回归与修复](docs/07_登录后回归与修复.md) |
+## Preview & safety boundaries
 
----
+- **Unverified flashing & fresh-host setup**: The clean RPi4 USB host image (`USB/sda`, 16 GB+, 12 GiB blank userdata, not SD/mmc) passed static checks only; **a fresh physical USB-disk flash and first boot have not been tested**, nor has initial BPF dispatcher creation on a completely clean host that never ran Project Iris.
+- **Out of scope**: Arbitrary kernels/SoCs, SELinux `Enforcing`, physical camera/microphone passthrough, hardware DRM playback, Play Integrity / Google device certification, and arbitrary third-party Root modules.
+- **Anti-fraud / account risk boundary**: Migrating `/data/data` transfers app state into a different container identity (`SSAID`, virtual MAC). Sensitive apps (e.g., WeChat, QQ, commercial risk-controlled clients) can impose account restrictions; rely on APK-only migration and fresh in-container logins.
 
-## Preview Boundaries & Legal Notices
-
-1. **Clean Host Flash Image (`USB / sda` Only)**: The `.img.xz` preview image combines unmodified factory `boot` / `system` / `vendor` partitions with a freshly formatted **12 GiB empty `userdata`** partition for a **16 GB or larger USB disk**. It is **not an SD / `mmc` image**. Static partition and filesystem checks are recorded, but **a physical flash and first boot on a spare USB disk have not been tested**.
-2. **Unsupported Scope**: Other kernels or devices, Enforcing SELinux, hardware camera/microphone passthrough, DRM-protected video, Play Integrity, per-app project disk quotas in mapped guests, and arbitrary third-party Root modules are not covered.
-3. **Provenance & Licensing**: IrisBox (`com.irisbox.viewer`, `/data/irisbox`) is maintained independently while keeping `.irisrom` compatibility; the previous reference project remains read-only. See [Third-Party Notices](THIRD_PARTY_NOTICES.md) and [Source Provenance](reference/NOTICE.md). Publishing this repository does not relicense third-party components, and project-specific source currently carries no blanket license grant. Signing keys, user accounts, instance data, and raw device logs/screenshots are excluded.
+See [third-party notices](THIRD_PARTY_NOTICES.md) and [source provenance](reference/NOTICE.md). Project-specific code carries no blanket license grant; keys, user data, proprietary/GMS ROMs, and raw device logs/screenshots are excluded from public distribution.

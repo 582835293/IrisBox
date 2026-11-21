@@ -40,6 +40,7 @@ trap 'exit 7' HUP INT TERM
 echo "$$ $(ticks $$)" > "$LOG/watchdog.ready"
 START_SECONDS=$($BB date +%s)
 N=0
+NEXT_NET_RECONCILE=0
 # Continue checking identity and memory even when the lifetime is unlimited.
 while [ "$MAX_SECONDS" = 0 ] || [ "$N" -lt "$MAX_SECONDS" ]; do
     if [ -f "$LOG/network.request" ] && [ ! -f "$LOG/network.ready" ]; then
@@ -66,8 +67,17 @@ while [ "$MAX_SECONDS" = 0 ] || [ "$N" -lt "$MAX_SECONDS" ]; do
                 break
             fi
         fi
+        # 每 5 秒协调一次实例动态上行出口（支持无网启动后自动补齐与 Wi-Fi/有线热切换）。
+        if [ "$N" -ge "$NEXT_NET_RECONCILE" ] && [ -f "$LOG/network.ready" ] && [ -f "$LOG/network.request" ]; then
+            NEXT_NET_RECONCILE=$((N + 5))
+            NET_REQ_SESSION=$(cat "$LOG/network.request" 2>/dev/null || true)
+            if [ -n "$NET_REQ_SESSION" ]; then
+                /system/bin/sh "$BASE/network.sh" reconcile "$ID" "$NET_REQ_SESSION" "$LOG" >> "$LOG/network.reconcile.log" 2>&1 || true
+            fi
+        fi
         AVAILABLE=$($BB awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
-        if [ "$AVAILABLE" -lt 524288 ]; then echo 'Host available memory below 512 MiB'; break; fi
+        STOP_KIB=${HOST_STOP_BELOW_KIB:-524288}
+        if [ "$AVAILABLE" -lt "$STOP_KIB" ]; then echo "Host available memory below $((STOP_KIB / 1024)) MiB"; break; fi
     elif [ "$N" -gt 30 ] && groups_empty; then
         echo 'Startup failed before init; groups empty'; exit 0
     elif [ "$N" -ge 75 ]; then

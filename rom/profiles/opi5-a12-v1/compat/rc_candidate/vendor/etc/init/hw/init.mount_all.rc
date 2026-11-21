@@ -1,0 +1,11 @@
+# 容器 Guest 挂载与早期核心 HAL 触发（跳过物理 mount_all / optee / 硬件 composer）
+on init
+    start vendor.keymint-default
+
+on early-fs
+    start vold
+
+on late-fs
+    start servicemanager
+    start vendor.gralloc-4-0
+    start surfaceflinger

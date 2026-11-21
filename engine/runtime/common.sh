@@ -52,15 +52,54 @@ registered_instance() {
 # ------------------------------------------------------------------------------
 MEM=/dev/memcg/irisbox_$ID
 PIDS=/sys/fs/cgroup/irisbox_$ID
-MEM_BYTES=1342177280      # 默认 1280 MiB 对应的字节数
-MEM_DEFAULT_MIB=1280     # 默认内存配额（MiB）
-MEM_MIN_MIB=512          # 允许配置的最小内存（MiB）
-MEM_MAX_MIB=2560         # 允许配置的最大内存（MiB）
-MAX_TASKS=1536           # 普通实例最大并发任务/线程数上限
+. "$BASE/board.sh"
+iris_detect_board || return 4
+MEM_DEFAULT_MIB=$BOARD_MEM_DEFAULT_MIB     # 默认内存配额（MiB）
+MEM_MIN_MIB=$BOARD_MEM_MIN_MIB             # 允许配置的最小内存（MiB）
+MEM_MAX_MIB=$BOARD_MEM_MAX_MIB             # 允许配置的最大内存（MiB）
+HOST_RESERVE_MIB=$BOARD_HOST_RESERVE_MIB   # 为宿主保留的内存余量（MiB）
+HOST_STOP_BELOW_KIB=$BOARD_HOST_STOP_BELOW_KIB
+MEM_BYTES=$("$BB" awk -v mib="$MEM_DEFAULT_MIB" 'BEGIN {printf "%.0f", mib * 1048576}')
+MAX_TASKS=$BOARD_MAX_TASKS                 # 普通实例最大并发任务/线程数上限
+
+# 探测指定 ROM 目录的 Google 支持模式：
+# optional = 外挂 compat/google（如 AOSP13 54 文件层）；
+# builtin  = ROM 系统分区原生内置 GMS/Play 商店；
+# none     = 无 Google 服务组件。
+rom_google_mode() {
+    _rg_rom=${1:-$ROM}
+    _rg_compat=$_rg_rom/compat
+    if [ ! -L "$_rg_compat/google" ] && [ -f "$_rg_compat/google/component.id" ] && [ ! -L "$_rg_compat/google/component.id" ] && [ -d "$_rg_compat/google/rootfs" ] && [ ! -L "$_rg_compat/google/rootfs" ]; then
+        printf 'optional\n'
+        return 0
+    fi
+    if [ -f "$_rg_rom/rom.json" ] && [ ! -L "$_rg_rom/rom.json" ]; then
+        if "$BB" grep -qE '"googleMode"[[:space:]]*:[[:space:]]*"builtin"|"googleBuiltin"[[:space:]]*:[[:space:]]*true' "$_rg_rom/rom.json" 2>/dev/null; then
+            printf 'builtin\n'
+            return 0
+        fi
+    fi
+    _rg_sys=$_rg_rom/system.lower
+    if [ -d "$_rg_sys" ] && [ ! -L "$_rg_sys" ]; then
+        _rg_play=0
+        _rg_gms=0
+        for _rg_p in system/priv-app system/product/priv-app product/priv-app system/system_ext/priv-app system_ext/priv-app; do
+            if [ -f "$_rg_sys/$_rg_p/Phonesky/Phonesky.apk" ]; then _rg_play=1; fi
+            if [ -f "$_rg_sys/$_rg_p/PrebuiltGmsCore/PrebuiltGmsCore.apk" ] || [ -f "$_rg_sys/$_rg_p/GmsCore/GmsCore.apk" ]; then _rg_gms=1; fi
+        done
+        if [ "$_rg_play" = 1 ] && [ "$_rg_gms" = 1 ]; then
+            printf 'builtin\n'
+            return 0
+        fi
+    fi
+    printf 'none\n'
+}
 
 # 首次登录 Google 账号同步和 Google Play 会创建大量正常的进程与线程。
-# 此处设置一个有限上限（3072）；未启用 Google 核心套件的普通 Guest 保留较小的初始配额（1536）。
-[ ! -f "$RUN/google.core.enabled" ] || MAX_TASKS=3072
+# 为启用外挂 Google 层或原生内置 GMS 的实例分配更高的任务配额。
+if [ -f "$RUN/google.core.enabled" ] || [ "$(rom_google_mode "$ROM")" = builtin ]; then
+    MAX_TASKS=$BOARD_GOOGLE_MAX_TASKS
+fi
 
 # ------------------------------------------------------------------------------
 # 【内存配置读写与校验函数】
@@ -68,7 +107,7 @@ MAX_TASKS=1536           # 普通实例最大并发任务/线程数上限
 # 校验内存数值范围：纯数字且介于 512 ~ 2560 MiB 之间
 valid_memory_mib() {
     case "$1" in ''|*[!0-9]*|0*) return 2 ;; esac
-    [ "${#1}" -le 4 ] && [ "$1" -ge "$MEM_MIN_MIB" ] && [ "$1" -le "$MEM_MAX_MIB" ]
+    [ "${#1}" -le 5 ] && [ "$1" -ge "$MEM_MIN_MIB" ] && [ "$1" -le "$MEM_MAX_MIB" ]
 }
 
 # 读取保存的内存配置：严格防御符号链接，防止路径穿越
@@ -103,6 +142,31 @@ alive() {
 }
 
 # ------------------------------------------------------------------------------
+# 【函数：iris_require_external_storage】
+# 若当前板卡要求外置存储（BOARD_REQUIRE_EXTERNAL_MOUNT=1）或已配置外置存储绑定文件，
+# 强制核验 /data/irisbox 已挂载为独立的 ext4 文件系统且标记匹配，拦截写入内部 /data。
+# ------------------------------------------------------------------------------
+iris_require_external_storage() {
+    _conf=/data/adb/irisbox_storage.conf
+    _need=${BOARD_REQUIRE_EXTERNAL_MOUNT:-0}
+    if [ "$_need" != 1 ] && [ ! -e "$_conf" ]; then
+        return 0
+    fi
+    [ ! -L /data/irisbox ] && [ -d /data/irisbox ] || { echo 'SSD_NOT_MOUNTED：/data/irisbox 尚未就绪' >&2; return 4; }
+    [ ! -L "$_conf" ] && [ -f "$_conf" ] || { echo 'SSD_UNBOUND：请先绑定并挂载外置 SSD 至 /data/irisbox' >&2; return 4; }
+    read _magic _uuid _extra < "$_conf" || return 4
+    [ "$_magic" = IRISBOX_SSD_V1 ] && [ -n "$_uuid" ] && [ -z "$_extra" ] || { echo 'SSD_CONF_INVALID' >&2; return 4; }
+    _d_data=$("$BB" stat -c '%d' /data 2>/dev/null || echo 0)
+    _d_iris=$("$BB" stat -c '%d' /data/irisbox 2>/dev/null || echo 0)
+    [ "$_d_iris" != 0 ] && [ "$_d_iris" != "$_d_data" ] || { echo 'SSD_NOT_MOUNTED：外置 SSD 未挂载至 /data/irisbox，已拦截写入内部存储' >&2; return 4; }
+    "$BB" grep -qE '^[^ ]+ /data/irisbox ext4 ' /proc/mounts || { echo 'SSD_NOT_MOUNTED：/data/irisbox 非 ext4 挂载点' >&2; return 4; }
+    _marker=/data/irisbox/.irisbox_ssd_marker
+    [ ! -L "$_marker" ] && [ -f "$_marker" ] || { echo 'SSD_MARKER_MISMATCH：缺少外置 SSD 所有权标记' >&2; return 4; }
+    read _mm _mu _me < "$_marker" || return 4
+    [ "$_mm" = IRISBOX_SSD_V1 ] && [ "$_mu" = "$_uuid" ] && [ -z "$_me" ] || { echo 'SSD_MARKER_MISMATCH：外置 SSD 标记与绑定不匹配' >&2; return 4; }
+}
+
+# ------------------------------------------------------------------------------
 # 【函数：host_only】
 # 宿主全局入口安全检查：
 # 1. 必须是 root（UID 0）；
@@ -115,6 +179,7 @@ host_only() {
     for N in pid mnt net ipc uts cgroup; do
         [ "$($BB readlink /proc/$$/ns/$N)" = "$($BB readlink /proc/1/ns/$N)" ] || return 3
     done
+    iris_require_external_storage || return 4
 }
 
 # ------------------------------------------------------------------------------

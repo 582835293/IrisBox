@@ -52,7 +52,7 @@ public final class FileActivity extends Activity {
     @Override protected void attachBaseContext(android.content.Context base) {super.attachBaseContext(I18n.wrap(base));}
 
     private static final int PICK_IMPORT=51,PICK_EXPORT=52;
-    private static final long MAX_BYTES=TransferIO.MAX_BYTES,DEADLINE_MS=120000;
+    private static final long MAX_BYTES=TransferIO.MAX_BYTES,DEADLINE_MS=1800000L;
     private final Handler ui=new Handler(Looper.getMainLooper());
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
     private final ExecutorService closer=Executors.newCachedThreadPool();
@@ -94,7 +94,7 @@ public final class FileActivity extends Activity {
         root.addView(label(I18n.s(R.string.ui_6bac12d05195),15));
         status=label(I18n.s(R.string.ui_84cb10f62524),14);status.setContentDescription(InstanceNames.description("files-status",number));root.addView(status);
         LinearLayout actions=new LinearLayout(this);importButton=button(I18n.s(R.string.ui_8fb6f00ec5b5),"files-import",this::pickImport);refreshButton=button(I18n.s(R.string.ui_bd82e40e45a0),"files-refresh",this::refresh);actions.addView(importButton);actions.addView(refreshButton);root.addView(actions);
-        transfer=label(I18n.s(R.string.ui_b6d520e0511f),14);transfer.setContentDescription(InstanceNames.description("files-progress",number));root.addView(transfer);
+        transfer=label(I18n.s(R.string.ui_4dc252ccceba),14);transfer.setContentDescription(InstanceNames.description("files-progress",number));root.addView(transfer);
         LinearLayout meter=new LinearLayout(this);meter.setGravity(Gravity.CENTER_VERTICAL);progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(1000);meter.addView(progress,new LinearLayout.LayoutParams(0,dp(28),1));cancelButton=button(I18n.s(R.string.ui_965b34119adf),"files-cancel",()->cancel(I18n.s(R.string.ui_910383278517)));meter.addView(cancelButton);root.addView(meter);
         ScrollView scroll=new ScrollView(this);fileRows=column();scroll.addView(fileRows);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));setContentView(root);controls();
     }
@@ -148,7 +148,7 @@ public final class FileActivity extends Activity {
     }
     private void upload(Operation op)throws Exception{
         String name=null;long total=-1;try(Cursor c=getContentResolver().query(op.uri,new String[]{OpenableColumns.DISPLAY_NAME,OpenableColumns.SIZE},null,null,null,op.signal)){if(c!=null&&c.moveToFirst()){int ni=c.getColumnIndex(OpenableColumns.DISPLAY_NAME),si=c.getColumnIndex(OpenableColumns.SIZE);if(ni>=0)name=c.getString(ni);if(si>=0&&!c.isNull(si))total=c.getLong(si);}}
-        if(!validName(name))throw new IOException(I18n.s(R.string.ui_826bfe2082bf));if(total<0)throw new IOException(I18n.s(R.string.ui_d32e536f4db2));if(total>MAX_BYTES)throw new IOException(I18n.s(R.string.ui_2a5e7a625b48));op.name=name;op.total=total;op.check();
+        if(!validName(name))throw new IOException(I18n.s(R.string.ui_826bfe2082bf));if(total<0)throw new IOException(I18n.s(R.string.ui_d32e536f4db2));if(total>MAX_BYTES)throw new IOException(I18n.s(R.string.ui_1068ea092b81));op.name=name;op.total=total;op.check();
         HttpURLConnection c=open("POST",query("/import",name),op);c.setDoOutput(true);c.setFixedLengthStreamingMode(total);c.setRequestProperty("Content-Type","application/octet-stream");
         MessageDigest digest=MessageDigest.getInstance("SHA-256");AssetFileDescriptor descriptor=getContentResolver().openAssetFileDescriptor(op.uri,"r",op.signal);if(descriptor==null)throw new IOException(I18n.s(R.string.ui_63bda37a9075));op.provider=descriptor;op.check();op.input=descriptor.createInputStream();op.requestStarted=true;op.output=c.getOutputStream();copy(op,op.input,op.output,total,digest);op.output.close();op.output=null;op.check();
         int code=c.getResponseCode();if(code!=201)throw rejected(c,code);JSONObject receipt=readJson(c);requireIdentity(receipt);if(!name.equals(receipt.optString("name"))||receipt.optLong("bytes",-1)!=total||!hex(digest.digest()).equalsIgnoreCase(receipt.optString("sha256")))throw new IOException(I18n.s(R.string.ui_32e568babef7));op.check();checkLive();op.check();op.completed=true;
@@ -177,10 +177,10 @@ public final class FileActivity extends Activity {
     private void cancel(String why){Operation op=operation;if(op==null||op.completed||op.cancelled)return;op.reason=why;op.cancelled=true;closeAsync(op.signal::cancel);closeAsync(op::close);ui.post(()->{if(operation==op&&!destroyed){transfer.setText(why+I18n.s(R.string.ui_5d8e922bf35b));cancelButton.setEnabled(false);}});}
     private final class Operation {
         final Uri uri;final boolean upload;final long started=SystemClock.elapsedRealtime();final CancellationSignal signal=new CancellationSignal();
-        final Runnable timeout=()->{if(operation==this)cancel(I18n.s(R.string.ui_7a920ae53c2a));};
+        final Runnable timeout=()->{if(operation==this)cancel(I18n.s(R.string.ui_48f281f5f7ef));};
         volatile boolean cancelled,completed,requestStarted;volatile String reason=I18n.s(R.string.ui_c2013c9c102f);String name="";long total;volatile HttpURLConnection connection;volatile InputStream input;volatile OutputStream output;volatile Closeable provider;
         Operation(Uri uri,boolean upload,String name,long bytes){this.uri=uri;this.upload=upload;this.name=name;this.total=bytes;}
-        void check()throws IOException{if(cancelled||destroyed||!resumed)throw new IOException(reason);if(SystemClock.elapsedRealtime()-started>=DEADLINE_MS)throw new IOException(I18n.s(R.string.ui_ba74fe0a6d30));}
+        void check()throws IOException{if(cancelled||destroyed||!resumed)throw new IOException(reason);if(SystemClock.elapsedRealtime()-started>=DEADLINE_MS)throw new IOException(I18n.s(R.string.ui_491a0837c76c));}
         void close(){HttpURLConnection c=connection;if(c!=null){c.disconnect();connections.remove(c);}closeQuietly(provider);closeQuietly(input);closeQuietly(output);}
     }
     private HttpURLConnection open(String method,String path,Operation op)throws Exception{int openedEpoch=epoch;HttpURLConnection c=(HttpURLConnection)new URL(base+path).openConnection();connections.add(c);try{if(destroyed||!resumed||openedEpoch!=epoch)throw new IOException(I18n.s(R.string.ui_dca586ba4d8b));if(op!=null){op.connection=c;op.check();}c.setRequestMethod(method);c.setConnectTimeout(5000);c.setReadTimeout(15000);c.setInstanceFollowRedirects(false);c.setUseCaches(false);c.setRequestProperty("Authorization","Bearer "+token);return c;}catch(Exception failure){c.disconnect();connections.remove(c);throw failure;}}
@@ -196,7 +196,7 @@ public final class FileActivity extends Activity {
     }
     private JSONObject readJson(HttpURLConnection c)throws Exception{try(InputStream input=c.getInputStream()){return new JSONObject(new String(bounded(input),"UTF-8"));}}
     private static byte[] bounded(InputStream input)throws IOException{if(input==null)return new byte[0];try(ByteArrayOutputStream output=new ByteArrayOutputStream()){byte[] data=new byte[4096];int n;while((n=input.read(data))!=-1){if(output.size()+n>65536)throw new IOException(I18n.s(R.string.ui_a3415b5adf19));output.write(data,0,n);}return output.toByteArray();}}
-    private IOException rejected(HttpURLConnection c,int code){String detail="",machineCode="";try(InputStream input=c.getErrorStream()){JSONObject j=new JSONObject(new String(bounded(input),"UTF-8"));detail=j.optString("error","");machineCode=j.optString("code","");}catch(Exception ignored){}if(detail.length()>220)detail=detail.substring(0,220);String hint=code==409?I18n.s(R.string.ui_7637fa012880):code==423?I18n.s(R.string.ui_a43c7b66fb3a):code==503?I18n.s(R.string.ui_3b229178f89f):code==413?I18n.s(R.string.ui_2a5e7a625b48):code==401?I18n.s(R.string.ui_34cbe1449ed7):I18n.s(R.string.ui_4216aa6e21bd)+code+"）";return new DirectoryRefresh.Failure(code,machineCode,hint+(detail.isEmpty()?"":"："+detail));}
+    private IOException rejected(HttpURLConnection c,int code){String detail="",machineCode="";try(InputStream input=c.getErrorStream()){JSONObject j=new JSONObject(new String(bounded(input),"UTF-8"));detail=j.optString("error","");machineCode=j.optString("code","");}catch(Exception ignored){}if(detail.length()>220)detail=detail.substring(0,220);String hint=code==409?I18n.s(R.string.ui_7637fa012880):code==423?I18n.s(R.string.ui_a43c7b66fb3a):code==503?I18n.s(R.string.ui_3b229178f89f):code==413?I18n.s(R.string.ui_1068ea092b81):code==401?I18n.s(R.string.ui_34cbe1449ed7):I18n.s(R.string.ui_4216aa6e21bd)+code+"）";return new DirectoryRefresh.Failure(code,machineCode,hint+(detail.isEmpty()?"":"："+detail));}
     private void requireIdentity(JSONObject j)throws IOException{if(j.optInt("id")!=id||!session.equals(j.optString("session")))throw new IOException(I18n.s(R.string.ui_8551a052e534));}
     private static boolean validName(String name){if(name==null||name.isEmpty()||name.startsWith(".")||name.indexOf('/')>=0||name.indexOf('\\')>=0)return false;for(int i=0;i<name.length();i++)if(Character.isISOControl(name.charAt(i)))return false;try{return name.getBytes("UTF-8").length<=128;}catch(Exception e){return false;}}
     private static String size(long value){return value>=1048576?String.format(Locale.ROOT,"%.1f MiB",value/1048576.0):value>=1024?String.format(Locale.ROOT,"%.1f KiB",value/1024.0):value+" B";}

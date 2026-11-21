@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 宿主管理后台守护进程（BufferBroker）：
@@ -40,6 +41,94 @@ public final class BufferBroker {
     /** 支持的分辨率预设档位 */
     private static final List<String> RESOLUTIONS = Arrays.asList("legacy", "960x540", "1280x720", "1600x900", "1920x1080");
     private static final List<String> ORIENTATIONS = Arrays.asList("auto", "landscape", "portrait");
+    private static final List<String> NETWORK_MODES = Arrays.asList("follow_host_uplink", "fixed_uplink", "host_vpn_tun", "host_proxy");
+    private static final List<String> VPN_FALLBACKS = Arrays.asList("fallback_physical", "fail_closed");
+
+    private static boolean validNetIface(String iface) {
+        return iface.isEmpty() || (iface.length() <= 16 && iface.matches("[a-zA-Z0-9_.-]+") &&
+            !iface.equals("lo") && !iface.startsWith("tun") && !iface.startsWith("tap") &&
+            !iface.startsWith("rv") && !iface.startsWith("veth") && !iface.startsWith("dummy"));
+    }
+
+    private static boolean validNetPort(String port) {
+        if (!port.matches("[1-9][0-9]{0,4}")) return false;
+        int p = Integer.parseInt(port);
+        return p >= 1 && p <= 65535;
+    }
+
+    private static boolean validIpv4(String ip) {
+        if (ip == null || !ip.matches("([0-9]{1,3}\\.){3}[0-9]{1,3}") || ip.equals("0.0.0.0")) return false;
+        for (String part : ip.split("\\.")) {
+            int n = Integer.parseInt(part);
+            if (n < 0 || n > 255 || (part.length() > 1 && part.startsWith("0"))) return false;
+        }
+        return true;
+    }
+
+    private static boolean validNetDns(String dns) {
+        if (dns == null || dns.isEmpty()) return false;
+        if (dns.equals("auto") || dns.equals("domestic") || dns.equals("overseas")) return true;
+        String[] parts = dns.split(",", -1);
+        if (parts.length < 1 || parts.length > 2) return false;
+        for (String p : parts) {
+            if (!validIpv4(p)) return false;
+        }
+        return true;
+    }
+
+    private static Map<String, String> parseKv(String text) {
+        HashMap<String, String> out = new HashMap<>();
+        if (text == null) return out;
+        for (String line : text.split("\n")) {
+            int eq = line.indexOf('=');
+            if (eq > 0) out.put(line.substring(0, eq).trim(), line.substring(eq + 1).trim());
+        }
+        return out;
+    }
+
+    private JSONObject networkState(int id, String session) throws Exception {
+        JSONObject result = new JSONObject()
+            .put("mode", "follow_host_uplink").put("iface", "").put("port", 7890)
+            .put("vpnFallback", "fallback_physical").put("dns", "auto").put("effectiveDns", "")
+            .put("effectiveUplink", "").put("effectiveMode", "").put("proxyApplied", false).put("valid", false);
+        try {
+            Path p = Paths.get(BASE, "config/network_v1", id + ".conf");
+            if (Files.isSymbolicLink(p) || Files.isSymbolicLink(p.getParent()) || Files.isSymbolicLink(p.getParent().getParent()))
+                throw new IOException("Invalid network config file");
+            String mode = "follow_host_uplink", iface = "", fallback = "fallback_physical", dns = "auto";
+            int port = 7890;
+            if (Files.exists(p)) {
+                Map<String, String> kv = parseKv(read(p, 1024));
+                mode = kv.getOrDefault("mode", mode);
+                iface = kv.getOrDefault("iface", iface);
+                String portStr = kv.getOrDefault("port", "7890");
+                fallback = kv.getOrDefault("vpn_fallback", fallback);
+                dns = kv.getOrDefault("dns", dns);
+                if (!NETWORK_MODES.contains(mode) || !validNetIface(iface) || !validNetPort(portStr) || !VPN_FALLBACKS.contains(fallback) ||
+                    !validNetDns(dns) || (mode.equals("fixed_uplink") && iface.isEmpty()))
+                    throw new IOException("Invalid network config values");
+                port = Integer.parseInt(portStr);
+            }
+            result.put("mode", mode).put("iface", iface).put("port", port).put("vpnFallback", fallback).put("dns", dns).put("valid", true);
+            if (!session.isEmpty()) {
+                Path cur = instance(id).resolve("network.current");
+                if (!Files.isSymbolicLink(cur) && Files.isRegularFile(cur)) {
+                    String[] parts = read(cur, 512).split(" +", 2);
+                    if (parts.length == 2 && parts[0].equals(session)) {
+                        Path st = Paths.get(parts[1]);
+                        if (st.normalize().equals(st) && st.startsWith(instance(id)) && Files.isDirectory(st, LinkOption.NOFOLLOW_LINKS) && st.toRealPath().equals(st)) {
+                            Path up = st.resolve("uplink"), md = st.resolve("mode"), pt = st.resolve("proxy_target"), dn = st.resolve("dns");
+                            if (Files.isRegularFile(up, LinkOption.NOFOLLOW_LINKS)) result.put("effectiveUplink", read(up, 64));
+                            if (Files.isRegularFile(md, LinkOption.NOFOLLOW_LINKS)) result.put("effectiveMode", read(md, 64));
+                            if (Files.isRegularFile(dn, LinkOption.NOFOLLOW_LINKS)) result.put("effectiveDns", read(dn, 64));
+                            result.put("proxyApplied", Files.isRegularFile(pt, LinkOption.NOFOLLOW_LINKS));
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return result;
+    }
 
     private static String savedOrientation(int id) throws IOException {
         Path p = Paths.get(BASE, "config/orientation_v1", id + ".mode");
@@ -69,8 +158,89 @@ public final class BufferBroker {
     }
 
     /** 校验内存数值合法性：必须为 512 ~ 2560 MiB 之间的合法整型数字 */
+    /** 根据当前宿主硬件与构建指纹，从 /data/irisbox/runtime/boards/<profile>/board.json 加载内存配额 {minMiB, maxMiB, defaultMiB} */
+    private static int[] boardMemorySpec() throws IOException {
+        Path boardsDir = java.nio.file.Paths.get(BASE, "boards");
+        if (Files.isSymbolicLink(boardsDir) || !Files.isDirectory(boardsDir)) {
+            throw new IOException("Missing board profiles directory");
+        }
+        String hostDev = android.os.Build.DEVICE;
+        String hostAbi = android.os.Build.SUPPORTED_ABIS != null && android.os.Build.SUPPORTED_ABIS.length > 0
+            ? android.os.Build.SUPPORTED_ABIS[0] : "";
+        int hostSdk = android.os.Build.VERSION.SDK_INT;
+        String hostFp = android.os.Build.FINGERPRINT;
+        try (java.nio.file.DirectoryStream<Path> dirs = Files.newDirectoryStream(boardsDir)) {
+            for (Path dir : dirs) {
+                if (Files.isSymbolicLink(dir) || !Files.isDirectory(dir)) continue;
+                Path boardFile = dir.resolve("board.json");
+                if (Files.isSymbolicLink(boardFile) || !Files.isRegularFile(boardFile)) continue;
+                JSONObject json = new JSONObject(read(boardFile, 16384));
+                JSONObject host = json.getJSONObject("host");
+                if (!hostAbi.equals(host.getString("abi")) || host.getInt("androidApi") != hostSdk) continue;
+                org.json.JSONArray devs = host.getJSONArray("devices");
+                boolean devOk = false;
+                for (int i = 0; i < devs.length(); i++) {
+                    if (hostDev.equals(devs.getString(i))) { devOk = true; break; }
+                }
+                if (!devOk) continue;
+                org.json.JSONArray fps = host.getJSONArray("fingerprints");
+                boolean fpOk = false;
+                for (int i = 0; i < fps.length(); i++) {
+                    if (hostFp.equals(fps.getString(i))) { fpOk = true; break; }
+                }
+                if (!fpOk) continue;
+                JSONObject mem = json.getJSONObject("guest").getJSONObject("memory");
+                int minMiB = mem.getInt("minMiB");
+                int maxMiB = mem.getInt("maxMiB");
+                int defaultMiB = mem.getInt("defaultMiB");
+                int reserveMiB = mem.optInt("hostReserveMiB", 384);
+                if (minMiB < 256 || maxMiB < minMiB || maxMiB > 32768 || defaultMiB < minMiB || defaultMiB > maxMiB) {
+                    throw new IOException("Invalid memory bounds in board.json");
+                }
+                int hostTotalMiB = readHostMemTotalMiB();
+                if (hostTotalMiB > 0) {
+                    int guard = Math.max(reserveMiB, (hostTotalMiB * 21) / 100);
+                    int pcap = Math.max(minMiB, ((hostTotalMiB - guard) / 256) * 256);
+                    maxMiB = hostTotalMiB <= 4608 ? Math.min(pcap, maxMiB) : Math.max(pcap, maxMiB);
+                    maxMiB = Math.min(32768, Math.max(minMiB, maxMiB));
+                    if (hostTotalMiB >= 12000 && defaultMiB < 4096) defaultMiB = 4096;
+                    else if (hostTotalMiB >= 6000 && defaultMiB < 2048) defaultMiB = 2048;
+                    defaultMiB = Math.max(minMiB, Math.min(maxMiB, defaultMiB));
+                }
+                return new int[]{minMiB, maxMiB, defaultMiB, hostTotalMiB};
+            }
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IOException("Failed to parse host board.json", e);
+        }
+        throw new IOException("Unsupported host board profile: " + hostDev);
+    }
+
+    private static int readHostMemTotalMiB() {
+        try {
+            for (String line : Files.readAllLines(Paths.get("/proc/meminfo"), StandardCharsets.US_ASCII)) {
+                if (line.startsWith("MemTotal:")) {
+                    String[] parts = line.trim().split("\\s+");
+                    if (parts.length >= 2) return (int) (Long.parseLong(parts[1]) / 1024L);
+                }
+            }
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
+    private static boolean validMemory(String value, int[] bounds) {
+        if (!value.matches("[1-9][0-9]{2,4}")) return false;
+        int parsed = Integer.parseInt(value);
+        return parsed >= bounds[0] && parsed <= bounds[1];
+    }
+
     private static boolean validMemory(String value) {
-        return value.matches("[1-9][0-9]{2,3}") && Integer.parseInt(value) >= 512 && Integer.parseInt(value) <= 2560;
+        try {
+            return validMemory(value, boardMemorySpec());
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     /** 读取保存的静态内存配置（严格检查符号链接，防路径遍历安全攻击） */
@@ -78,14 +248,16 @@ public final class BufferBroker {
         Path p = Paths.get(BASE, "config/memory_v1", id + ".mib");
         if (Files.isSymbolicLink(p) || Files.isSymbolicLink(p.getParent()) || Files.isSymbolicLink(p.getParent().getParent()))
             throw new IOException("Invalid memory file");
-        String value = Files.exists(p) ? read(p, 8) : "1280";
-        if (!validMemory(value)) throw new IOException("Invalid memory limit");
+        int[] bounds = boardMemorySpec();
+        String value = Files.exists(p) ? read(p, 8) : Integer.toString(bounds[2]);
+        if (!validMemory(value, bounds)) throw new IOException("Invalid memory limit");
         return Integer.parseInt(value);
     }
 
     /** 聚合该实例当前的内存配置状态，并读取当前 cgroup 中真实生效的字节配额 */
     private static JSONObject memoryState(int id, String session) throws Exception {
-        JSONObject result = new JSONObject().put("minMiB", 512).put("maxMiB", 2560).put("defaultMiB", 1280).put("effectiveMiB", 0);
+        int[] bounds = boardMemorySpec();
+        JSONObject result = new JSONObject().put("minMiB", bounds[0]).put("maxMiB", bounds[1]).put("defaultMiB", bounds[2]).put("hostTotalMiB", bounds[3]).put("effectiveMiB", 0);
         try {
             result.put("mib", savedMemory(id)).put("valid", true);
         } catch (IOException failure) {
@@ -93,7 +265,7 @@ public final class BufferBroker {
         }
         if (!session.isEmpty()) try {
             long bytes = Long.parseLong(read(Paths.get("/dev/memcg/irisbox_" + id + "/memory.limit_in_bytes"), 32));
-            if (bytes % 1048576 == 0 && bytes >= 512L * 1048576 && bytes <= 2560L * 1048576 && session.equals(session(id)))
+            if (bytes % 1048576 == 0 && bytes >= (long) bounds[0] * 1048576 && bytes <= (long) bounds[1] * 1048576 && session.equals(session(id)))
                 result.put("effectiveMiB", bytes / 1048576);
         } catch (IOException | NumberFormatException ignored) {}
         return result;
@@ -164,6 +336,80 @@ public final class BufferBroker {
     /** 后台状态监控单线程定时调度器（每秒轮询一次） */
     private final ScheduledExecutorService monitor = Executors.newSingleThreadScheduledExecutor();
 
+    /** 宿主网络变化时异步触发运行中实例热切换的单线程池（避免阻塞 monitor 或排队操作） */
+    private final ExecutorService networkReconciler = Executors.newSingleThreadExecutor();
+    private final AtomicBoolean hostProbeQueued = new AtomicBoolean(false);
+    private volatile long lastHostNetProbeMs = 0L;
+    private volatile String lastHostNetSignature = "";
+    private volatile JSONObject cachedHostNetwork = defaultHostNetwork();
+
+    private static JSONObject defaultHostNetwork() {
+        try {
+            return new JSONObject().put("activePhysical", "").put("physicalInterfaces", new JSONArray())
+                .put("vpnActive", false).put("vpnInterface", "");
+        } catch (Exception e) { throw new RuntimeException(e); }
+    }
+
+    /** 探测宿主机上行与 VPN 状态；若出口变化则依次触发运行中实例热切换 */
+    private JSONObject refreshHostNetworkAndReconcile(boolean reconcileOnChange) {
+        try {
+            Map<String, String> kv = parseKv(runQuiet(BASE + "/network.sh", 0, 5, "host-probe"));
+            String activePhysical = kv.getOrDefault("host_physical", "");
+            String physicalList = kv.getOrDefault("host_physical_list", "");
+            String vpnIface = kv.getOrDefault("host_vpn", "");
+            JSONArray ifaces = new JSONArray();
+            for (String item : physicalList.trim().split(" +")) {
+                if (!item.isEmpty()) ifaces.put(item);
+            }
+            JSONObject hn = new JSONObject()
+                .put("activePhysical", activePhysical)
+                .put("physicalInterfaces", ifaces)
+                .put("vpnActive", !vpnIface.isEmpty())
+                .put("vpnInterface", vpnIface);
+            cachedHostNetwork = hn;
+            lastHostNetProbeMs = SystemClock.elapsedRealtime();
+            String sig = activePhysical + "|" + physicalList + "|" + vpnIface;
+            String prev = lastHostNetSignature;
+            lastHostNetSignature = sig;
+            if (reconcileOnChange && !prev.isEmpty() && !prev.equals(sig)) {
+                reconcileRunningNetworks();
+            }
+            return hn;
+        } catch (Exception ignored) {
+            return cachedHostNetwork;
+        }
+    }
+
+    /** 对指定运行中实例执行网络策略协调（不抛异常，避免阻断桌面就绪状态） */
+    private void reconcileInstanceNetwork(int id, String expectedSession) {
+        try {
+            if (expectedSession == null || expectedSession.isEmpty()) return;
+            Path cur = instance(id).resolve("network.current");
+            if (Files.isSymbolicLink(cur) || !Files.isRegularFile(cur)) return;
+            String[] parts = read(cur, 512).split(" +", 2);
+            if (parts.length != 2 || !parts[0].equals(expectedSession)) return;
+            Path st = Paths.get(parts[1]);
+            if (!st.normalize().equals(st) || !st.startsWith(instance(id)) ||
+                !Files.isDirectory(st, LinkOption.NOFOLLOW_LINKS) || !st.toRealPath().equals(st)) return;
+            Path logDir = st.getParent();
+            if (logDir == null) return;
+            runQuiet(BASE + "/network.sh", id, 20, "reconcile", Integer.toString(id), parts[0], logDir.toString());
+        } catch (Exception ignored) {}
+    }
+
+    /** 遍历当前全部运行中实例，逐一执行热切换协调 */
+    private void reconcileRunningNetworks() {
+        try {
+            for (int id : InstanceCatalog.all().keySet()) {
+                String sess = session(id);
+                if (!sess.isEmpty()) reconcileInstanceNetwork(id, sess);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /** Linux / Cgroup / 硬件遥测采样器 */
+    private final LinuxTelemetry telemetry = new LinuxTelemetry();
+
     /** 显示与小窗预览操作全局互斥锁 */
     private final Object displayLock = new Object();
 
@@ -172,6 +418,14 @@ public final class BufferBroker {
 
     /** 宿主与 Guest 间的大文件导入/导出管理组件 */
     private final ExchangeFiles files = new ExchangeFiles(new ExchangeFiles.State() {
+        public String session(int id) { return BufferBroker.session(id); }
+        public boolean ready(int id, String expected) { return expected.equals(readySessions.get(id)); }
+        public boolean busy(int id) { return BufferBroker.this.busy.containsKey(id); }
+        public boolean stopping(int id) { return "stop".equals(BufferBroker.this.busy.get(id)); }
+    });
+
+    /** 宿主已安装应用及 OBB 数据直接迁入组件 */
+    private final HostAppImporter hostApps = new HostAppImporter(new HostAppImporter.State() {
         public String session(int id) { return BufferBroker.session(id); }
         public boolean ready(int id, String expected) { return expected.equals(readySessions.get(id)); }
         public boolean busy(int id) { return BufferBroker.this.busy.containsKey(id); }
@@ -236,6 +490,64 @@ public final class BufferBroker {
 
     /** 获取指定实例的本地文件系统路径 */
     private static Path instance(int id) { return Paths.get(BASE, "instances", Integer.toString(id)); }
+
+    /** 读取默认 ROM ID（安全检查非软链且字符合规） */
+    private static String defaultRomId() {
+        try {
+            Path p = Paths.get(BASE, "config/default_rom");
+            if (!Files.isSymbolicLink(p) && Files.isRegularFile(p)) {
+                String id = read(p, 128);
+                if (id.matches("[a-z0-9._-]{1,64}")) return id;
+            }
+        } catch (IOException ignored) {}
+        return "";
+    }
+
+    /** 读取指定实例锁定的 ROM ID，未记录时回退默认 ROM */
+    private static String instanceRomId(int id) {
+        try {
+            Path p = Paths.get(BASE, "config/rom_v1", id + ".id");
+            if (!Files.isSymbolicLink(p) && Files.isRegularFile(p)) {
+                String rom = read(p, 128);
+                if (rom.matches("[a-z0-9._-]{1,64}")) return rom;
+            }
+        } catch (IOException ignored) {}
+        return defaultRomId();
+    }
+
+    /** 探测指定 ROM 的 Google 服务支持模式：optional(外挂层) / builtin(原生内置) / none(无) */
+    private static String romGoogleMode(String romId) {
+        if (romId == null || !romId.matches("[a-z0-9._-]{1,64}")) return "none";
+        Path romDir = Paths.get(BASE, "roms", romId);
+        if (Files.isSymbolicLink(romDir) || !Files.isDirectory(romDir)) return "none";
+        Path compatGoogle = romDir.resolve("compat/google");
+        if (!Files.isSymbolicLink(compatGoogle)
+                && Files.isRegularFile(compatGoogle.resolve("component.id"), LinkOption.NOFOLLOW_LINKS)
+                && Files.isDirectory(compatGoogle.resolve("rootfs"), LinkOption.NOFOLLOW_LINKS)) {
+            return "optional";
+        }
+        Path manifestFile = romDir.resolve("rom.json");
+        if (!Files.isSymbolicLink(manifestFile) && Files.isRegularFile(manifestFile)) {
+            try {
+                JSONObject manifest = new JSONObject(read(manifestFile, 262144));
+                if ("builtin".equals(manifest.optString("googleMode")) || manifest.optBoolean("googleBuiltin")) {
+                    return "builtin";
+                }
+            } catch (Exception ignored) {}
+        }
+        Path sysLower = romDir.resolve("system.lower");
+        if (!Files.isSymbolicLink(sysLower) && Files.isDirectory(sysLower)) {
+            boolean hasPlay = false, hasGms = false;
+            for (String rel : new String[]{"system/priv-app", "system/product/priv-app", "product/priv-app", "system/system_ext/priv-app", "system_ext/priv-app"}) {
+                Path dir = sysLower.resolve(rel);
+                if (Files.isRegularFile(dir.resolve("Phonesky/Phonesky.apk"))) hasPlay = true;
+                if (Files.isRegularFile(dir.resolve("PrebuiltGmsCore/PrebuiltGmsCore.apk"))
+                        || Files.isRegularFile(dir.resolve("GmsCore/GmsCore.apk"))) hasGms = true;
+            }
+            if (hasPlay && hasGms) return "builtin";
+        }
+        return "none";
+    }
 
     /** 读取进程的启动时钟滴答数（start tick），结合排除僵尸状态，作为防 PID 复用唯一凭证 */
     private static String tick(String pid) throws IOException {
@@ -335,7 +647,15 @@ public final class BufferBroker {
     }
 
     private String run(String script, int id, String expected, String expectedRun, int seconds, String... args) throws Exception {
-        return runCaptured(script, id, expected, expectedRun, seconds, null, args);
+        return runCaptured(script, id, expected, expectedRun, seconds, null, true, args);
+    }
+
+    private String runQuiet(String script, int id, int seconds, String... args) throws Exception {
+        return runCaptured(script, id, "", "", seconds, null, false, args);
+    }
+
+    private String runCaptured(String script, int id, String expected, String expectedRun, int seconds, BootAttempt attempt, String... args) throws Exception {
+        return runCaptured(script, id, expected, expectedRun, seconds, attempt, true, args);
     }
 
     /**
@@ -345,7 +665,7 @@ public final class BufferBroker {
      * 3. 独立后台守护线程排空 stdout 与 stderr，写日志的同时防止 Linux 管道填满死锁；
      * 4. 严格超时控制，返回时核验退出码。
      */
-    private String runCaptured(String script, int id, String expected, String expectedRun, int seconds, BootAttempt attempt, String... args) throws Exception {
+    private String runCaptured(String script, int id, String expected, String expectedRun, int seconds, BootAttempt attempt, boolean recordLog, String... args) throws Exception {
         ArrayList<String> cmd = new ArrayList<>(Arrays.asList(BB, "timeout", Integer.toString(seconds), "/system/bin/sh", script));
         cmd.addAll(Arrays.asList(args));
         ProcessBuilder b = new ProcessBuilder(cmd);
@@ -357,11 +677,12 @@ public final class BufferBroker {
         p.getOutputStream().close();
         ByteArrayOutputStream capture = new ByteArrayOutputStream();
         Thread drain = new Thread(() -> {
-            try (InputStream in = p.getInputStream(); OutputStream log = new FileOutputStream(DIR + "/command_" + id + ".log", true)) {
+            try (InputStream in = p.getInputStream();
+                 OutputStream log = recordLog ? new FileOutputStream(DIR + "/command_" + id + ".log", true) : null) {
                 byte[] block = new byte[4096];
                 int n;
                 while ((n = in.read(block)) != -1) {
-                    log.write(block, 0, n);
+                    if (log != null) log.write(block, 0, n);
                     if (attempt != null) attempt.command(block, n);
                     synchronized (capture) {
                         if (capture.size() < 32768) capture.write(block, 0, Math.min(n, 32768 - capture.size()));
@@ -525,6 +846,7 @@ public final class BufferBroker {
                 operation.equals("resolution") ? "正在保存分辨率" :
                 operation.equals("memory") ? "正在保存内存上限" :
                 operation.equals("root") ? "正在保存应用 Root" :
+                operation.equals("network") ? "正在保存网络出口" :
                 operation.equals("app") ? "正在打开应用" :
                 operation.equals("reset") ? "正在重置数据" :
                 operation.equals("delete") ? "正在删除实例" :
@@ -546,16 +868,22 @@ public final class BufferBroker {
             }
 
             // 打包当前实例全部状态 JSON
+            String instGoogleMode = romGoogleMode(instanceRomId(id));
+            boolean instGoogleEnabled = "builtin".equals(instGoogleMode)
+                || Files.isRegularFile(instance(id).resolve("google.core.enabled"), LinkOption.NOFOLLOW_LINKS);
             list.put(new JSONObject().put("id", id).put("number", InstanceCatalog.number(catalog, id))
                 .put("displayName", "实例 " + InstanceCatalog.number(catalog, id))
                 .put("revision", catalog.get(id))
-                .put("googleEnabled", Files.isRegularFile(instance(id).resolve("google.core.enabled"), LinkOption.NOFOLLOW_LINKS))
+                .put("googleMode", instGoogleMode)
+                .put("googleEnabled", instGoogleEnabled)
                 .put("running", !s.isEmpty()).put("session", s)
                 .put("ready", ready).put("error", BootAttempt.safe(errors.getOrDefault(id, "")))
                 .put("busy", operation).put("stage", stage)
                 .put("resolution", resolutionState(id, s))
                 .put("orientation", orientationState(id))
                 .put("memory", memoryState(id, s)).put("root", rootState(id, s)).put("audio", audioState(id, s))
+                .put("network", networkState(id, s))
+                .put("perf", telemetry.instancePerfBrief(id, s))
                 .put("cleanupPending", Files.exists(instance(id).resolve("cleanup.pending"), LinkOption.NOFOLLOW_LINKS))
                 .put("bootLog", logs).put("bootLogKey", attempt == null ? "" : attempt.key())
                 .put("bootElapsedMs", attempt == null ? 0 : attempt.elapsed())
@@ -569,7 +897,10 @@ public final class BufferBroker {
 
         return new JSONObject().put("count", ids.size()).put("offset", offset)
             .put("catalogBusy", catalogBusy).put("catalogError", catalogError)
+            .put("defaultRomGoogleMode", romGoogleMode(defaultRomId()))
             .put("lastCreatedId", lastCreatedId).put("instances", list)
+            .put("hostNetwork", cachedHostNetwork)
+            .put("hostTelemetry", telemetry.hostSnapshot(false))
             .put("resolutionPresets", presets).put("mode", "shared graphics buffers")
             .put("displaySeconds", 0).put("instanceSeconds", 0).put("previewIntervalMs", 1000);
     }
@@ -581,6 +912,7 @@ public final class BufferBroker {
      */
     private void action(int id, String expected, String type, String app, int displaySeconds,
                         String profile, String previousProfile, String mib, String previousMib,
+                        String netMode, String netIface, String netPort, String netVpnFallback, String netDns,
                         String revision, int confirmedNumber) throws Exception {
         SortedMap<Integer, String> currentCatalog = InstanceCatalog.all();
         // 校验 Revision：若数据目录在此期间被其他操作变更，立即拒绝执行
@@ -615,6 +947,11 @@ public final class BufferBroker {
             // 分支 4：修改分辨率预设（必须在停机状态下执行）
             if (!now.isEmpty()) throw new IOException("Stop the instance before changing resolution");
             run(BASE + "/resolution.sh", id, "", "", 45, "set", Integer.toString(id), profile, previousProfile);
+        } else if (type.equals("network")) {
+            // 分支 4b：保存网络出口策略与 DNS 模式（停机或运行中均可执行，运行中由脚本持锁就地协调）
+            if (!expected.equals(now)) throw new IOException("Instance session changed");
+            run(BASE + "/network.sh", id, expected, "", 35, "config-set", Integer.toString(id),
+                netMode, netIface.isEmpty() ? "-" : netIface, netPort, netVpnFallback, netDns);
         } else if (type.equals("start")) {
             // 分支 5：点火启动虚拟机实例
             if (!now.isEmpty()) throw new IOException("Instance already running");
@@ -640,10 +977,17 @@ public final class BufferBroker {
                 ctl(id, expected, 45, "stop", Integer.toString(id));
                 readySessions.remove(id);
             } else if (type.equals("open")) {
-                // 分支 7：全屏投屏连接（必须桌面就绪、排空预览、关闭前一个显示会话）
+                // 分支 7：全屏投屏连接（必须桌面就绪、取消排空预览；若前一展示页刚退出未清理则直接就地回收后无缝进入）
                 if (!expected.equals(readySessions.get(id))) throw new IOException("Guest is still booting");
+                synchronized (displayLock) {
+                    for (PreviewJob job : previewJobs.values()) job.cancelled = true;
+                }
                 waitPreviews(0);
-                if (display() != null) throw new IOException("Previous display is still open or cleaning up");
+                Display previous = display();
+                if (previous != null) {
+                    if (previous.active) throw new IOException("Previous display is still open or cleaning up");
+                    stopDisplay(previous);
+                }
                 run(DIR + "/display.sh", id, expected, "", 55, "start", Integer.toString(id), expected,
                     Integer.toString(displaySeconds), Integer.toString(InstanceCatalog.number(currentCatalog, id)));
             } else if (type.equals("orientation")) {
@@ -733,9 +1077,24 @@ public final class BufferBroker {
                             }
                             if (!current.equals(session(id))) continue;
                             readySessions.put(id, current);
+                            // 桌面就绪（sys.boot_completed=1）后立即协调一次网络出口，补齐运行中代理或清理残留代理
+                            reconcileInstanceNetwork(id, current);
                             if (attempt != null) { attempt.finished = SystemClock.elapsedRealtime(); attempt.checkpoint(); }
                         }
                     } catch (Exception ignored) {} // 引导中正常等待，不伪造 ready
+                }
+            }
+
+            // 每 3 秒异步刷新宿主机上行/VPN 状态；变化时驱动运行中实例热切换
+            long nowProbeMs = SystemClock.elapsedRealtime();
+            if (nowProbeMs - lastHostNetProbeMs >= 3000 && hostProbeQueued.compareAndSet(false, true)) {
+                try {
+                    networkReconciler.execute(() -> {
+                        try { refreshHostNetworkAndReconcile(true); }
+                        finally { hostProbeQueued.set(false); }
+                    });
+                } catch (RejectedExecutionException e) {
+                    hostProbeQueued.set(false);
                 }
             }
 
@@ -867,11 +1226,79 @@ public final class BufferBroker {
                 }
                 bodyHeaders.requireEmpty();
 
+                // 应用枚举与直迁路由（支持宿主机或运行中实例来源）
+                if (route[0].equals("/apps/host") && r[0].equals("GET")) {
+                    json(socket, 200, hostApps.listHostApps());
+                    return;
+                }
+                if (route[0].equals("/apps/list") && r[0].equals("GET")) {
+                    String source = v.getOrDefault("source", "host");
+                    json(socket, 200, hostApps.listApps(source));
+                    return;
+                }
+                if (route[0].equals("/apps/import") && r[0].equals("POST")) {
+                    int appId = Integer.parseInt(v.getOrDefault("id", "0"));
+                    String appSess = v.getOrDefault("session", ""), pkg = v.getOrDefault("pkg", ""),
+                        source = v.getOrDefault("source", "host");
+                    boolean obb = !"0".equals(v.getOrDefault("obb", "1"));
+                    boolean extData = "1".equals(v.getOrDefault("extData", "0"));
+                    boolean appData = "1".equals(v.getOrDefault("appData", "0"));
+                    json(socket, 202, hostApps.startImport(appId, appSess, source, pkg, obb, extData, appData));
+                    return;
+                }
+                if (route[0].equals("/apps/import/status") && r[0].equals("GET")) {
+                    int appId = Integer.parseInt(v.getOrDefault("id", "0"));
+                    String appSess = v.getOrDefault("session", "");
+                    json(socket, 200, hostApps.status(appId, appSess));
+                    return;
+                }
+
                 // 状态查询路由
                 if (route[0].equals("/state") && r[0].equals("GET")) {
                     int offset = Integer.parseInt(v.getOrDefault("offset", "0")), limit = Integer.parseInt(v.getOrDefault("limit", "65535"));
                     if (offset < 0 || limit < 1 || limit > 65535) { json(socket, 400, new JSONObject().put("error", "Invalid page")); return; }
                     json(socket, 200, state(offset, limit));
+                    return;
+                }
+
+                // 实例与宿主机实时网络探测路由（可选带 test=1 执行容器内出口连通测试）
+                if (route[0].equals("/network/probe") && r[0].equals("GET")) {
+                    int probeId = Integer.parseInt(v.getOrDefault("id", "0"));
+                    if (!InstanceCatalog.contains(probeId)) { json(socket, 400, new JSONObject().put("error", "Invalid instance")); return; }
+                    Map<String, String> kv = parseKv(runQuiet(BASE + "/network.sh", probeId, 10, "probe", Integer.toString(probeId)));
+                    JSONArray physIfaces = new JSONArray();
+                    String physList = kv.getOrDefault("host_physical_list", "");
+                    for (String item : physList.trim().split(" +")) {
+                        if (!item.isEmpty()) physIfaces.put(item);
+                    }
+                    String hostVpn = kv.getOrDefault("host_vpn", "");
+                    JSONObject hostNet = new JSONObject()
+                        .put("activePhysical", kv.getOrDefault("host_physical", ""))
+                        .put("physicalInterfaces", physIfaces)
+                        .put("vpnActive", !hostVpn.isEmpty())
+                        .put("vpnInterface", hostVpn);
+                    cachedHostNetwork = hostNet;
+                    lastHostNetProbeMs = SystemClock.elapsedRealtime();
+
+                    JSONObject resp = new JSONObject()
+                        .put("id", probeId)
+                        .put("valid", "1".equals(kv.getOrDefault("valid", "0")))
+                        .put("mode", kv.getOrDefault("mode", "follow_host_uplink"))
+                        .put("iface", kv.getOrDefault("iface", ""))
+                        .put("port", Integer.parseInt(validNetPort(kv.getOrDefault("port", "7890")) ? kv.get("port") : "7890"))
+                        .put("vpnFallback", kv.getOrDefault("vpn_fallback", "fallback_physical"))
+                        .put("dns", kv.getOrDefault("dns", "auto"))
+                        .put("effectiveDns", kv.getOrDefault("effective_dns", ""))
+                        .put("effectiveUplink", kv.getOrDefault("effective_uplink", ""))
+                        .put("effectiveMode", kv.getOrDefault("effective_mode", ""))
+                        .put("proxyApplied", "1".equals(kv.getOrDefault("proxy_applied", "0")))
+                        .put("proxyReachable", "1".equals(kv.getOrDefault("proxy_reachable", "0")))
+                        .put("hostNetwork", hostNet);
+                    if ("1".equals(v.getOrDefault("test", "0"))) {
+                        String report = runQuiet(BASE + "/network.sh", probeId, 20, "test-egress", Integer.toString(probeId));
+                        resp.put("report", report.trim());
+                    }
+                    json(socket, 200, resp);
                     return;
                 }
 
@@ -887,6 +1314,37 @@ public final class BufferBroker {
                         return;
                     }
                     json(socket, 200, attempt.page(offset));
+                    return;
+                }
+
+                // 宿主与单实例 Linux / 性能遥测路由
+                if (route[0].equals("/telemetry") && r[0].equals("GET")) {
+                    int tid = Integer.parseInt(v.getOrDefault("id", "0"));
+                    boolean brief = "1".equals(v.getOrDefault("brief", "0"));
+                    if (tid != 0 && !InstanceCatalog.contains(tid)) {
+                        json(socket, 400, new JSONObject().put("error", "Invalid instance"));
+                        return;
+                    }
+                    JSONObject payload = new JSONObject().put("host", telemetry.hostSnapshot(!brief));
+                    if (tid != 0) {
+                        String curSession = session(tid);
+                        payload.put("instance", brief ? telemetry.instancePerfBrief(tid, curSession) : telemetry.instanceFullDetail(tid, curSession));
+                    }
+                    json(socket, 200, payload);
+                    return;
+                }
+
+                // 快捷唤醒实例最近任务（后台切换）按键路由
+                if (route[0].equals("/recents") && r[0].equals("POST")) {
+                    int rid = Integer.parseInt(v.getOrDefault("id", "0"));
+                    String expectedSession = v.getOrDefault("session", "");
+                    String currentSession = session(rid);
+                    if (!InstanceCatalog.contains(rid) || expectedSession.isEmpty() || !expectedSession.equals(currentSession) || !expectedSession.equals(readySessions.get(rid))) {
+                        json(socket, 409, new JSONObject().put("error", "Instance not ready or session changed"));
+                        return;
+                    }
+                    ctl(rid, expectedSession, 8, "exec", Integer.toString(rid), "/system/bin/input", "keyevent", "187");
+                    json(socket, 200, new JSONObject().put("sent", true));
                     return;
                 }
 
@@ -906,13 +1364,14 @@ public final class BufferBroker {
                         json(socket, 400, new JSONObject().put("error", "Invalid create options"));
                         return;
                     }
+                    final String effectiveGoogle = "builtin".equals(romGoogleMode(defaultRomId())) ? "1" : google;
                     synchronized (displayLock) {
                         if (!catalogBusy.isEmpty()) { json(socket, 409, new JSONObject().put("error", "Instance creation pending")); return; }
                         catalogBusy = "create"; catalogError = "";
                         try {
                             actions.execute(() -> {
                                 try {
-                                    String result = run(BASE + "/instances.sh", 0, "", "", 145, "create", google, root);
+                                    String result = run(BASE + "/instances.sh", 0, "", "", 145, "create", effectiveGoogle, root);
                                     for (String line : result.split("\n"))
                                         if (line.startsWith("INSTANCE_CREATED=")) lastCreatedId = Integer.parseInt(line.substring(17));
                                 } catch (Exception e) {
@@ -940,14 +1399,19 @@ public final class BufferBroker {
                 String type = v.getOrDefault("type", ""), app = v.getOrDefault("app", ""), expected = v.getOrDefault("session", "");
                 final String profile = v.getOrDefault("profile", ""), previousProfile = v.getOrDefault("previousProfile", "");
                 final String mib = v.getOrDefault("mib", ""), previousMib = v.getOrDefault("previousMib", "");
+                final String netMode = v.getOrDefault("mode", ""), netIface = v.getOrDefault("iface", ""),
+                    netPort = v.getOrDefault("port", "7890"), netVpnFallback = v.getOrDefault("vpnFallback", "fallback_physical"),
+                    netDns = v.getOrDefault("dns", "auto");
 
                 // 参数白名单严密防呆校验
-                if (!InstanceCatalog.contains(id) || !Arrays.asList("start", "stop", "open", "app", "orientation", "resolution", "memory", "root", "reset", "delete").contains(type) ||
+                if (!InstanceCatalog.contains(id) || !Arrays.asList("start", "stop", "open", "app", "orientation", "resolution", "memory", "root", "network", "reset", "delete").contains(type) ||
                     type.equals("app") && !Arrays.asList("settings", "clock", "magisk").contains(app) ||
                     type.equals("root") && (!Arrays.asList("off", "magisk", "magisk-safe").contains(profile) || !Arrays.asList("off", "magisk", "magisk-safe").contains(previousProfile)) ||
                     type.equals("memory") && (!validMemory(mib) || !(validMemory(previousMib) || previousMib.equals("-1"))) ||
                     type.equals("resolution") && (!RESOLUTIONS.contains(profile) || !(RESOLUTIONS.contains(previousProfile) || previousProfile.equals("invalid"))) ||
-                    type.equals("orientation") && (!ORIENTATIONS.contains(profile) || !ORIENTATIONS.contains(previousProfile))) {
+                    type.equals("orientation") && (!ORIENTATIONS.contains(profile) || !ORIENTATIONS.contains(previousProfile)) ||
+                    type.equals("network") && (!NETWORK_MODES.contains(netMode) || !validNetIface(netIface) ||
+                        (netMode.equals("fixed_uplink") && netIface.isEmpty()) || !validNetPort(netPort) || !VPN_FALLBACKS.contains(netVpnFallback) || !validNetDns(netDns))) {
                     json(socket, 400, new JSONObject().put("error", "Invalid action"));
                     return;
                 }
@@ -972,8 +1436,9 @@ public final class BufferBroker {
                 }
 
                 String current = session(id);
-                if (type.equals("start") || type.equals("resolution") || type.equals("memory") || type.equals("root") || destructive ?
-                    !current.isEmpty() || !expected.isEmpty() : expected.isEmpty() || !expected.equals(current)) {
+                if (type.equals("network") ? !expected.equals(current) :
+                    (type.equals("start") || type.equals("resolution") || type.equals("memory") || type.equals("root") || destructive ?
+                        !current.isEmpty() || !expected.isEmpty() : expected.isEmpty() || !expected.equals(current))) {
                     json(socket, 409, new JSONObject().put("error", "Instance session changed"));
                     return;
                 }
@@ -982,7 +1447,8 @@ public final class BufferBroker {
                 synchronized (displayLock) {
                     if (busy.containsKey(id)) { json(socket, 409, new JSONObject().put("error", "An instance operation is already pending")); return; }
                     if (type.equals("open")) {
-                        if (opening != 0 || display() != null || cleanupQueued) {
+                        Display activeDisplay = display();
+                        if (opening != 0 || (activeDisplay != null && activeDisplay.active)) {
                             json(socket, 409, new JSONObject().put("error", "Close the current display and wait for cleanup"));
                             return;
                         }
@@ -1001,7 +1467,8 @@ public final class BufferBroker {
                     try {
                         actions.execute(() -> {
                             try {
-                                action(id, expected, type, app, displaySeconds, profile, previousProfile, mib, previousMib, revision, confirmedNumber);
+                                action(id, expected, type, app, displaySeconds, profile, previousProfile, mib, previousMib,
+                                    netMode, netIface, netPort, netVpnFallback, netDns, revision, confirmedNumber);
                                 errors.remove(id);
                             } catch (Exception e) {
                                 errors.put(id, e.getMessage() == null ? "Action failed" : e.getMessage());
@@ -1047,9 +1514,11 @@ public final class BufferBroker {
             closing = true;
             for (BootAttempt attempt : attempts.values()) attempt.close();
             files.close();
+            hostApps.close();
             clients.shutdownNow();
             actions.shutdownNow();
             monitor.shutdownNow();
+            networkReconciler.shutdownNow();
             previews.shutdownNow();
             previewDeadlines.shutdownNow();
         }));

@@ -14,11 +14,20 @@ if ! $BB grep -qw pids "$PIDS_ROOT/cgroup.subtree_control"; then
     builtin echo '+pids' > "$PIDS_ROOT/cgroup.subtree_control"
 fi
 $BB grep -qw pids "$PIDS_ROOT/cgroup.subtree_control" || exit 3
+for G in "$MEM" "$PIDS"; do $BB mkdir -p "$G"; done
+if [ "$(cat "$MEM/memory.use_hierarchy")" != 1 ]; then
+    $BB rmdir "$MEM/managed" 2>/dev/null || true
+    if ! echo 1 > "$MEM/memory.use_hierarchy" 2>/dev/null; then
+        $BB rmdir "$MEM" 2>/dev/null || true
+        $BB mkdir -p "$MEM"
+        echo 1 > "$MEM/memory.use_hierarchy"
+    fi
+fi
+[ "$(cat "$MEM/memory.use_hierarchy")" = 1 ] || exit 3
 for G in "$MEM" "$PIDS"; do $BB mkdir -p "$G/managed"; done
 echo "$MEM_BYTES" > "$MEM/memory.limit_in_bytes"
 echo 0 > "$MEM/memory.max_usage_in_bytes"
 echo 0 > "$MEM/memory.failcnt"
-[ "$(cat "$MEM/memory.use_hierarchy")" = 1 ] || exit 3
 echo 0 > "$MEM/memory.oom_control"
 echo "$MAX_TASKS" > "$PIDS/pids.max"
 echo +pids > "$PIDS/cgroup.subtree_control"

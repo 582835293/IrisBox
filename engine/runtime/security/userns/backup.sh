@@ -46,11 +46,11 @@ for TREE in data upper vendor.upper metadata; do
         echo "COPIED id=$ID tree=$TREE" > "$SAVE/progress"
     fi
 done
-for KIND in instances_v1 resolution_v1 memory_v1 graphics_v1 root_v1 rom_v1 userns_v1; do
+for KIND in instances_v1 resolution_v1 orientation_v1 memory_v1 graphics_v1 root_v1 rom_v1 network_v1 userns_v1; do
     [ ! -L "$BASE/config/$KIND" ] || exit 3
     mkdir "$SAVE/config/$KIND"
-    for F in "$BASE/config/$KIND/$ID.record" "$BASE/config/$KIND/$ID.profile" \
-             "$BASE/config/$KIND/$ID.mib" "$BASE/config/$KIND/$ID.map" "$BASE/config/$KIND/$ID.id"; do
+    for F in "$BASE/config/$KIND/$ID.record" "$BASE/config/$KIND/$ID.profile" "$BASE/config/$KIND/$ID.mode" \
+             "$BASE/config/$KIND/$ID.mib" "$BASE/config/$KIND/$ID.map" "$BASE/config/$KIND/$ID.id" "$BASE/config/$KIND/$ID.conf"; do
         [ ! -L "$F" ] || exit 3
         if [ -f "$F" ]; then /system/bin/cp -a --preserve=all "$F" "$SAVE/config/$KIND/"; fi
     done

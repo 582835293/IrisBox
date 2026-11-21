@@ -1,0 +1,498 @@
+diff --git a/init/init.cpp b/init/init.cpp
+index 942feb9..61399e2 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -65,6 +65,7 @@
+ #include "first_stage_init.h"
+ #include "first_stage_mount.h"
+ #include "import_parser.h"
++#include "iris_guest_mode.h"
+ #include "keychords.h"
+ #include "lmkd_service.h"
+ #include "mount_handler.h"
+@@ -304,9 +305,21 @@ Parser CreateServiceOnlyParser(ServiceList& service_list, bool from_apex) {
+ static void LoadBootScripts(ActionManager& action_manager, ServiceList& service_list) {
+     Parser parser = CreateParser(action_manager, service_list);
+ 
+-    std::string bootscript = GetProperty("ro.boot.init_rc", "");
++    if (IsIrisGuestProbeMode()) {
++        std::string probe_rc = GetProperty("ro.boot.init_rc", "");
++        if (probe_rc.empty()) probe_rc = "/init.iris_guest.rc";
++        if (!parser.ParseConfig(probe_rc) || parser.parse_error_count() != 0) {
++            LOG(FATAL) << "Iris Guest init: missing or invalid " << probe_rc;
++        }
++        return;
++    }
++
++    std::string bootscript = IsIrisGuestMode() ? "" : GetProperty("ro.boot.init_rc", "");
+     if (bootscript.empty()) {
+-        parser.ParseConfig("/system/etc/init/hw/init.rc");
++        const bool parsed_main = parser.ParseConfig("/system/etc/init/hw/init.rc");
++        if (IsIrisGuestMode() && !parsed_main) {
++            LOG(FATAL) << "Iris Guest init: unable to load stock main RC";
++        }
+         if (!parser.ParseConfig("/system/etc/init")) {
+             late_import_paths.emplace_back("/system/etc/init");
+         }
+@@ -325,6 +338,9 @@ static void LoadBootScripts(ActionManager& action_manager, ServiceList& service_
+     } else {
+         parser.ParseConfig(bootscript);
+     }
++    if (IsIrisGuestMode() && parser.parse_error_count() != 0) {
++        LOG(FATAL) << "Iris Guest init: invalid stock RC tree";
++    }
+ }
+ 
+ void PropertyChanged(const std::string& name, const std::string& value) {
+@@ -335,6 +351,10 @@ void PropertyChanged(const std::string& name, const std::string& value) {
+     // In non-thermal-shutdown case, 'shutdown' trigger will be fired to let device specific
+     // commands to be executed.
+     if (name == "sys.powerctl") {
++        if (IsIrisGuestMode()) {
++            LOG(ERROR) << "Iris Guest init: ignored power request " << value;
++            return;
++        }
+         trigger_shutdown(value);
+     }
+ 
+@@ -569,6 +589,10 @@ static void SetKernelVersion() {
+ }
+ 
+ static void HandleSigtermSignal(const signalfd_siginfo& siginfo) {
++    if (IsIrisGuestMode()) {
++        LOG(INFO) << "Iris Guest init: terminating this PID namespace after SIGTERM";
++        _exit(0);
++    }
+     if (siginfo.ssi_pid != 0) {
+         // Drop any userspace SIGTERM requests.
+         LOG(DEBUG) << "Ignoring SIGTERM from pid " << siginfo.ssi_pid;
+@@ -623,7 +647,7 @@ static void InstallSignalFdHandler(Epoll* epoll) {
+     sigemptyset(&mask);
+     sigaddset(&mask, SIGCHLD);
+ 
+-    if (!IsRebootCapable()) {
++    if (IsIrisGuestMode() || !IsRebootCapable()) {
+         // If init does not have the CAP_SYS_BOOT capability, it is running in a container.
+         // In that case, receiving SIGTERM will cause the system to shut down.
+         sigaddset(&mask, SIGTERM);
+@@ -740,7 +764,13 @@ void SendLoadPersistentPropertiesMessage() {
+ }
+ 
+ int SecondStageMain(int argc, char** argv) {
+-    if (REBOOT_BOOTLOADER_ON_PANIC) {
++    const bool iris_guest = IsIrisGuestMode();
++    const char* guest_boot_rc = IsIrisGuestProbeMode() ? "/init.iris_guest.rc"
++                                                       : "/system/etc/init/hw/init.rc";
++    if (iris_guest && (getpid() != 1 || (!IsIrisGuestProbeMode() && access(guest_boot_rc, R_OK) != 0))) {
++        return 2;
++    }
++    if (!iris_guest && REBOOT_BOOTLOADER_ON_PANIC) {
+         InstallRebootSignalHandlers();
+     }
+ 
+@@ -748,8 +778,12 @@ int SecondStageMain(int argc, char** argv) {
+ 
+     trigger_shutdown = [](const std::string& command) { shutdown_state.TriggerShutdown(command); };
+ 
+-    SetStdioToDevNull(argv);
+-    InitKernelLogging(argv);
++    if (iris_guest) {
++        android::base::InitLogging(argv, &android::base::StderrLogger);
++    } else {
++        SetStdioToDevNull(argv);
++        InitKernelLogging(argv);
++    }
+     LOG(INFO) << "init second stage started!";
+ 
+     // Update $PATH in the case the second stage init is newer than first stage init, where it is
+@@ -769,10 +803,14 @@ int SecondStageMain(int argc, char** argv) {
+     }
+ 
+     // Set init and its forked children's oom_adj.
++    const int init_oom_score_adjust = iris_guest ? 0 : DEFAULT_OOM_SCORE_ADJUST;
+     if (auto result =
+-                WriteFile("/proc/1/oom_score_adj", StringPrintf("%d", DEFAULT_OOM_SCORE_ADJUST));
++                WriteFile("/proc/1/oom_score_adj", StringPrintf("%d", init_oom_score_adjust));
+         !result.ok()) {
+-        LOG(ERROR) << "Unable to write " << DEFAULT_OOM_SCORE_ADJUST
++        if (iris_guest) {
++            LOG(FATAL) << "Unable to make Iris Guest init OOM-killable: " << result.error();
++        }
++        LOG(ERROR) << "Unable to write " << init_oom_score_adjust
+                    << " to /proc/1/oom_score_adj: " << result.error();
+     }
+ 
+@@ -794,27 +832,29 @@ int SecondStageMain(int argc, char** argv) {
+ 
+     // Umount the debug ramdisk so property service doesn't read .prop files from there, when it
+     // is not meant to.
+-    if (!load_debug_prop) {
++    if (!iris_guest && !load_debug_prop) {
+         UmountDebugRamdisk();
+     }
+ 
+     PropertyInit();
+ 
+     // Umount second stage resources after property service has read the .prop files.
+-    UmountSecondStageRes();
++    if (!iris_guest) UmountSecondStageRes();
+ 
+     // Umount the debug ramdisk after property service has read the .prop files when it means to.
+-    if (load_debug_prop) {
++    if (!iris_guest && load_debug_prop) {
+         UmountDebugRamdisk();
+     }
+ 
+     // Mount extra filesystems required during second stage init
+-    MountExtraFilesystems();
++    if (!iris_guest) MountExtraFilesystems();
+ 
+     // Now set up SELinux for second stage.
+-    SelinuxSetupKernelLogging();
+-    SelabelInitialize();
+-    SelinuxRestoreContext();
++    if (!iris_guest) SelinuxSetupKernelLogging();
++    if (!IsIrisGuestProbeMode()) {
++        SelabelInitialize();
++        SelinuxRestoreContext();
++    }
+ 
+     Epoll epoll;
+     if (auto result = epoll.Open(); !result.ok()) {
+@@ -834,11 +874,13 @@ int SecondStageMain(int argc, char** argv) {
+     }
+     unsetenv("INIT_AVB_VERSION");
+ 
+-    fs_mgr_vendor_overlay_mount_all();
+-    export_oem_lock_status();
++    if (!iris_guest) fs_mgr_vendor_overlay_mount_all();
++    if (!iris_guest) export_oem_lock_status();
+     MountHandler mount_handler(&epoll);
+-    SetUsbController();
+-    SetKernelVersion();
++    if (!iris_guest) {
++        SetUsbController();
++        SetKernelVersion();
++    }
+ 
+     const BuiltinFunctionMap& function_map = GetBuiltinFunctionMap();
+     Action::set_function_map(&function_map);
+@@ -847,7 +889,7 @@ int SecondStageMain(int argc, char** argv) {
+         PLOG(FATAL) << "SetupMountNamespaces failed";
+     }
+ 
+-    InitializeSubcontext();
++    if (!IsIrisGuestProbeMode()) InitializeSubcontext();
+ 
+     ActionManager& am = ActionManager::GetInstance();
+     ServiceList& sm = ServiceList::GetInstance();
+@@ -864,17 +906,19 @@ int SecondStageMain(int argc, char** argv) {
+     auto is_installed = android::gsi::IsGsiInstalled() ? "1" : "0";
+     SetProperty(gsi::kGsiInstalledProp, is_installed);
+ 
+-    am.QueueBuiltinAction(SetupCgroupsAction, "SetupCgroups");
+-    am.QueueBuiltinAction(SetKptrRestrictAction, "SetKptrRestrict");
+-    am.QueueBuiltinAction(TestPerfEventSelinuxAction, "TestPerfEventSelinux");
++    if (!iris_guest) {
++        am.QueueBuiltinAction(SetupCgroupsAction, "SetupCgroups");
++        am.QueueBuiltinAction(SetKptrRestrictAction, "SetKptrRestrict");
++        am.QueueBuiltinAction(TestPerfEventSelinuxAction, "TestPerfEventSelinux");
++    }
+     am.QueueEventTrigger("early-init");
+ 
+     // Queue an action that waits for coldboot done so we know ueventd has set up all of /dev...
+-    am.QueueBuiltinAction(wait_for_coldboot_done_action, "wait_for_coldboot_done");
++    if (!iris_guest) am.QueueBuiltinAction(wait_for_coldboot_done_action, "wait_for_coldboot_done");
+     // ... so that we can start queuing up actions that require stuff from /dev.
+-    am.QueueBuiltinAction(SetMmapRndBitsAction, "SetMmapRndBits");
++    if (!iris_guest) am.QueueBuiltinAction(SetMmapRndBitsAction, "SetMmapRndBits");
+     Keychords keychords;
+-    am.QueueBuiltinAction(
++    if (!iris_guest) am.QueueBuiltinAction(
+             [&epoll, &keychords](const BuiltinArguments& args) -> Result<void> {
+                 for (const auto& svc : ServiceList::GetInstance()) {
+                     keychords.Register(svc->keycodes());
+@@ -945,7 +989,7 @@ int SecondStageMain(int argc, char** argv) {
+         }
+         if (!IsShuttingDown()) {
+             HandleControlMessages();
+-            SetUsbController();
++            if (!iris_guest) SetUsbController();
+         }
+     }
+ 
+diff --git a/init/iris_guest_mode.h b/init/iris_guest_mode.h
+new file mode 100644
+index 0000000..a71eb02
+--- /dev/null
++++ b/init/iris_guest_mode.h
+@@ -0,0 +1,28 @@
++/*
++ * IrisBox container mode for Android 12 init.
++ *
++ * The ordinary device boot path is unchanged. This flag is set only by an
++ * isolated Guest launcher and the resulting binary is never installed over
++ * the Android Host's /system/bin/init.
++ */
++
++#pragma once
++
++#include <cstdlib>
++#include <cstring>
++
++namespace android {
++namespace init {
++
++inline bool IsIrisGuestMode() {
++    const char* flag = std::getenv("IRIS_GUEST_INIT");
++    return flag != nullptr && std::strcmp(flag, "1") == 0;
++}
++
++inline bool IsIrisGuestProbeMode() {
++    const char* flag = std::getenv("IRIS_GUEST_INIT_PROBE");
++    return IsIrisGuestMode() && flag != nullptr && std::strcmp(flag, "1") == 0;
++}
++
++}  // namespace init
++}  // namespace android
+diff --git a/init/main.cpp b/init/main.cpp
+index 23f5530..5ae2ac4 100644
+--- a/init/main.cpp
++++ b/init/main.cpp
+@@ -17,6 +17,7 @@
+ #include "builtins.h"
+ #include "first_stage_init.h"
+ #include "init.h"
++#include "iris_guest_mode.h"
+ #include "selinux.h"
+ #include "subcontext.h"
+ #include "ueventd.h"
+@@ -52,6 +53,15 @@ int main(int argc, char** argv) {
+ #if __has_feature(address_sanitizer)
+     __asan_set_error_report_callback(AsanReportCallback);
+ #endif
++    if (IsIrisGuestMode()) {
++        const bool second_stage = argc == 2 && strcmp(argv[1], "second_stage") == 0;
++        const bool subcontext = !IsIrisGuestProbeMode() && argc == 4 &&
++                                strcmp(argv[1], "subcontext") == 0;
++        if ((!second_stage && !subcontext) || strcmp(basename(argv[0]), "ueventd") == 0) {
++            return 2;
++        }
++    }
++
+     // Boost prio which will be restored later
+     setpriority(PRIO_PROCESS, 0, -20);
+     if (!strcmp(basename(argv[0]), "ueventd")) {
+@@ -60,7 +70,8 @@ int main(int argc, char** argv) {
+ 
+     if (argc > 1) {
+         if (!strcmp(argv[1], "subcontext")) {
+-            android::base::InitLogging(argv, &android::base::KernelLogger);
++            android::base::InitLogging(argv, IsIrisGuestMode() ? &android::base::StderrLogger
++                                                            : &android::base::KernelLogger);
+             const BuiltinFunctionMap& function_map = GetBuiltinFunctionMap();
+ 
+             return SubcontextMain(argc, argv, &function_map);
+diff --git a/init/mount_namespace.cpp b/init/mount_namespace.cpp
+index 2a57808..8e25bd3 100644
+--- a/init/mount_namespace.cpp
++++ b/init/mount_namespace.cpp
+@@ -29,6 +29,7 @@
+ #include <android-base/unique_fd.h>
+ 
+ #include "util.h"
++#include "iris_guest_mode.h"
+ 
+ #ifndef RECOVERY
+ #define ACTIVATE_FLATTENED_APEX 1
+@@ -195,6 +196,13 @@ static std::string default_ns_id;
+ }  // namespace
+ 
+ bool SetupMountNamespaces() {
++    if (IsIrisGuestProbeMode()) {
++        bootstrap_ns_fd.reset(OpenMountNamespace());
++        default_ns_fd.reset(OpenMountNamespace());
++        bootstrap_ns_id = GetMountNamespaceId();
++        default_ns_id = bootstrap_ns_id;
++        return bootstrap_ns_fd.ok() && default_ns_fd.ok() && !bootstrap_ns_id.empty();
++    }
+     // Set the propagation type of / as shared so that any mounting event (e.g.
+     // /data) is by default visible to all processes. When private mounting is
+     // needed for /foo/bar, then we will make /foo/bar as a mount point (by
+diff --git a/init/reboot.cpp b/init/reboot.cpp
+index a0ae4b4..9684a71 100644
+--- a/init/reboot.cpp
++++ b/init/reboot.cpp
+@@ -61,6 +61,7 @@
+ #include "mount_namespace.h"
+ #include "property_service.h"
+ #include "reboot_utils.h"
++#include "iris_guest_mode.h"
+ #include "service.h"
+ #include "service_list.h"
+ #include "sigchld_handler.h"
+@@ -580,6 +581,10 @@ static Result<void> UnmountAllApexes() {
+ //
+ static void DoReboot(unsigned int cmd, const std::string& reason, const std::string& reboot_target,
+                      bool run_fsck) {
++    if (IsIrisGuestMode()) {
++        LOG(ERROR) << "Iris Guest init: ignored shutdown request " << reason;
++        return;
++    }
+     Timer t;
+     LOG(INFO) << "Reboot start, reason: " << reason << ", reboot_target: " << reboot_target;
+ 
+diff --git a/init/reboot_utils.cpp b/init/reboot_utils.cpp
+index b3fa9fd..ea816f1 100644
+--- a/init/reboot_utils.cpp
++++ b/init/reboot_utils.cpp
+@@ -30,6 +30,7 @@
+ #include <cutils/android_reboot.h>
+ 
+ #include "capabilities.h"
++#include "iris_guest_mode.h"
+ #include "reboot_utils.h"
+ #include "util.h"
+ 
+@@ -87,6 +88,9 @@ void SetFatalRebootTarget(const std::optional<std::string>& reboot_target) {
+ }
+ 
+ bool IsRebootCapable() {
++    if (IsIrisGuestMode()) {
++        return false;
++    }
+     if (!CAP_IS_SUPPORTED(CAP_SYS_BOOT)) {
+         PLOG(WARNING) << "CAP_SYS_BOOT is not supported";
+         return true;
+@@ -107,6 +111,10 @@ bool IsRebootCapable() {
+ }
+ 
+ void __attribute__((noreturn)) RebootSystem(unsigned int cmd, const std::string& rebootTarget) {
++    if (IsIrisGuestMode()) {
++        LOG(ERROR) << "Iris Guest init: blocked kernel reboot";
++        _exit(1);
++    }
+     LOG(INFO) << "Reboot ending, jumping to kernel";
+ 
+     if (!IsRebootCapable()) {
+@@ -142,6 +150,9 @@ void __attribute__((noreturn)) RebootSystem(unsigned int cmd, const std::string&
+ }
+ 
+ void __attribute__((noreturn)) InitFatalReboot(int signal_number) {
++    if (IsIrisGuestMode()) {
++        _exit(signal_number == 0 ? 1 : signal_number);
++    }
+     auto pid = fork();
+ 
+     if (pid == -1) {
+diff --git a/init/selinux.cpp b/init/selinux.cpp
+index 29c0ff3..ed5aa14 100644
+--- a/init/selinux.cpp
++++ b/init/selinux.cpp
+@@ -74,6 +74,7 @@
+ 
+ #include "block_dev_initializer.h"
+ #include "debug_ramdisk.h"
++#include "iris_guest_mode.h"
+ #include "reboot_utils.h"
+ #include "snapuserd_transition.h"
+ #include "util.h"
+@@ -554,6 +555,12 @@ void SelinuxAvcLog(char* buf, size_t buf_len) {
+ 
+ void SelinuxRestoreContext() {
+     LOG(INFO) << "Running restorecon...";
++    if (IsIrisGuestMode()) {
++        selinux_android_restorecon("/dev/__properties__", 0);
++        selinux_android_restorecon("/apex", 0);
++        selinux_android_restorecon("/linkerconfig", 0);
++        return;
++    }
+     selinux_android_restorecon("/dev", 0);
+     selinux_android_restorecon("/dev/kmsg", 0);
+     if constexpr (WORLD_WRITABLE_KMSG) {
+@@ -598,6 +605,8 @@ int SelinuxKlogCallback(int type, const char* fmt, ...) {
+     }
+     if (type == SELINUX_AVC) {
+         SelinuxAvcLog(buf, sizeof(buf));
++    } else if (IsIrisGuestMode()) {
++        android::base::StderrLogger(android::base::MAIN, severity, "selinux", nullptr, 0, buf);
+     } else {
+         android::base::KernelLogger(android::base::MAIN, severity, "selinux", nullptr, 0, buf);
+     }
+diff --git a/init/service.cpp b/init/service.cpp
+index c3069f5..e37b98d 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -37,6 +37,7 @@
+ #include <selinux/selinux.h>
+ 
+ #include "lmkd_service.h"
++#include "iris_guest_mode.h"
+ #include "service_list.h"
+ #include "util.h"
+ 
+@@ -185,6 +186,12 @@ void Service::NotifyStateChange(const std::string& new_state) const {
+ }
+ 
+ void Service::KillProcessGroup(int signal, bool report_oneshot) {
++    if (IsIrisGuestProbeMode()) {
++        if (pid_ > 1) {
++            kill(pid_, signal);
++        }
++        return;
++    }
+     // If we've already seen a successful result from killProcessGroup*(), then we have removed
+     // the cgroup already and calling these functions a second time will simply result in an error.
+     // This is true regardless of which signal was sent.
+@@ -395,6 +402,15 @@ Result<void> Service::ExecStart() {
+ }
+ 
+ Result<void> Service::Start() {
++    if (IsIrisGuestProbeMode() &&
++        (name_ != "iris_probe" || args_ != std::vector<std::string>{"/system/bin/sleep", "30"} ||
++         !(flags_ & SVC_ONESHOT) || namespaces_.flags != 0 ||
++         !namespaces_.namespaces_to_enter.empty() || !environment_vars_.empty() ||
++         !writepid_files_.empty() || !task_profiles_.empty() || !sockets_.empty() ||
++         !files_.empty() || proc_attr_.uid != 0 || proc_attr_.gid != 0 ||
++         seclabel_ != "u:r:su:s0")) {
++        return Error() << "Iris Guest probe mode permits only the fixed sleep probe";
++    }
+     auto reboot_on_failure = make_scope_guard([this] {
+         if (on_failure_reboot_target_) {
+             trigger_shutdown(*on_failure_reboot_target_);
+@@ -527,11 +543,14 @@ Result<void> Service::Start() {
+             descriptor.Publish();
+         }
+ 
+-        if (auto result = WritePidToFiles(&writepid_files_); !result.ok()) {
+-            LOG(ERROR) << "failed to write pid to files: " << result.error();
++        if (!IsIrisGuestProbeMode()) {
++            if (auto result = WritePidToFiles(&writepid_files_); !result.ok()) {
++                LOG(ERROR) << "failed to write pid to files: " << result.error();
++            }
+         }
+ 
+-        if (task_profiles_.size() > 0 && !SetTaskProfiles(getpid(), task_profiles_)) {
++        if (!IsIrisGuestProbeMode() && task_profiles_.size() > 0 &&
++            !SetTaskProfiles(getpid(), task_profiles_)) {
+             LOG(ERROR) << "failed to set task profiles";
+         }
+ 
+@@ -568,7 +587,7 @@ Result<void> Service::Start() {
+ 
+     bool use_memcg = swappiness_ != -1 || soft_limit_in_bytes_ != -1 || limit_in_bytes_ != -1 ||
+                       limit_percent_ != -1 || !limit_property_.empty();
+-    errno = -createProcessGroup(proc_attr_.uid, pid_, use_memcg);
++    errno = IsIrisGuestProbeMode() ? 0 : -createProcessGroup(proc_attr_.uid, pid_, use_memcg);
+     if (errno != 0) {
+         PLOG(ERROR) << "createProcessGroup(" << proc_attr_.uid << ", " << pid_
+                     << ") failed for service '" << name_ << "'";
+@@ -613,7 +632,7 @@ Result<void> Service::Start() {
+         }
+     }
+ 
+-    if (oom_score_adjust_ != DEFAULT_OOM_SCORE_ADJUST) {
++    if (!IsIrisGuestProbeMode() && oom_score_adjust_ != DEFAULT_OOM_SCORE_ADJUST) {
+         LmkdRegister(name_, proc_attr_.uid, pid_, oom_score_adjust_);
+     }
+ 

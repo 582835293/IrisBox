@@ -1,0 +1,10 @@
+# 容器 Guest 内仅保留工作目录骨架；蓝牙与无线硬件服务均由 zz_disable_vendor.rc / guest_vendor.rc 禁用
+on zygote-start
+    mkdir /data/vendor/wifi 0771 wifi wifi
+    mkdir /data/vendor/wifi/wpa 0770 wifi wifi
+    mkdir /data/vendor/wifi/wpa/sockets 0770 wifi wifi
+
+service wpa_supplicant /vendor/bin/hw/wpa_supplicant /vendor/etc/wifi/wpa_config.txt
+    class main
+    disabled
+    oneshot

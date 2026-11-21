@@ -7,7 +7,7 @@ import java.security.MessageDigest;
 
 /** The real transfer loop, kept free of Android so its byte contract is testable. */
 final class TransferIO {
-    static final long MAX_BYTES = 134217728L;
+    static final long MAX_BYTES = 4294967296L;
     interface Guard { void check() throws IOException; }
     interface Progress { void bytes(long copied, long total); }
 

@@ -33,11 +33,12 @@ public final class SetupActivity extends Activity {
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved); I18n.init(this);
         LinearLayout layout = new LinearLayout(this); layout.setOrientation(1); layout.setPadding(28,16,28,16); layout.setBackgroundColor(Color.rgb(20,24,30));
-        TextView title = label(I18n.s(R.string.ui_1e14f55edbd2), 25); layout.addView(title);
+        TextView title = label(I18n.s(R.string.ui_b4b039705f8b), 25); layout.addView(title);
         layout.addView(label(I18n.s(R.string.ui_735e5a8789a6),16));
         LinearLayout settings=new LinearLayout(this);layout.addView(settings);
         language=new Button(this);language.setText("EN / 中文");language.setOnClickListener(v->I18n.choose(this));settings.addView(language,new LinearLayout.LayoutParams(0,-2,1));
-        button(settings,I18n.known("交换空间"),()->startActivity(new Intent(this,HostSwapActivity.class)));
+        button(settings,I18n.known("交换空间"),()->{startActivity(new Intent(this,HostSwapActivity.class).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION));overridePendingTransition(0,0);});
+        button(settings,I18n.known("外置存储"),()->HostStorage.openDialog(this, () -> inspect()));
         LinearLayout row = new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL); layout.addView(row);
         check = button(row,I18n.s(R.string.ui_719fc1bb80cb), () -> inspect());
         install = button(row,I18n.s(R.string.ui_5f6b5ee42ec1), () -> task("install",null));
@@ -50,13 +51,14 @@ public final class SetupActivity extends Activity {
             checking=true;
             worker.execute(() -> {
                 try {
+                    HostStorage.ensureMountedGuard(this);
                     RootShell.run("test -s /data/irisbox/runtime/config/default_rom",15);
-                    ui.post(() -> startActivity(new Intent(this,ListActivity.class)));
+                    ui.post(() -> { startActivity(new Intent(this,ListActivity.class).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)); overridePendingTransition(0,0); });
                 } catch (Exception e) { SetupService.message(this,I18n.s(R.string.ui_e9813c6d4b9f)+e.getMessage()); }
                 finally { ui.post(() -> checking=false); }
             });
         });
-        info = label(I18n.s(R.string.ui_8dec65600663),14); layout.addView(info);
+        info = label(I18n.s(R.string.ui_2da1ac5ce9bc),14); layout.addView(info);
         ScrollView scroll = new ScrollView(this); output=label("",15); output.setTextIsSelectable(true); scroll.addView(output);
         layout.addView(scroll,new LinearLayout.LayoutParams(-1,0,1)); setContentView(layout);
         readStatus();
@@ -93,7 +95,7 @@ public final class SetupActivity extends Activity {
             Uri uri=data.getData();
             try { getContentResolver().takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION); } catch(SecurityException ignored) {}
             new AlertDialog.Builder(this).setTitle(I18n.s(R.string.ui_233cfdb13ce4))
-                .setMessage(I18n.s(R.string.ui_926bfbf0ee0b))
+                .setMessage(I18n.s(R.string.ui_0a5e0d6f0cc9))
                 .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787),null).setPositiveButton(I18n.s(R.string.ui_60e2bcad85ac),(d,w)->task("import",uri)).show();
         }
     }

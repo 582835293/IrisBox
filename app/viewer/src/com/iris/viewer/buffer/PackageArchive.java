@@ -26,6 +26,10 @@ final class PackageArchive {
         return hex(d.digest());
     }
     static JSONObject extract(InputStream input, File dest, String manifestName, boolean rom, Progress progress) throws Exception {
+        return extract(input, dest, manifestName, rom, PROFILE, "arm64-v8a", 33, Collections.singletonList(FINGERPRINT), progress);
+    }
+    static JSONObject extract(InputStream input, File dest, String manifestName, boolean rom,
+            String targetProfile, String requiredAbi, int requiredApi, List<String> allowedFingerprints, Progress progress) throws Exception {
         if (!dest.isDirectory() || dest.list().length != 0) throw new IOException("暂存目录必须为空");
         try (ZipInputStream zip = new ZipInputStream(new BufferedInputStream(input, 1048576))) {
             ZipEntry first = zip.getNextEntry();
@@ -33,10 +37,25 @@ final class PackageArchive {
             ByteArrayOutputStream header = new ByteArrayOutputStream(); byte[] b = new byte[1048576]; int n;
             while ((n = zip.read(b)) != -1) { if (header.size() + n > 131072) throw new IOException("包清单过大"); header.write(b, 0, n); }
             JSONObject manifest = new JSONObject(new String(header.toByteArray(), StandardCharsets.UTF_8));
-            if (manifest.getInt("formatVersion") != 1 || !manifest.getString("compatibility").equals(PROFILE)) throw new IOException("包格式或适配版本不支持");
-            if (rom && (!manifest.getString("id").matches("[a-z0-9][a-z0-9._-]{0,63}") || manifest.getString("id").contains("..") ||
-                !manifest.getString("abi").equals("arm64-v8a") || manifest.getInt("androidApi") != 33 ||
-                !manifest.getString("hostFingerprint").equals(FINGERPRINT))) throw new IOException("ROM 需要匹配的树莓派4 AOSP13 ARM64 适配包");
+            boolean compatOk = manifest.getInt("formatVersion") == 1 && targetProfile.equals(manifest.optString("compatibility"));
+            if (!compatOk && !rom && manifest.getInt("formatVersion") == 1) {
+                JSONArray profiles = manifest.optJSONArray("compatibleProfiles");
+                if (profiles != null) {
+                    for (int i = 0; i < profiles.length(); i++) {
+                        if (targetProfile.equals(profiles.optString(i))) { compatOk = true; break; }
+                    }
+                }
+            }
+            if (!compatOk) throw new IOException("包格式或适配版本不支持");
+            if (rom) {
+                boolean idOk = manifest.getString("id").matches("[a-z0-9][a-z0-9._-]{0,63}") && !manifest.getString("id").contains("..");
+                boolean hostOk = requiredAbi != null
+                    && requiredAbi.equals(manifest.optString("abi"))
+                    && requiredApi == manifest.optInt("androidApi", 0)
+                    && allowedFingerprints != null
+                    && allowedFingerprints.contains(manifest.optString("hostFingerprint"));
+                if (!idOk || !hostOk) throw new IOException("ROM 需要与当前宿主设备匹配的 ARM64 适配包");
+            }
             JSONObject files = manifest.getJSONObject("files");
             if (files.length() < 1 || files.length() > 512) throw new IOException("包文件数超出范围");
             if (rom) for (String required : new String[]{"system.img", "vendor.img", "compat/iris_init", "compat/guest.rc", "compat/guest_vendor.rc", "compat/loaded_files.txt"})
