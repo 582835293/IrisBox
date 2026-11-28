@@ -8,7 +8,7 @@ import java.util.UUID;
 import java.nio.charset.StandardCharsets;
 
 final class EngineInstaller {
-    static final String VERSION = "0.2.1-e40";
+    static final String VERSION = "0.3.2-e50";
     static String preflight(Context c) throws Exception {
         HostTools.ensure(c);
         String script;
@@ -42,7 +42,7 @@ final class EngineInstaller {
                 "[ \"$(cat /data/irisbox/runtime/engine.version)\" = " + RootShell.quote(VERSION) + " ] && [ \"$(cat /data/irisbox/runtime/engine.sha256)\" = " + RootShell.quote(fingerprint) + " ] || { echo '已安装不同版本；请按升级文档处理，当前版本不会覆盖实例'; exit 4; }\n(cd /data/irisbox/runtime && /data/irisbox/host/bin/busybox sha256sum -c files.sha256 >/dev/null)\n/system/bin/sh /data/irisbox/runtime/instances.sh init\nexit 0\nfi\n"+
                 "[ ! -e /data/irisbox/runtime ] || { echo '发现未完成安装，请查看恢复文档'; exit 4; }\n" + copyScript(work,stage) +
                 "find . -type d -exec chmod 0755 {} \\;\nfind . -type f -exec chmod 0644 {} \\;\n" +
-                "chmod 0755 irisbox_ns irisbox_userns iris_inet_policy display/buffer_bridge/iris_buffer_producer root/magisk_30_7/busybox root/magisk_30_7/magisk root/magisk_30_7/magisk32 root/magisk_30_7/magiskpolicy\n" +
+                "chmod 0755 tuning.sh irisbox_ns irisbox_userns iris_inet_policy display/buffer_bridge/iris_buffer_producer display/buffer_bridge/iris_buffer_producer.opi5-a12-v1 root/magisk_30_7/busybox root/magisk_30_7/magisk root/magisk_30_7/magisk32 root/magisk_30_7/magiskpolicy\n" +
                 "echo " + RootShell.quote(fingerprint) + " > engine.sha256\necho " + RootShell.quote(VERSION) + " > engine.version\n"+
                 "mkdir -p config roms instances\nchmod 0700 config instances\nsync\ncd /\nmv " + RootShell.quote(stage) + " /data/irisbox/runtime\n"+
                 "/system/bin/sh /data/irisbox/runtime/instances.sh init\n";
@@ -95,5 +95,48 @@ final class EngineInstaller {
         return RootShell.run("if [ -f /data/irisbox/runtime/engine.version ]; then printf '引擎：'; cat /data/irisbox/runtime/engine.version; else echo '引擎：未安装'; fi\n"+
             "if [ -f /data/irisbox/runtime/config/default_rom ]; then printf '新实例 ROM：'; cat /data/irisbox/runtime/config/default_rom; else echo 'ROM：尚未导入'; fi\n"+
             "for D in /data/irisbox/runtime/roms/*; do [ ! -f \"$D/rom.json\" ] || printf '已安装 ROM：%s\\n' \"${D##*/}\"; done", 15);
+    }
+
+    /** 结构化读取当前环境、引擎、ROM 与实例摘要供新版仪表盘渲染 */
+    static JSONObject structuredStatus(Context c) throws Exception {
+        BoardSpec board = BoardSpec.matchHost(c);
+        String out = RootShell.run(
+            "EV=''; [ ! -f /data/irisbox/runtime/engine.version ] || EV=$(cat /data/irisbox/runtime/engine.version 2>/dev/null)\n" +
+            "DEF=''; [ ! -f /data/irisbox/runtime/config/default_rom ] || DEF=$(cat /data/irisbox/runtime/config/default_rom 2>/dev/null)\n" +
+            "ROMS=''; for D in /data/irisbox/runtime/roms/*; do [ ! -f \"$D/rom.json\" ] || ROMS=\"${ROMS}${ROMS:+|}${D##*/}\"; done\n" +
+            "INST_TOTAL=0; INST_RUN=0\n" +
+            "for F in /data/irisbox/runtime/config/instances_v1/*.record; do\n" +
+            "  [ -f \"$F\" ] || continue\n" +
+            "  INST_TOTAL=$((INST_TOTAL + 1))\n" +
+            "  N=${F##*/}; N=${N%.record}\n" +
+            "  ID_FILE=/data/irisbox/runtime/instances/$N/init.identity\n" +
+            "  if [ -f \"$ID_FILE\" ]; then\n" +
+            "    read P T < \"$ID_FILE\" 2>/dev/null || true\n" +
+            "    if [ -n \"$P\" ] && [ -r \"/proc/$P/stat\" ]; then INST_RUN=$((INST_RUN + 1)); fi\n" +
+            "  fi\n" +
+            "done\n" +
+            "MOUNTED=0; AVAIL_MB=0\n" +
+            "if grep -qs ' /data/irisbox ' /proc/mounts; then\n" +
+            "  MOUNTED=1\n" +
+            "  AVAIL_MB=$(/data/irisbox/host/bin/busybox df -Pm /data/irisbox 2>/dev/null | /data/irisbox/host/bin/busybox awk 'END {print $(NF-2)}')\n" +
+            "fi\n" +
+            "printf 'engineVersion=%s\\ndefaultRom=%s\\ninstalledRoms=%s\\ninstanceCount=%s\\nrunningCount=%s\\nssdMounted=%s\\nssdAvailMb=%s\\n' " +
+            "\"$EV\" \"$DEF\" \"$ROMS\" \"$INST_TOTAL\" \"$INST_RUN\" \"$MOUNTED\" \"${AVAIL_MB:-0}\"\n", 15);
+        JSONObject j = new JSONObject();
+        j.put("expectedEngineVersion", VERSION);
+        j.put("boardProfile", board.profile);
+        j.put("boardName", board.displayName);
+        j.put("requireExternalSsd", board.requireExternalMount);
+        for (String line : out.split("\n")) {
+            int eq = line.indexOf('=');
+            if (eq <= 0) continue;
+            j.put(line.substring(0, eq).trim(), line.substring(eq + 1).trim());
+        }
+        String ev = j.optString("engineVersion", "");
+        j.put("engineInstalled", !ev.isEmpty());
+        j.put("engineMatches", VERSION.equals(ev));
+        String roms = j.optString("installedRoms", "");
+        j.put("romImported", !j.optString("defaultRom", "").isEmpty() || !roms.isEmpty());
+        return j;
     }
 }

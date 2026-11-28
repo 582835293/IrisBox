@@ -1,19 +1,36 @@
 # Building and maintenance
 
-Current **`0.3.0` (engine `0.3.0-e41`)** unifies Raspberry Pi 4 (`rpi4-a13-v1`) and Orange Pi 5 (`opi5-a12-v1`) under declarative board profiles, adds enforced external SSD storage binding, dynamic uplink & DNS switching, sub-second display handoff, live Linux/FPS telemetry HUD, and a typed confirmation gate for `/data/data` migration. Already mapped `0.1.5`–`0.2.1` instances require no repeated UID migration: stop all guests normally, keep the matching old APK, run `python tools/upgrade_engine.py --from-apk <old-apk> --apply`, then install the same-signed `out/IrisBox-0.3.0.apk`.
+Current **`0.3.1` (engine `0.3.1-e42`)** unifies Raspberry Pi 4 (`rpi4-a13-v1`) and Orange Pi 5 (`opi5-a12-v1`) under declarative board profiles, adds enforced external SSD storage binding, dynamic uplink & DNS switching, sub-second display handoff, live Linux/FPS telemetry HUD, a typed confirmation gate for `/data/data` migration, automatic old host-swap tier cleanup after successful tier switches, and an in-app guarded "Clean up & uninstall" flow (`HostCleanup` + `uninstall_cleanup.sh`). Already mapped `0.1.5`–`0.3.0` instances require no repeated UID migration: stop all guests normally, keep the matching old APK, run `python tools/upgrade_engine.py --from-apk <old-apk> --apply`, then install the same-signed `out/IrisBox-0.3.1.apk`.
 
 Earlier **0.1.6/e27** added host swap management ([details](low-memory.md)), and **0.1.5/e25** introduced the Iris namespace migration ([migration guide](namespace-migration.md)). Older `0.1.4/e21` setups still require the stopped-state migration before upgrading.
 
 [中文](../04_构建与维护.md)
 
-Use JDK 17, Python 3, Android SDK platform android-30, build-tools 34.0.0 and NDK 28.2.13676358. The APK targets API 33; SDK 30 is the compilation interface baseline.
+Use JDK 17, Python 3.9+, Android SDK platform android-30, build-tools 34.0.0 and NDK 28.2.13676358 across **Linux**, **macOS (Intel & Apple Silicon)**, and **Windows**. The APK targets API 33; SDK 30 is the compilation interface baseline.
+
+**Linux / macOS**:
+
+```sh
+git clone https://github.com/582835293/IrisBox.git
+cd IrisBox
+chmod +x build.sh
+./build.sh
+# Auto-detects ANDROID_SDK_ROOT / ANDROID_HOME and JAVA_HOME (or macOS java_home -v 17).
+# Explicit overrides and app-only rebuilds are also supported:
+./build.sh --sdk-dir /path/to/Android/Sdk --jdk-dir /path/to/jdk-17
+./build.sh --app-only
+```
+
+> `build.sh` is a POSIX `sh` wrapper over `tools/build_all.py`. It works across Linux distributions and macOS (including Apple Silicon / macOS default Bash 3.2 and `darwin-x86_64` NDK prebuilts) without PowerShell or GNU-only coreutils flags.
+
+**Windows (PowerShell)**:
 
 ```powershell
 $env:JAVA_TOOL_OPTIONS='-Xmx256m -Xms16m -XX:+UseSerialGC'
 ./build.ps1 -SdkDir "$env:LOCALAPPDATA/Android/Sdk" -JdkDir 'C:/path/to/jdk-17'
 ```
 
-The full build generates EN/ZH resources, packages the fixed host BusyBox, builds the ordinary Guest download browser, compiles native helpers, AudioBridge, Broker and Gateway, normalizes JAR times, generates engine/profile hashes, compiles Viewer JNI/Java, links resources with generated R.java, aligns and signs the APK. Current development output: `out/IrisBox-0.1.5.apk`. `-AppOnly` is appropriate only when the engine is unchanged and already packaged. Engine changes require a new engine version and full build.
+The full build generates EN/ZH resources, packages the fixed host BusyBox, builds the ordinary Guest download browser, compiles native helpers, AudioBridge, Broker and Gateway, normalizes JAR times, generates engine/profile hashes, compiles Viewer JNI/Java, links resources with generated R.java, aligns and signs the APK. Current development output: `out/IrisBox-0.3.1.apk`. `-AppOnly` is appropriate only when the engine is unchanged and already packaged. Engine changes require a new engine version and full build.
 
 The local signing key is generated under the ignored App build directory. Preserve the private key for updates; it is not published. A clone creates a different development key and cannot overwrite a release-signed installation. This preview keeps its original development signing identity; there is no automated release-signing service.
 
@@ -39,7 +56,7 @@ An incomplete upgrade leaves `engine-upgrade.pending`; the App refuses startup. 
 
 The e13 → e17 upgrade additionally requires the independent, stopped-state userdata backup and ownership migration described in [User namespace migration](userns.md). After the first mapped boot, restoring an older engine alone is unsafe. The original full data snapshot must remain available. Fresh instances receive mappings automatically.
 
-Uninstalling the APK preserves `/data/irisbox`. Complete removal requires stopping/deleting only this project's instances, verifying no owned mounts/cgroups remain and stopping its manager before targeted cleanup. Never remove `/data/guest`, flush shared BPF or firewall tables, or reset user data to resolve host compatibility errors.
+Uninstalling the APK preserves `/data/irisbox`. Since `0.3.1`, **SetupActivity -> Clean up & uninstall** (`HostCleanup` + memory-piped `uninstall_cleanup.sh`) automates safe removal once all instances are stopped manually (`STOP_INSTANCES` / `SUBMOUNT_ACTIVE`), verifies `512 MiB` swapoff margin and `# IRISBOX_MANAGED_*` hook headers, cleans only IrisBox-owned data/hooks/SSD mount bindings without deleting external storage backups, and launches `ACTION_DELETE`. Never remove unrelated storage directories, flush shared BPF or firewall tables, or touch system `zram`.
 
 Keep Android scripts LF. The packager rejects CR bytes. Do not rerun the initial extraction/adaptation scripts over the maintained source tree. Raw logs, screenshots, account baselines and signing keys stay private.
 

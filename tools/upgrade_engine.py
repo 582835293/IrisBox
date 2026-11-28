@@ -22,11 +22,11 @@ def main():
         assert re.fullmatch(r'/data/irisbox/\.upgrade-[a-f0-9]{32}',stage)
         print(shell('test ! -L '+stage+'\nsh '+stage+'/recover.sh',timeout=180));return
     if args.from_apk is None:parser.error('--from-apk is required unless --recover is selected')
-    old,old_raw=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.3.0.apk')
+    old,old_raw=engine(args.from_apk);new,raw=engine(ROOT/'out/IrisBox-0.3.2.apk')
     with zipfile.ZipFile(io.BytesIO(old_raw)) as archive:
         old_base=re.search(r'^BASE=(/data/[a-z0-9_]+/runtime)$',archive.read('common.sh').decode(),re.M)
     assert old_base and old_base[1]==BASE,'Use migrate_namespace.py for a different package/storage namespace'
-    assert old['version'] in ('0.1.5-e25','0.1.6-e26','0.1.6-e27','0.2.0-e28','0.2.1-e29','0.2.1-e30','0.2.1-e31','0.2.1-e32','0.2.1-e33','0.2.1-e34','0.2.1-e35','0.2.1-e36','0.2.1-e37','0.2.1-e38','0.2.1-e39','0.2.1-e40') and new['version']=='0.3.0-e41'
+    assert old['version'] in ('0.1.5-e25','0.1.6-e26','0.1.6-e27','0.2.0-e28','0.2.1-e29','0.2.1-e30','0.2.1-e31','0.2.1-e32','0.2.1-e33','0.2.1-e34','0.2.1-e35','0.2.1-e36','0.2.1-e37','0.2.1-e38','0.2.1-e39','0.2.1-e40','0.3.0-e41','0.3.1-e42','0.3.2-e43','0.3.2-e44','0.3.2-e45','0.3.2-e46','0.3.2-e47','0.3.2-e48','0.3.2-e49') and new['version']=='0.3.2-e50'
     current=json.loads(shell('cat '+BASE+'/engine.json'))
     assert current==old,'Installed engine is not the supplied known baseline'
     with API() as api:
@@ -74,7 +74,7 @@ def main():
     for name in sorted(new['files']):
         parent=str(Path(name).parent).replace('\\','/')
         script += [f'mkdir -p "$B/{parent}"',f'[ ! -L "$B/{name}" ]',f'cp "$S/payload/{name}" "$B/{name}.upgrade"',f'chmod 0644 "$B/{name}.upgrade"',f'mv -f "$B/{name}.upgrade" "$B/{name}"']
-    executable=('irisbox_ns','irisbox_userns','iris_inet_policy','display/buffer_bridge/iris_buffer_producer','root/magisk_30_7/busybox','root/magisk_30_7/magisk','root/magisk_30_7/magisk32','root/magisk_30_7/magiskpolicy')
+    executable=('irisbox_ns','irisbox_userns','iris_inet_policy','tuning.sh','display/buffer_bridge/iris_buffer_producer','display/buffer_bridge/iris_buffer_producer.opi5-a12-v1','root/magisk_30_7/busybox','root/magisk_30_7/magisk','root/magisk_30_7/magisk32','root/magisk_30_7/magiskpolicy')
     script += ['chmod 0755 '+' '.join('"$B/'+n+'"' for n in executable),
                'cp "$S/payload/engine.json" "$B/engine.json"','cp "$S/files.sha256" "$B/files.sha256"',
                '(cd "$B" && "$BB" sha256sum -c files.sha256 >/dev/null)',

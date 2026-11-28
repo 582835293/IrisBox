@@ -22,10 +22,10 @@ def main():
             data=p.read_bytes()
             if p.suffix in ('.sh','.rc'):assert b'\r' not in data, 'Android script must use LF: '+str(p)
             files[p.relative_to(engine).as_posix()]={'size':len(data),'sha256':hashlib.sha256(data).hexdigest()}
-    for required in ('host_swap.sh','board.sh','irisbox_ns','irisbox_userns','security/userns/libalarm_jni.so','browser/IrisBoxBrowser.apk','iris_inet_policy','display/buffer_bridge/iris_buffer_producer','display/buffer_viewer/broker.jar','display/buffer_viewer/gateway.jar'):
+    for required in ('host_swap.sh','board.sh','tuning.sh','irisbox_ns','irisbox_userns','security/userns/libalarm_jni.so','browser/IrisBoxBrowser.apk','iris_inet_policy','display/buffer_bridge/iris_buffer_producer','display/buffer_bridge/iris_buffer_producer.opi5-a12-v1','display/buffer_viewer/broker.jar','display/buffer_viewer/gateway.jar'):
         assert required in files, 'Engine executable missing: '+required
     profiles = [b['profile'] for b in boards]
-    manifest={'formatVersion':1,'compatibility':profiles[0],'compatibleProfiles':profiles,'version':'0.3.0-e41','files':files}
+    manifest={'formatVersion':1,'compatibility':profiles[0],'compatibleProfiles':profiles,'version':'0.3.2-e50','files':files}
     out=ROOT/'app/viewer/assets/engine.zip';out.parent.mkdir(parents=True,exist_ok=True)
     with zipfile.ZipFile(out,'w',zipfile.ZIP_DEFLATED,compresslevel=6) as z:
         z.writestr('engine.json',json.dumps(manifest,separators=(',',':')))

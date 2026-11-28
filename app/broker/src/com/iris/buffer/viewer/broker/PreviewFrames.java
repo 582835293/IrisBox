@@ -32,7 +32,8 @@ final class PreviewFrames {
         if(jpeg.length<4||jpeg[0]!=(byte)255||jpeg[1]!=(byte)216)throw new IOException("Expected JPEG preview");
         BitmapFactory.Options options=new BitmapFactory.Options();options.inJustDecodeBounds=true;
         BitmapFactory.decodeByteArray(jpeg,0,jpeg.length,options);
-        if(options.outWidth!=640||options.outHeight!=360)throw new IOException("Preview dimensions outside limit");
+        boolean validDims=(options.outWidth==640&&options.outHeight==360)||(options.outWidth==360&&options.outHeight==640);
+        if(!validDims)throw new IOException("Preview dimensions outside limit");
         return jpeg;
     }
 }

@@ -52,5 +52,8 @@ for CONTROL in cpuctl cpuset blkio; do
     $BB chown 1000:1000 "$G/managed"
     $BB chmod 0755 "$G/managed"
 done
+if [ -f "$BASE/tuning.sh" ] && [ ! -L "$BASE/tuning.sh" ]; then
+    /system/bin/sh "$BASE/tuning.sh" apply-cgroup "$ID"
+fi
 [ "$(cat "$MEM/memory.limit_in_bytes")" = "$MEM_BYTES" ]
 [ "$(cat "$PIDS/pids.max")" = "$MAX_TASKS" ]

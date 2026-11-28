@@ -159,7 +159,14 @@ Detailed per-step logs and measurements are kept in [the Chinese validation reco
 | Media playback & `1007 -> 1010` app migration | OPi5 `1007 -> 1010` (`~3.70 GB` across 4 apps, clean up afterward) | Douyin (`FPS 33.8–33.9`, `AudioBridge` `PLAYING`) and Bilibili (`FPS 29.9`) played inside `1007`; all 4 apps migrated with remapped `userId` (`10091–10094`). Bilibili kept its session in `1010`; Douyin prompted re-login due to isolated `SSAID`/MAC. |
 | `/data/data` high-risk safety gate (`0.3.0`) | Viewer `ListActivity` + 525 EN/ZH strings on OPi5 | Enabling `/data/data` import resets the checkbox and displays a red anti-fraud ban warning requiring exact typed confirmation (`CONFIRM HIGH RISK` / `确认高风险迁移`). High-risk social packages (`com.tencent.mm`, `com.tencent.mobileqq`, `com.tencent.tim`, `com.tencent.wework`, `com.tencent.qqlite`) are tagged and blocked from `/data/data` import. Warning dialog & invalid-phrase rejection captured on OPi5; exact-phrase unlock and targeted WeChat/QQ import dialog verified by static build after test apps were uninstalled. |
 
-### Known untested items for 0.3.0
+### Known untested items through 0.3.1
 
 1. Fresh physical flash/first boot of the RPi4 clean USB host image (`USB/sda`, 16 GB+) and fresh BPF initialization on a never-touched host remain unverified.
-2. Public release still ships RPi4 AOSP 13 `.irisrom` only (no Orange Pi 5 proprietary/GMS ROM); full RPi4 automated `tests/*_regression.py` suite and OPi5 `12288 MiB` ceiling stress test were not re-run in the latest round.
+2. Public release still ships RPi4 AOSP 13 `.irisrom` only (no Orange Pi 5 proprietary/GMS ROM); full RPi4 automated `tests/*_regression.py` suite, OPi5 `12288 MiB` ceiling stress test, and destructive end-to-end wipe via Android `ACTION_DELETE` on OPi5 (intentionally skipped to preserve the existing 32 GB SSD ROM and instances) were not executed in the `0.3.1` round.
+
+## November 2026: 0.3.1 / 0.3.1-e42 swap tier cleanup & guarded uninstall validation
+
+- **Build & static gates**: `python tools/build_all.py` passed cleanly, producing `out/IrisBox-0.3.1.apk` (APKv3 signed) and the `58`-payload `engine.zip`; `tests/audit_inputs.py` and `tests/i18n_catalog.py` (`550` EN/ZH strings) passed with zero warnings.
+- **OPi5 non-destructive upgrade (`0.2.1-e40 -> 0.3.1-e42`)**: `upgrade_engine.py --apply` upgraded the device engine transactionally with `ENGINE_UPGRADED_DATA_PRESERVED`, `IrisBox-0.3.1.apk` (`versionCode=131`) installed cleanly, and instance `1007` (`6144 MiB`) booted and shut down cleanly without losing data.
+- **Swap tier switch cleanup & lock guard**: Switching `0 -> 1024 -> 2048 -> 0` deleted obsolete `swap-1024.img/.record` after switching to `2048 MiB` and freed all host swap disk usage back to `0` upon turning off, while leaving system `/dev/block/zram0` and `irisbox-storage.sh` untouched; concurrent swap operations were rejected cleanly with `START_IN_PROGRESS`.
+- **`STOP_INSTANCES` cleanup guard**: Invoking `uninstall_cleanup.sh` while instance `1007` was active exited with code `4` (`IRIS_CLEANUP_ERROR=STOP_INSTANCES`), leaving `/data/irisbox` and the `1007` image completely intact before stopping cleanly and passing `device.py preflight`.

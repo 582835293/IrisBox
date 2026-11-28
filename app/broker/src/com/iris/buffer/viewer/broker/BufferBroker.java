@@ -600,8 +600,112 @@ public final class BufferBroker {
         } catch (Exception e) { return false; }
     }
 
+    private static JSONObject savedAudioConfig(int id) throws Exception {
+        JSONObject cfg = new JSONObject()
+            .put("outputEnabled", true)
+            .put("muted", false)
+            .put("volume", 100)
+            .put("inputPolicy", "mute_no_mic")
+            .put("hasHardwareMic", false);
+        Path dir = Paths.get(BASE, "config/audio_v1");
+        Path conf = dir.resolve(id + ".conf");
+        if (Files.isSymbolicLink(Paths.get(BASE, "config")) || Files.isSymbolicLink(dir) || Files.isSymbolicLink(conf)) {
+            return cfg;
+        }
+        if (Files.isRegularFile(conf, LinkOption.NOFOLLOW_LINKS) && Files.size(conf) <= 1024) {
+            for (String line : Files.readAllLines(conf, StandardCharsets.UTF_8)) {
+                int eq = line.indexOf('=');
+                if (eq <= 0) continue;
+                String k = line.substring(0, eq).trim(), v = line.substring(eq + 1).trim();
+                if ("output_enabled".equals(k)) cfg.put("outputEnabled", !"0".equals(v) && !"false".equalsIgnoreCase(v));
+                else if ("muted".equals(k)) cfg.put("muted", "1".equals(v) || "true".equalsIgnoreCase(v));
+                else if ("volume".equals(k)) {
+                    try { cfg.put("volume", Math.max(0, Math.min(100, Integer.parseInt(v)))); } catch (NumberFormatException ignored) {}
+                } else if ("input_policy".equals(k) && ("mute_no_mic".equals(v) || "keep_silent".equals(v))) {
+                    cfg.put("inputPolicy", v);
+                }
+            }
+        }
+        return cfg;
+    }
+
+    private static void saveAudioConfig(int id, boolean outputEnabled, boolean muted, int volume, String inputPolicy) throws Exception {
+        if (volume < 0 || volume > 100 || (!"mute_no_mic".equals(inputPolicy) && !"keep_silent".equals(inputPolicy))) {
+            throw new IOException("Invalid audio config");
+        }
+        Path cfgRoot = Paths.get(BASE, "config");
+        Path dir = cfgRoot.resolve("audio_v1");
+        Path conf = dir.resolve(id + ".conf");
+        if (Files.isSymbolicLink(cfgRoot) || Files.isSymbolicLink(dir) || Files.isSymbolicLink(conf)) {
+            throw new IOException("Unsafe audio config path");
+        }
+        if (!Files.exists(dir, LinkOption.NOFOLLOW_LINKS)) {
+            Files.createDirectories(dir);
+            Os.chmod(dir.toString(), 0700);
+        }
+        Path tmp = dir.resolve(id + ".conf.tmp." + Os.getpid());
+        String content = "output_enabled=" + (outputEnabled ? "1" : "0") + "\n"
+            + "muted=" + (muted ? "1" : "0") + "\n"
+            + "volume=" + volume + "\n"
+            + "input_policy=" + inputPolicy + "\n";
+        Files.write(tmp, content.getBytes(StandardCharsets.UTF_8));
+        Os.chmod(tmp.toString(), 0600);
+        Files.move(tmp, conf, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+    }
+
+    private static String savedGraphicsMode(int id) {
+        try {
+            Path p = Paths.get(BASE, "config/graphics_v1", id + ".profile");
+            if (!Files.isSymbolicLink(p) && !Files.isSymbolicLink(p.getParent()) && Files.isRegularFile(p, LinkOption.NOFOLLOW_LINKS)) {
+                String g = read(p, 16);
+                if ("native".equals(g) || "opengl".equals(g)) return g;
+            }
+        } catch (Exception ignored) {}
+        return "native";
+    }
+
+    private static JSONObject tuningState(int id, String session) throws Exception {
+        JSONObject result = new JSONObject()
+            .put("pidsMax", "auto")
+            .put("cpusetCpus", "all")
+            .put("cpuQuotaPct", 0)
+            .put("cpuShares", 1024)
+            .put("blkioWeight", 500)
+            .put("displayDpi", "auto")
+            .put("dexoptInstall", "verify")
+            .put("dex2oatThreads", 4)
+            .put("graphicsMode", savedGraphicsMode(id));
+        Path dir = Paths.get(BASE, "config/tuning_v1");
+        Path conf = dir.resolve(id + ".conf");
+        if (!Files.isSymbolicLink(Paths.get(BASE, "config")) && !Files.isSymbolicLink(dir) &&
+            !Files.isSymbolicLink(conf) && Files.isRegularFile(conf, LinkOption.NOFOLLOW_LINKS) && Files.size(conf) <= 1024) {
+            for (String line : Files.readAllLines(conf, StandardCharsets.UTF_8)) {
+                int eq = line.indexOf('=');
+                if (eq <= 0) continue;
+                String k = line.substring(0, eq).trim(), val = line.substring(eq + 1).trim();
+                if ("pids_max".equals(k)) result.put("pidsMax", val);
+                else if ("cpuset_cpus".equals(k)) result.put("cpusetCpus", val);
+                else if ("cpu_quota_pct".equals(k)) { try { result.put("cpuQuotaPct", Integer.parseInt(val)); } catch (NumberFormatException ignored) {} }
+                else if ("cpu_shares".equals(k)) { try { result.put("cpuShares", Integer.parseInt(val)); } catch (NumberFormatException ignored) {} }
+                else if ("blkio_weight".equals(k)) { try { result.put("blkioWeight", Integer.parseInt(val)); } catch (NumberFormatException ignored) {} }
+                else if ("display_dpi".equals(k)) result.put("displayDpi", val);
+                else if ("dexopt_install".equals(k)) result.put("dexoptInstall", val);
+                else if ("dex2oat_threads".equals(k)) { try { result.put("dex2oatThreads", Integer.parseInt(val)); } catch (NumberFormatException ignored) {} }
+            }
+        }
+        if (!session.isEmpty()) {
+            try {
+                result.put("effectivePidsMax", read(Paths.get("/sys/fs/cgroup/irisbox_" + id + "/pids.max"), 32));
+                result.put("effectiveCpuset", read(Paths.get("/dev/cpuset/irisbox_" + id + "/cpus"), 64));
+            } catch (Exception ignored) {}
+        }
+        return result;
+    }
+
     private static JSONObject audioState(int id, String expected) throws Exception {
-        JSONObject result = new JSONObject().put("ready", false).put("status", expected.isEmpty() ? "STOPPED" : "WAITING");
+        JSONObject result = savedAudioConfig(id)
+            .put("ready", false)
+            .put("status", expected.isEmpty() ? "STOPPED" : "WAITING");
         if (expected.isEmpty()) return result;
         try {
             Path run = Paths.get(read(instance(id).resolve("latest.logdir"), 512));
@@ -883,6 +987,7 @@ public final class BufferBroker {
                 .put("orientation", orientationState(id))
                 .put("memory", memoryState(id, s)).put("root", rootState(id, s)).put("audio", audioState(id, s))
                 .put("network", networkState(id, s))
+                .put("tuning", tuningState(id, s))
                 .put("perf", telemetry.instancePerfBrief(id, s))
                 .put("cleanupPending", Files.exists(instance(id).resolve("cleanup.pending"), LinkOption.NOFOLLOW_LINKS))
                 .put("bootLog", logs).put("bootLogKey", attempt == null ? "" : attempt.key())
@@ -1250,6 +1355,92 @@ public final class BufferBroker {
                     int appId = Integer.parseInt(v.getOrDefault("id", "0"));
                     String appSess = v.getOrDefault("session", "");
                     json(socket, 200, hostApps.status(appId, appSess));
+                    return;
+                }
+                if (route[0].equals("/apps/export") && r[0].equals("POST")) {
+                    int appId = Integer.parseInt(v.getOrDefault("id", "0"));
+                    String appSess = v.getOrDefault("session", ""), pkg = v.getOrDefault("pkg", ""),
+                        targetMode = v.getOrDefault("targetMode", "apk_file");
+                    boolean obb = "1".equals(v.getOrDefault("obb", "0"));
+                    json(socket, 202, hostApps.startExportToHost(appId, appSess, pkg, targetMode, obb));
+                    return;
+                }
+                if (route[0].equals("/apps/export/status") && r[0].equals("GET")) {
+                    int appId = Integer.parseInt(v.getOrDefault("id", "0"));
+                    String appSess = v.getOrDefault("session", "");
+                    json(socket, 200, hostApps.exportStatus(appId, appSess));
+                    return;
+                }
+                if (route[0].equals("/audio/config") && r[0].equals("POST")) {
+                    int aid = Integer.parseInt(v.getOrDefault("id", "0"));
+                    if (!InstanceCatalog.contains(aid)) { json(socket, 400, new JSONObject().put("error", "Invalid instance")); return; }
+                    boolean outEn = !"0".equals(v.getOrDefault("outputEnabled", "1"));
+                    boolean muted = "1".equals(v.getOrDefault("muted", "0"));
+                    int vol = Integer.parseInt(v.getOrDefault("volume", "100"));
+                    String inPol = v.getOrDefault("inputPolicy", "mute_no_mic");
+                    saveAudioConfig(aid, outEn, muted, vol, inPol);
+                    json(socket, 200, audioState(aid, session(aid)));
+                    return;
+                }
+                if (route[0].equals("/tuning/get") && r[0].equals("GET")) {
+                    int tid = Integer.parseInt(v.getOrDefault("id", "0"));
+                    if (!InstanceCatalog.contains(tid)) { json(socket, 400, new JSONObject().put("error", "Invalid instance")); return; }
+                    Map<String, String> kv = parseKv(runQuiet(BASE + "/tuning.sh", tid, 10, "get", Integer.toString(tid)));
+                    JSONObject resp = new JSONObject()
+                        .put("id", tid)
+                        .put("running", !session(tid).isEmpty())
+                        .put("pidsMax", kv.getOrDefault("pids_max", "auto"))
+                        .put("cpusetCpus", kv.getOrDefault("cpuset_cpus", "all"))
+                        .put("cpuQuotaPct", Integer.parseInt(kv.getOrDefault("cpu_quota_pct", "0")))
+                        .put("cpuShares", Integer.parseInt(kv.getOrDefault("cpu_shares", "1024")))
+                        .put("blkioWeight", Integer.parseInt(kv.getOrDefault("blkio_weight", "500")))
+                        .put("displayDpi", kv.getOrDefault("display_dpi", "auto"))
+                        .put("dexoptInstall", kv.getOrDefault("dexopt_install", "verify"))
+                        .put("dex2oatThreads", Integer.parseInt(kv.getOrDefault("dex2oat_threads", "4")))
+                        .put("graphicsMode", savedGraphicsMode(tid))
+                        .put("hostCpus", kv.getOrDefault("host_cpus", "0-7"))
+                        .put("hostBigCpus", kv.getOrDefault("host_big_cpus", "0-7"))
+                        .put("hostLittleCpus", kv.getOrDefault("host_little_cpus", "0-3"))
+                        .put("effectiveCpuset", kv.getOrDefault("effective_cpuset", ""))
+                        .put("effectivePidsMax", kv.getOrDefault("effective_pids_max", ""))
+                        .put("effectivePidsCur", kv.getOrDefault("effective_pids_cur", ""))
+                        .put("boardDefaultTasks", kv.getOrDefault("board_default_tasks", ""));
+                    json(socket, 200, resp);
+                    return;
+                }
+                if (route[0].equals("/tuning/set") && r[0].equals("POST")) {
+                    int tid = Integer.parseInt(v.getOrDefault("id", "0"));
+                    if (!InstanceCatalog.contains(tid)) { json(socket, 400, new JSONObject().put("error", "Invalid instance")); return; }
+                    String expectedSess = v.getOrDefault("session", "");
+                    String nowSess = session(tid);
+                    if (!expectedSess.equals(nowSess)) { json(socket, 409, new JSONObject().put("error", "Instance session changed")); return; }
+                    String reqPids = v.getOrDefault("pidsMax", "auto");
+                    String reqCpuset = v.getOrDefault("cpusetCpus", "all");
+                    String reqQuota = v.getOrDefault("cpuQuotaPct", "0");
+                    String reqShares = v.getOrDefault("cpuShares", "1024");
+                    String reqBlkio = v.getOrDefault("blkioWeight", "500");
+                    String reqDpi = v.getOrDefault("displayDpi", "auto");
+                    String reqDexopt = v.getOrDefault("dexoptInstall", "verify");
+                    String reqThreads = v.getOrDefault("dex2oatThreads", "4");
+                    String reqGfx = v.getOrDefault("graphicsMode", "");
+                    String prevGfx = savedGraphicsMode(tid);
+                    JSONObject prevTuning = tuningState(tid, nowSess);
+                    boolean pidsChanged = !reqPids.equals(prevTuning.optString("pidsMax", "auto"));
+                    boolean gfxChanged = !reqGfx.isEmpty() && !reqGfx.equals(prevGfx);
+                    if (!nowSess.isEmpty() && (pidsChanged || gfxChanged)) {
+                        json(socket, 409, new JSONObject().put("error", "停止实例后才能修改线程上限或图形渲染模式"));
+                        return;
+                    }
+                    if (!reqGfx.isEmpty() && !"native".equals(reqGfx) && !"opengl".equals(reqGfx)) {
+                        json(socket, 400, new JSONObject().put("error", "Invalid graphicsMode"));
+                        return;
+                    }
+                    if (gfxChanged) {
+                        run(BASE + "/graphics.sh", tid, "", "", 20, "set", Integer.toString(tid), reqGfx, prevGfx);
+                    }
+                    run(BASE + "/tuning.sh", tid, nowSess, "", 25, "set", Integer.toString(tid),
+                        reqPids, reqCpuset, reqQuota, reqShares, reqBlkio, reqDpi, reqDexopt, reqThreads);
+                    json(socket, 200, tuningState(tid, nowSess).put("saved", true));
                     return;
                 }
 

@@ -24,6 +24,7 @@
     <string name="ui_4958d1bb5dd6" formatted="false">" · Last action incomplete"</string>
     <string name="ui_637d53cd9da4" formatted="false">" · Connecting"</string>
     <string name="ui_c681b7343000" formatted="false">" · Network egress"</string>
+    <string name="ui_e4c4db5f1a84" formatted="false">" · Tap below to complete initial installation."</string>
     <string name="ui_fc4b4d491ceb" formatted="false">" · Long-press to copy"</string>
     <string name="ui_8f2085358747" formatted="false">" instances"</string>
     <string name="ui_371b8345ec33" formatted="false">" to confirm."</string>
@@ -37,16 +38,32 @@
     <string name="ui_5e5d942c3c54" formatted="false">"1 GiB = 1024 MiB; board default %1$s GiB."</string>
     <string name="ui_1225ee44356f" formatted="false">"1 GiB = 1024 MiB; default 1.25 GiB."</string>
     <string name="ui_719fc1bb80cb" formatted="false">"1 · Authorize and check"</string>
+    <string name="ui_4575886c5620" formatted="false">"1000 · Highest storage I/O"</string>
+    <string name="ui_86daa1a202ab" formatted="false">"1024 · Standard (default)"</string>
     <string name="ui_982ab1425740" formatted="false">"1280×720 · Balanced"</string>
     <string name="ui_22e8a8bf13a8" formatted="false">"1600×900 · Higher detail"</string>
     <string name="ui_29150070c055" formatted="false">"1920×1080 · Highest detail and resource use"</string>
     <string name="ui_5f6b5ee42ec1" formatted="false">"2 · Install engine"</string>
+    <string name="ui_1266757404a0" formatted="false">"2048 · Gaming priority"</string>
+    <string name="ui_6d4c9c5da11f" formatted="false">"240 · Tablet wide view"</string>
     <string name="ui_ed63f2ba7598" formatted="false">"3 · Import ROM"</string>
+    <string name="ui_075688441b48" formatted="false">"320 · HD balanced"</string>
     <string name="ui_697394547d6e" formatted="false">"4 · Manage instances"</string>
+    <string name="ui_87bcef5276ad" formatted="false">"4 threads (Recommended)"</string>
+    <string name="ui_9760b4c5a613" formatted="false">"4096 · Maximum weight"</string>
+    <string name="ui_cdd5347c1f7f" formatted="false">"420 · Phone standard (fixes PDD/app aspect ratio)"</string>
+    <string name="ui_3317d630a0a8" formatted="false">"440 · Phone compact"</string>
+    <string name="ui_1d427fc323a3" formatted="false">"500 · Standard (default)"</string>
+    <string name="ui_e01232e29606" formatted="false">"512 · Background low"</string>
     <string name="ui_a4275512346c" formatted="false">"960×540 · Performance"</string>
+    <string name="ui_c86472967d0a" formatted="false">"Bundled in APK: "</string>
+    <string name="ui_f38698275bea" formatted="false">"ARM64 Isolated Container Console · Engine &amp; Storage Manager"</string>
     <string name="ui_88e5fa8dc7d4" formatted="false">"Android is starting"</string>
     <string name="ui_89e719c391f4" formatted="false">"Android is starting; waiting for the desktop"</string>
     <string name="ui_dc3ebc1fd0b4" formatted="false">"Insufficient App staging space; required: "</string>
+    <string name="ui_c91ff34110e3" formatted="false">"CPU affinity (cpuset)"</string>
+    <string name="ui_64cf56d6e669" formatted="false">"CPU quota ceiling"</string>
+    <string name="ui_fd025aa46dd1" formatted="false">"CPU scheduling weight"</string>
     <string name="ui_61431715c6f5" formatted="false">"Invalid DNS address; enter 1 or 2 valid IPv4 addresses"</string>
     <string name="ui_ef1aebd42c7a" formatted="false">"DNS Resolution"</string>
     <string name="ui_93676a2553d5" formatted="false">"IrisBox_Instance"</string>
@@ -72,8 +89,16 @@
     <string name="ui_b72827b39c61" formatted="false">"Root: loading"</string>
     <string name="ui_63265c9e9d1a" formatted="false">"Root: invalid configuration"</string>
     <string name="ui_851c082fc074" formatted="false">"Fail-closed when VPN drops (unchecked: fall back to physical)"</string>
+    <string name="ui_8c1950b448c8" formatted="false">"[Dir] "</string>
     <string name="ui_2fbc9da21a8d" formatted="false">"_startup_log.txt"</string>
+    <string name="ui_241e4e599bc4" formatted="false">"native · Native Vulkan + GLES"</string>
+    <string name="ui_60190ef116fc" formatted="false">"opengl · GLES 3.0 game compatibility"</string>
+    <string name="ui_3dd680b72686" formatted="false">"speed · Full AOT (slower install)"</string>
+    <string name="ui_18821c66775d" formatted="false">"speed-profile · Profile-guided"</string>
+    <string name="ui_8acc605aa002" formatted="false">"verify · Fast verify (Recommended, rapid APK install)"</string>
     <string name="ui_785dd9ea5202" formatted="false">". Open it inside the instance under Downloads / IrisExchange."</string>
+    <string name="ui_15048c33e5eb" formatted="false">"One-click export to host Download/IrisBoxExport"</string>
+    <string name="ui_53addb32d4cf" formatted="false">"Parent"</string>
     <string name="ui_b41561d80765" formatted="false">"Previous"</string>
     <string name="ui_251c4e30277a" formatted="false">"Previous transfer is finishing. Refresh shortly."</string>
     <string name="ui_20275ef27d3a" formatted="false">"Previous"</string>
@@ -84,21 +109,26 @@
     <string name="ui_67a246a344ae" formatted="false">"Next"</string>
     <string name="ui_3ea894a932dd" formatted="false">"Next startup memory limit: "</string>
     <string name="ui_e0c5746ef927" formatted="false">"Next startup resolution: "</string>
+    <string name="ui_2b9d013177da" formatted="false">"Downloads"</string>
     <string name="ui_d96fc7526625" formatted="false">"Cannot create working folder"</string>
     <string name="ui_97d351c230ee" formatted="false">"Cannot create staging folder"</string>
     <string name="ui_5e1466abc843" formatted="false">"Cannot clean staging file"</string>
+    <string name="ui_51ad799bb18d" formatted="false">"Unlimited (default)"</string>
     <string name="ui_cda744734fbe" formatted="false">"SEVERE BAN RISK · Unlock /data/data Migration"</string>
     <string name="ui_90cf6d0198c4" formatted="false">"To protect your account from risk-control bans, /data/data credential migration is blocked for WeChat and QQ (running primary WeChat/QQ inside containers is also discouraged).\n\nPlease uncheck /data/data or choose another app."</string>
     <string name="ui_5a0bfda7e17d" formatted="false">"Swap file receipt missing. Operation stopped."</string>
     <string name="ui_8f1bf0307305" formatted="false">"Unsafe swap path. Operation stopped."</string>
     <string name="ui_4b9bba4e6a12" formatted="false">"Swap file identity check failed. Existing files were retained for maintenance."</string>
+    <string name="ui_a36d618451d0" formatted="false">"Exchange Dir"</string>
     <string name="ui_6bac12d05195" formatted="false">"Exchange folder: Downloads / IrisExchange. Files go only to this instance; confirm APK installation inside it."</string>
     <string name="ui_eb02f52661da" formatted="false">"Swap space"</string>
     <string name="ui_e6c9e933d09c" formatted="false">"Swap operation failed. Check host root authorization and engine version."</string>
-    <string name="ui_d2f7ea0129c0" formatted="false">"All instances share swap; it does not add physical RAM. Boot restore enables swap without starting guests. Disabled files are retained; using different sizes can consume additional disk space."</string>
+    <string name="ui_d35d9eea39ad" formatted="false">"All instances share swap; it does not add physical RAM. Boot restore enables swap without starting guests. Unused swap files are removed automatically when disabling or switching sizes."</string>
     <string name="ui_f075297f2ddb" formatted="false">"Swap settings applied"</string>
     <string name="ui_f87312a2da37" formatted="false">"Invalid swap settings. Existing files were retained for maintenance."</string>
+    <string name="ui_25aa881bf1e3" formatted="false">"Performance big cores ("</string>
     <string name="ui_9a15c8d8f000" formatted="false">"Showing only this instance\'s exchange folder"</string>
+    <string name="ui_c6e9eb92b6f8" formatted="false">"Efficiency little cores ("</string>
     <string name="ui_c2013c9c102f" formatted="false">"Transfer cancelled"</string>
     <string name="ui_48f281f5f7ef" formatted="false">"Transfer timed out (30 min) and was cancelled"</string>
     <string name="ui_d423be219c7c" formatted="false">"Transfer incomplete: "</string>
@@ -112,8 +142,11 @@
     <string name="ui_6d9bea7b8726" formatted="false">"Save for next startup"</string>
     <string name="ui_7b4c157a1308" formatted="false">"Stopped"</string>
     <string name="ui_a17f70a8d3d6" formatted="false">"Stop"</string>
+    <string name="ui_6b182c95e228" formatted="false">"Failed to disable IrisBox swap files. Check host memory and storage status."</string>
     <string name="ui_9e3667cb5ffd" formatted="false">"Allow apps to request root (Magisk)"</string>
     <string name="ui_7403656d2fd1" formatted="false">"Authorize root and check the host, then install the engine and import a ROM."</string>
+    <string name="ui_74ca3cbcc617" formatted="false">"All CPU cores ("</string>
+    <string name="ui_a77fe4bf681a" formatted="false">"All Storage"</string>
     <string name="ui_6c14bd7f6f9e" formatted="false">"Close"</string>
     <string name="ui_99183a8a2dd4" formatted="false">"Off"</string>
     <string name="ui_d014ab77038c" formatted="false">"Memory"</string>
@@ -122,6 +155,7 @@
     <string name="ui_a059ca83fc97" formatted="false">"Memory limit: loading"</string>
     <string name="ui_8e15a45a13bf" formatted="false">"New starts are rejected when memory is insufficient. Running instances are preserved."</string>
     <string name="ui_3204497ae97d" formatted="false">"Invalid memory configuration. Restore the default."</string>
+    <string name="ui_3f993b521cea" formatted="false">"Bundled version: "</string>
     <string name="ui_cd3c4683bb6c" formatted="false">"Egress probe failed; check connection and retry"</string>
     <string name="ui_cde9b52b2395" formatted="false">"Resolution"</string>
     <string name="ui_e11e911cfd24" formatted="false">"Could not apply resolution. Stop and restart; check this session log."</string>
@@ -142,8 +176,10 @@
     <string name="ui_d1bf6a488f11" formatted="false">"Truncated package; declared files are missing"</string>
     <string name="ui_c80b0e307e63" formatted="false">"Extracted package exceeds the size limit"</string>
     <string name="ui_e182174bcea8" formatted="false">"Failed to unmount external SSD; /data/irisbox may still be busy"</string>
+    <string name="ui_c3c4a29c3fb1" formatted="false">"Uninstall App"</string>
     <string name="ui_610dc926d655" formatted="false">"The page has closed. Export the log again."</string>
     <string name="ui_12c67171a695" formatted="false">"Failed to read telemetry: "</string>
+    <string name="ui_6231f82afbe1" formatted="false">"Boot hook under /data/adb/service.d/ was modified externally and was preserved. Inspect it manually."</string>
     <string name="ui_4d0b4688c787" formatted="false">"Cancel"</string>
     <string name="ui_965b34119adf" formatted="false">"Cancel transfer"</string>
     <string name="ui_a43c7b66fb3a" formatted="false">"Another transfer is running. Retry shortly."</string>
@@ -153,16 +189,21 @@
     <string name="ui_43a05689d2d1" formatted="false">"Also migrate /data/data (HIGH BAN RISK · confirmation required)"</string>
     <string name="ui_39ab90b1ad62" formatted="false">"Also migrate internal app resources and data (/data/data, skips large game re-downloads)"</string>
     <string name="ui_579e1d73fb48" formatted="false">"Recents"</string>
+    <string name="ui_7c6723cfb853" formatted="false">"Run in background"</string>
     <string name="ui_ebd26da42171" formatted="false">"Start"</string>
     <string name="ui_b28f7fc03b17" formatted="false">"This startup log is retained from the first line. Scroll to read or long-press to copy it."</string>
     <string name="ui_abaa5827dc73" formatted="false">"The actual log for this startup will appear here."</string>
     <string name="ui_17ebdf18caeb" formatted="false">"This startup log will appear here after starting."</string>
     <string name="ui_8ad868abbca6" formatted="false">"Startup log"</string>
     <string name="ui_8e4f83eef218" formatted="false">"Startup log\n"</string>
+    <string name="ui_8ec7b58d01a8" formatted="false">"Enable instance audio output"</string>
     <string name="ui_cd75e3894213" formatted="false">"Bind fixed host interface (no fallback when down)"</string>
     <string name="ui_8b294c5f664a" formatted="false">"Domestic"</string>
     <string name="ui_d64103c57e22" formatted="false">"Domestic DNS (223.5.5.5 / 119.29.29.29)"</string>
+    <string name="ui_c1f52c749880" formatted="false">"Graphics mode · requires stop"</string>
+    <string name="ui_be8da62ea113" formatted="false">"Pictures"</string>
     <string name="ui_ad19269f34b7" formatted="false">"Copy"</string>
+    <string name="ui_5c74e6ac82b4" formatted="false">"Failed to unmount external SSD (/data/irisbox). Another process may still hold it open."</string>
     <string name="ui_b0b5d84c5f22" formatted="false">"External SSD unmount returned no status"</string>
     <string name="ui_48daffbe10b7" formatted="false">"External SSD mount returned no status; refresh to verify"</string>
     <string name="ui_e81335ce0c5c" formatted="false">"External SSD is not mounted at /data/irisbox; internal write blocked. Tap External SSD to restore mount"</string>
@@ -172,8 +213,16 @@
     <string name="ui_2d9c40e6ee17" formatted="false">"Unsafe external storage path (symlink detected); aborted"</string>
     <string name="ui_b4941cbbee1d" formatted="false">"External storage config corrupted; inspect /data/adb/irisbox_storage.conf"</string>
     <string name="ui_e2ec33457eea" formatted="false">"External Storage (/data/irisbox)"</string>
+    <string name="ui_f45f4671d78f" formatted="false">"External SSD: Mounted · %.1f GiB free"</string>
+    <string name="ui_9b8bf8c59688" formatted="false">"External SSD: Pending check"</string>
+    <string name="ui_0e2ca5f9f42e" formatted="false">"External SSD: Not mounted"</string>
+    <string name="ui_22bfc5730c4d" formatted="false">"External SSD: Not mounted (bind first)"</string>
+    <string name="ui_d72e2223edc5" formatted="false">"External SSD: Checking…"</string>
+    <string name="ui_c6c4064fd675" formatted="false">"Big: "</string>
     <string name="ui_f57811282867" formatted="false">"Safe Unmount"</string>
     <string name="ui_ee42ae7c12d7" formatted="false">"Installing the independent engine"</string>
+    <string name="ui_5d78916758fa" formatted="false">"Install compiler threads (dex2oat)"</string>
+    <string name="ui_a257dc3d2f09" formatted="false">"Install dexopt mode (pm.dexopt.install)"</string>
     <string name="ui_ffed807bad4f" formatted="false">"Full startup log saved"</string>
     <string name="ui_1150ec9bec2f" formatted="false">"Instance "</string>
     <string name="ui_3b229178f89f" formatted="false">"Instance shared storage is not ready"</string>
@@ -190,7 +239,10 @@
     <string name="ui_c01087274984" formatted="false">"Instance identity changed; refusing the file"</string>
     <string name="ui_e4377db610c0" formatted="false">"Invalid instance identity"</string>
     <string name="ui_870379d0d76d" formatted="false">"Instance back"</string>
+    <string name="ui_183b4ccd0816" formatted="false">"Too many entries in this directory; please open a subdirectory."</string>
     <string name="ui_cfc55190390a" formatted="false">"Probe result:\n"</string>
+    <string name="ui_3d9d671ae9ba" formatted="false">"Host Magisk root, namespaces, Binder, GPU, and cgroups ready."</string>
+    <string name="ui_aa73366d7b5b" formatted="false">"Insufficient host available RAM to safely swapoff active IrisBox swap (512 MiB headroom required). Free host memory and retry."</string>
     <string name="ui_d5a6a98e28f7" formatted="false">"No save-location picker is available on the host"</string>
     <string name="ui_4fae6a2dba6f" formatted="false">"No file picker is available on the host"</string>
     <string name="ui_f135d8912da5" formatted="false">"Install and configure Magisk root on the host first."</string>
@@ -199,48 +251,71 @@
     <string name="ui_1858af82008e" formatted="false">"Host interface name (e.g. wlan0, eth0):"</string>
     <string name="ui_d79cc5a8e001" formatted="false">"Host uplink: %1$s · VPN: %2$s"</string>
     <string name="ui_65bc12869c9f" formatted="false">"Host device (installed apps)"</string>
+    <string name="ui_a3fad3e71caa" formatted="false">"Host CPUs: "</string>
     <string name="ui_a61143fbb1e4" formatted="false">"Host checks passed: Magisk root, User namespaces, matched AOSP 13, Permissive, Binder/Overlay, GPU, cgroups and Wi-Fi"</string>
     <string name="ui_e382234ca817" formatted="false">"Host checks passed: Magisk root, User namespace, matched host fingerprint, Permissive, Binder/Overlay, GPU, cgroups, uplink "</string>
     <string name="ui_195425feb421" formatted="false">"Host checks passed: Magisk root, User namespace, matched host fingerprint, Permissive, Binder/Overlay, GPU, cgroups (no active uplink; instances start offline and auto-attach when online)"</string>
     <string name="ui_47cf8cc253d6" formatted="false">"Host checks passed: Magisk root, six host namespaces, matched AOSP 13, Permissive, Binder/Overlay, GPU, cgroups and Wi-Fi"</string>
+    <string name="ui_9a75537d8754" formatted="false">"Host environment cleaned completely. Launching system uninstall…"</string>
     <string name="ui_60e2bcad85ac" formatted="false">"Import"</string>
     <string name="ui_233cfdb13ce4" formatted="false">"Import ROM"</string>
+    <string name="ui_7826e0233e57" formatted="false">"Apps"</string>
+    <string name="ui_c25d3a99112a" formatted="false">"Import / Export Apps"</string>
     <string name="ui_32e568babef7" formatted="false">"Import receipt verification failed. Refresh the folder to check the result."</string>
     <string name="ui_2295848aae55" formatted="false">"Import complete: "</string>
+    <string name="ui_d5cdb6764362" formatted="false">"Import app into this instance (from Host / other instance)"</string>
     <string name="ui_8fb6f00ec5b5" formatted="false">"Import file"</string>
     <string name="ui_188896795f1d" formatted="false">"Export"</string>
+    <string name="ui_0c8dddc75b38" formatted="false">"Export APKs to host Downloads (Download/IrisBoxExport)"</string>
     <string name="ui_f1dc2ddf285a" formatted="false">"Export complete: "</string>
+    <string name="ui_ae03cc66bc37" formatted="false">"Export App to Host"</string>
+    <string name="ui_831c30a5ac53" formatted="false">"Export app to host (save APKs or install onto host)"</string>
+    <string name="ui_758f9ec7bdea" formatted="false">"Export File to Host"</string>
     <string name="ui_0af9e5facfeb" formatted="false">"Apps"</string>
+    <string name="ui_6d12434077cd" formatted="false">"Little: "</string>
     <string name="ui_8c3afb3b80b3" formatted="false">"No instances yet. Select New instance."</string>
     <string name="ui_b0569c4c4048" formatted="false">"No preview yet"</string>
+    <string name="ui_253caf72c1f9" formatted="false">"No system ROM imported yet. Import a matched ROM package."</string>
     <string name="ui_0ea00180a025" formatted="false">"not ready. Check this startup log. Stop the instance to disable root or retry."</string>
     <string name="ui_10b0999596e9" formatted="false">"Configuration unavailable. Select Authorize and check to continue."</string>
     <string name="ui_7a67baf80ca6" formatted="false">"Orientation changed"</string>
+    <string name="ui_26729c0bc126" formatted="false">"Show / Hide Log"</string>
+    <string name="ui_c9c69ad6c22c" formatted="false">"Installed ROMs: "</string>
     <string name="ui_2ecfd7e9af20" formatted="false">"disabled."</string>
     <string name="ui_75d88b88c190" formatted="false">"Google Play services built into ROM (locked enabled; separate sign-in required)"</string>
+    <string name="ui_9590f52fd076" formatted="false">"%d instances created (%d running). Tap below to open control panel."</string>
     <string name="ui_0a522ea5c033" formatted="false">"File selection cancelled"</string>
     <string name="ui_5beeed14f40c" formatted="false">"Linux telemetry copied"</string>
     <string name="ui_54309b76b734" formatted="false">"Full log for this startup copied"</string>
     <string name="ui_eb88ff57c977" formatted="false">"Installed"</string>
     <string name="ui_80099027100f" formatted="false">"Installed ROM: "</string>
+    <string name="ui_5c5b7cfb1208" formatted="false">"Imported"</string>
+    <string name="ui_08c192b21ce2" formatted="false">"Exported to host Download folder: "</string>
+    <string name="ui_f2afde8960a6" formatted="false">"Ready"</string>
     <string name="ui_780a4c8c9b91" formatted="false">"Request accepted. Waiting for status."</string>
     <string name="ui_4bd157a9d214" formatted="false">"Memory limit submitted. Waiting for confirmation."</string>
     <string name="ui_87016bfffbd7" formatted="false">"Resolution submitted. Waiting for confirmation."</string>
     <string name="ui_f0c3b1b2f683" formatted="false">"Network egress submitted; running instance updates shortly"</string>
     <string name="ui_ad3b13c31706" formatted="false">"Left the files page; transfer cancelled"</string>
+    <string name="ui_9a8dd91cc16d" formatted="false">"Installed engine: "</string>
     <string name="ui_897fd4797df7" formatted="false">"/data/data migration unlocked (do NOT use for WeChat, QQ, or primary accounts)"</string>
     <string name="ui_84223ea001cf" formatted="false">"Configured: %d MiB   Active: %d MiB   Used: %d MiB\nHost available RAM: %d MiB   Free disk: %d MiB   Allocated files: %d MiB"</string>
+    <string name="ui_4b3c9650f8e7" formatted="false">"Passed"</string>
     <string name="ui_10df0753a8bf" formatted="false">"Apply swap settings"</string>
+    <string name="ui_5eb54da2056b" formatted="false">"App export failed: "</string>
     <string name="ui_c8446ed45e71" formatted="false">"App import failed: "</string>
     <string name="ui_09f06e521c97" formatted="false">"App import complete: "</string>
     <string name="ui_4a3c8724af26" formatted="false">"Apps request Root through Magisk and still require your approval inside the instance. Authorizations, modules and Zygisk settings are separate for each instance.\nInstall module ZIPs on the Magisk Modules page; enable Zygisk in Magisk settings. Then return to IrisBox, stop and start this instance.\nIf a module prevents booting, stop the instance and enable Rescue boot. This disables modules and Zygisk while preserving apps, accounts and module files for repair. Disable rescue after repair, then re-enable components as needed.\nTurning Root off preserves records. Resetting data clears them. Flashing upgrades and global kernel/SELinux changes are unsupported."</string>
     <string name="ui_a1174bf6c57c" formatted="false">"Apps request root from Magisk; you still authorize each app inside the instance. Authorizations, modules and Zygisk settings are independent.\nInstall module ZIP files in Magisk and enable Zygisk in its settings. Then return to IrisBox and stop and start this instance.\nIf a module prevents startup, stop the instance and enable rescue startup. It disables modules and Zygisk while preserving apps, accounts and module files so you can repair them in Magisk. Disable rescue afterwards.\nTurning root off preserves records; resetting data erases them. Firmware flashing and global kernel/SELinux changes are unsupported.\n"</string>
     <string name="ui_7ae34f47b8bb" formatted="false">"Enable app root (Magisk; authorize each app separately)"</string>
+    <string name="ui_86c599fe6e85" formatted="false">"Export"</string>
     <string name="ui_51256e8caae0" formatted="false">"Import"</string>
+    <string name="ui_e16c31ebd9d0" formatted="false">"Boot hook path contains a symlink; cleanup aborted for safety."</string>
     <string name="ui_48ff62cb7494" formatted="false">"Boot mount hook path is occupied by another file; not overwritten"</string>
     <string name="ui_e17c67a331b5" formatted="false">"Unsafe boot mount hook path; aborted"</string>
     <string name="ui_9709c11361d5" formatted="false">"The boot script name is already in use. It was not overwritten."</string>
     <string name="ui_3f0e5b6bbb81" formatted="false">"Unsafe boot script path. Operation stopped."</string>
+    <string name="ui_957f7f17ac88" formatted="false">"An engine upgrade transaction is pending. Complete or recover it before cleaning."</string>
     <string name="ui_e49153879bdd" formatted="false">"Engine installation and ROM import"</string>
     <string name="ui_005bf385d786" formatted="false">"Engine installed. Select and import a ROM package."</string>
     <string name="ui_a28d875aa888" formatted="false">"Engine installed. You can import a ROM."</string>
@@ -250,15 +325,24 @@
     <string name="ui_f82f850f42fc" formatted="false">"Engine: not installed"</string>
     <string name="ui_ba5758a6244b" formatted="false">"Duplicate, unsafe or undeclared archive file: "</string>
     <string name="ui_a6be439cb8af" formatted="false">"Google Play components are not included in this ROM"</string>
+    <string name="ui_2897d78e8397" formatted="false">"Current path: /sdcard"</string>
+    <string name="ui_b36fa18320f6" formatted="false">"Current path: /sdcard/"</string>
     <string name="ui_c5b9ec8b7e9e" formatted="false">"Instance egress: %1$s"</string>
+    <string name="ui_061ffe4a69c8" formatted="false">"No exportable 3rd-party apps found in this instance."</string>
     <string name="ui_5e6746d1ce91" formatted="false">"Another external SSD is currently mounted and bound; refusing overwrite"</string>
+    <string name="ui_92f87beb7f17" formatted="false">"Current shell is not in host root namespaces; cleanup aborted."</string>
     <string name="ui_f7b17b599ecd" formatted="false">"Input does not support this rotation or crop yet"</string>
     <string name="ui_e6b83064ea2c" formatted="false">"No startup log is available yet. Waiting for the instance."</string>
     <string name="ui_3b33bbc12593" formatted="false">"Board policy: external ext4 SSD optional\n"</string>
     <string name="ui_b85ee6f88867" formatted="false">"Board policy: external ext4 SSD required\n"</string>
     <string name="ui_1a64535f97fd" formatted="false">"This board requires an external ext4 SSD; bind and mount it via External SSD first"</string>
     <string name="ui_02cd2bc1522e" formatted="false">"Active DNS: %1$s"</string>
+    <string name="ui_0265b5cbfbd4" formatted="false">"This directory is empty."</string>
+    <string name="ui_8252583e8168" formatted="false">"Active engine: "</string>
+    <string name="ui_1b9dde36a0ce" formatted="false">"Cleanup failed; verify all instances are stopped and Root access is granted"</string>
+    <string name="ui_80d03b648719" formatted="false">"Clean Environment &amp; Uninstall IrisBox"</string>
     <string name="ui_cf5b41d721d5" formatted="false">"Pending"</string>
+    <string name="ui_516527377e6a" formatted="false">"Pending"</string>
     <string name="ui_6fe9974f4c1c" formatted="false">"WeChat / QQ frequently trigger risk-control restrictions inside virtualized containers (especially with Root / test-keys).\n\nAre you sure you still want to import the APK only?"</string>
     <string name="ui_cb1df6076593" formatted="false">"HUD"</string>
     <string name="ui_ec2542f5b372" formatted="false">"Perf: stopped"</string>
@@ -272,6 +356,7 @@
     <string name="ui_79d794cf096a" formatted="false">"Mount status: Mounted (%1$s · %2$d MiB free)\n"</string>
     <string name="ui_156dad7f4123" formatted="false">"Mount status: Not mounted\n"</string>
     <string name="ui_735e5a8789a6" formatted="false">"Authorize host root → Install engine → Import ROM → Create and start an instance"</string>
+    <string name="ui_4d01f7063fab" formatted="false">"Failed to submit app export: "</string>
     <string name="ui_f344492a9aff" formatted="false">"Failed to submit app import; check instance status"</string>
     <string name="ui_9eeeaf573a19" formatted="false">"Action incomplete. Check the latest status before retrying."</string>
     <string name="ui_b96f65eefc0b" formatted="false">"Action incomplete. Wait for a status update before retrying."</string>
@@ -283,6 +368,7 @@
     <string name="ui_f6067ecbdfb1" formatted="false">"Invalid IrisBox package; the first entry must be "</string>
     <string name="ui_fbc96d57a5de" formatted="false">"File content verification failed"</string>
     <string name="ui_6a061766d816" formatted="false">"File list exceeds the limit"</string>
+    <string name="ui_aaffca71ae81" formatted="false">"File list: current directory loaded"</string>
     <string name="ui_826bfe2082bf" formatted="false">"Use a plain filename without path separators (up to 128 bytes)"</string>
     <string name="ui_fa1703117195" formatted="false">"File size differs from its declaration"</string>
     <string name="ui_e93aa5b43616" formatted="false">"File size exceeds the limit"</string>
@@ -295,6 +381,8 @@
     <string name="ui_1068ea092b81" formatted="false">"File exceeds the 4 GiB limit"</string>
     <string name="ui_9ee8dd7a5773" formatted="false">"File exceeds its declared size: "</string>
     <string name="ui_7d5bec2673bb" formatted="false">"File selection expired. Refresh the folder."</string>
+    <string name="ui_1069127253fa" formatted="false">"Documents"</string>
+    <string name="ui_c7cb17b36fd6" formatted="false">"The new swap tier is active, but cleaning old swap files failed"</string>
     <string name="ui_4b95f6df9752" formatted="false">"New instance"</string>
     <string name="ui_c567011ba629" formatted="false">"Could not create instance. Check the manager log."</string>
     <string name="ui_96d7a34ea8df" formatted="false">"ROM for new instances: "</string>
@@ -316,6 +404,7 @@
     <string name="ui_64a55b299843" formatted="false">"Legacy: 1080p content scaled to 540p"</string>
     <string name="ui_cb6d970c41b1" formatted="false">"Clock"</string>
     <string name="ui_4bd5dfa2f736" formatted="false">"Switching display; preview paused"</string>
+    <string name="ui_3a83a056f937" formatted="false">"Display density (DPI · live)"</string>
     <string name="ui_ce176ecb85fd" formatted="false">"Staging folder must be empty"</string>
     <string name="ui_bdefa3f1511a" formatted="false">"No preview"</string>
     <string name="ui_96c0ba63a840" formatted="false">"Cannot verify instance status yet. Refresh shortly."</string>
@@ -325,24 +414,40 @@
     <string name="ui_9807d3930434" formatted="false">"Not started.\n\n"</string>
     <string name="ui_6f7dc945aefa" formatted="false">"Not installed"</string>
     <string name="ui_f5064e36fb9d" formatted="false">"Not completed: "</string>
+    <string name="ui_d90e9221e986" formatted="false">"Missing"</string>
     <string name="ui_b9004e6f7bb1" formatted="false">"Off"</string>
     <string name="ui_72166f0ac194" formatted="false">"MagiskSU not found. Install Magisk on the host and authorize IrisBox."</string>
     <string name="ui_f53ca2c4b26c" formatted="false">"No swap status received. Refresh to check."</string>
     <string name="ui_2b20fa51fe2c" formatted="false">"No external storage status received; please refresh"</string>
     <string name="ui_8c7035127b1a" formatted="false">"Bound ext4 SSD UUID not detected; check USB SSD connection and ext4 format"</string>
+    <string name="ui_d9c32a4c3dda" formatted="false">"Unknown"</string>
     <string name="ui_831cdf82e2aa" formatted="false">"Unknown setup action"</string>
     <string name="ui_848901754aec" formatted="false">"Unable to disable swap. Refresh to check the actual state."</string>
+    <string name="ui_6c2e06fd3b70" formatted="false">"Cleanup Refused"</string>
     <string name="ui_b2ba9634d9cf" formatted="false">"Stopped"</string>
     <string name="ui_f2f3e9803ccb" formatted="false">"Disconnected"</string>
+    <string name="ui_349c9e63a29b" formatted="false">"Failed"</string>
+    <string name="ui_377beda0ae58" formatted="false">"This will permanently delete the engine, all ROMs, all container instances and their data under /data/irisbox, IrisBox-managed swap files, and IrisBox boot hooks, then launch Android uninstall.\n\n• You must manually stop all running instances before proceeding.\n• Shared host network BPF dispatchers and system zRAM are never modified or removed."</string>
     <string name="ui_7fd47e102e12" formatted="false">"Current"</string>
     <string name="ui_442f1f0429ab" formatted="false">"Current startup log"</string>
+    <string name="ui_91e0133bf42d" formatted="false">"On-device files, boot hooks, and settings have been removed.\n\nAn external SSD was previously bound but is not currently mounted, so old files on the SSD could not be removed. Tap Uninstall App below to finish uninstalling; clean the SSD later when reconnected."</string>
     <string name="ui_b3bec5fd233e" formatted="false">"No eligible 3rd-party apps found in source."</string>
+    <string name="ui_f98882462aad" formatted="false">"Board: "</string>
+    <string name="ui_f35b50d23479" formatted="false">"Board: Pending auth"</string>
+    <string name="ui_67ecc2f02ba4" formatted="false">"Board: Detecting…"</string>
     <string name="ui_c89faf618244" formatted="false">"Verifying the bundled engine"</string>
+    <string name="ui_f79a84dcc2fc" formatted="false">"Verify Engine"</string>
     <string name="ui_33742d3f06d1" formatted="false">"Verified. Copying to the root-managed ROM library; please wait."</string>
+    <string name="ui_7607595342f7" formatted="false">"Verify and import ARM64 Android ROM matching this board"</string>
+    <string name="ui_b3d5036aa4f2" formatted="false">"Verify Magisk root, User Namespace, Binder, and host uplink"</string>
     <string name="ui_dd920408cf5b" formatted="false">"Preview appears when the desktop is ready"</string>
     <string name="ui_3fa4a5d1287b" formatted="false">"Desktop ready"</string>
     <string name="ui_79eff70947fd" formatted="false">"Checking host"</string>
     <string name="ui_79b3bc1a9795" formatted="false">"Checking host and Magisk authorization"</string>
+    <string name="ui_769ff6f5faa6" formatted="false">"Checking"</string>
+    <string name="ui_f0673d68eb29" formatted="false">"Active sub-mounts remain inside /data/irisbox. Cleanup refused to protect underlying mount data; reboot or inspect mounts first."</string>
+    <string name="ui_71c4265c2372" formatted="false">"Running container instances, active networks, or display sessions were detected. Stop all instances manually before cleaning."</string>
+    <string name="ui_4a16eca01310" formatted="false">"An instance initialization, reset, or deletion is still in progress. Wait for it to finish and retry."</string>
     <string name="ui_088836f4131e" formatted="false">"Landscape"</string>
     <string name="ui_1e54b5df0839" formatted="false">"Orientation"</string>
     <string name="ui_2df5017f4099" formatted="false">"Saving memory limit"</string>
@@ -355,6 +460,7 @@
     <string name="ui_a028ba2adbf0" formatted="false">"Stopping the instance"</string>
     <string name="ui_b1d5c9a2bcc4" formatted="false">"Preparing"</string>
     <string name="ui_91783c475b4b" formatted="false">"Preparing export…"</string>
+    <string name="ui_9368f4e10597" formatted="false">"Preparing app export: "</string>
     <string name="ui_300d18c126af" formatted="false">"Preparing display and pointer input…"</string>
     <string name="ui_e29e654d3987" formatted="false">"Preparing the first preview"</string>
     <string name="ui_43a12838bff9" formatted="false">"Changing orientation"</string>
@@ -365,8 +471,10 @@
     <string name="ui_6017dccf86b2" formatted="false">"Starting"</string>
     <string name="ui_38e2ecb93e2d" formatted="false">"Safely unmounting external SSD…"</string>
     <string name="ui_75557073ffee" formatted="false">"Importing: "</string>
+    <string name="ui_1e1b8be4949d" formatted="false">"Exporting to host Download directory…"</string>
     <string name="ui_cb04ad9ba1b5" formatted="false">"Exporting: "</string>
     <string name="ui_33b107080eaf" formatted="false">"Importing %1$s into instance; keep it running…"</string>
+    <string name="ui_b71f3cd8037f" formatted="false">"Cleaning IrisBox runtime environment…"</string>
     <string name="ui_7bd6558138e4" formatted="false">"Opening app"</string>
     <string name="ui_a693a667f993" formatted="false">"Opening display"</string>
     <string name="ui_7fb4ae902ad7" formatted="false">"Starting the instance"</string>
@@ -385,6 +493,7 @@
     <string name="ui_39096888f8a1" formatted="false">"Loading host installed apps…"</string>
     <string name="ui_8c5e2a1bcdac" formatted="false">"Loading app list…"</string>
     <string name="ui_cc8c3ff296c3" formatted="false">"Reading selected file…"</string>
+    <string name="ui_f63933e19c25" formatted="false">"Loading precision tuning parameters…"</string>
     <string name="ui_1f0d991f5ec0" formatted="false">"Opening "</string>
     <string name="ui_6e6fbca5c994" formatted="false">"Connecting to the manager"</string>
     <string name="ui_df9e3f1b3ad9" formatted="false">"Connecting to the manager through host Magisk…"</string>
@@ -400,21 +509,31 @@
     <string name="ui_a00bc7617b9f" formatted="false">"Overseas"</string>
     <string name="ui_d7691f5a1ba6" formatted="false">"Overseas DNS (1.1.1.1 / 8.8.8.8)"</string>
     <string name="ui_a655ea55c447" formatted="false">"Add Google Play components (separate sign-in required)"</string>
+    <string name="ui_1ca5ee976492" formatted="false">"Cleanup Complete"</string>
+    <string name="ui_903467186686" formatted="false">"Clean &amp; Uninstall"</string>
+    <string name="ui_d34f070d82bc" formatted="false">"Failed to delete some host directories; ensure storage is writable and unlocked."</string>
     <string name="ui_5f46da0526f1" formatted="false">"Select Previous log to view the last startup record."</string>
     <string name="ui_e8b0602f9b64" formatted="false">"Select New instance at the top right to create a fresh Android environment."</string>
     <string name="ui_56f4916f8177" formatted="false">"Select a preview to enter. Storage limits the number of instances; memory and performance limit how many can run together."</string>
+    <string name="ui_e3a4b10ec6c9" formatted="false">"Update Available"</string>
     <string name="ui_c490e74b8ded" formatted="false">"Status temporarily unavailable"</string>
+    <string name="ui_736285d2c592" formatted="false">"Environment Diagnostics &amp; Deployment Log"</string>
     <string name="ui_910383278517" formatted="false">"Transfer cancelled by user"</string>
     <string name="ui_429ac124aac3" formatted="false">"Swap uses disk to relieve memory pressure and may slow down apps. Stop all IrisBox instances before resizing or disabling it."</string>
     <string name="ui_33819f63ed13" formatted="false">"Invalid frame position"</string>
     <string name="ui_c87cbd5fc85d" formatted="false">"Metrics"</string>
     <string name="ui_b9e4148e0282" formatted="false">"This folder is empty. Select Import file to begin."</string>
     <string name="ui_16ff9253f805" formatted="false">"Folder refresh cancelled"</string>
+    <string name="ui_950fc6ef9f16" formatted="false">"Unexpected symlink detected in target path; cleanup aborted for safety."</string>
     <string name="ui_a77a7e1a6afa" formatted="false">"Copying /data/data clones encrypted credentials, tokens, and local keys into a container with a different device fingerprint (SSAID / virtual MAC).\n\n• WeChat, QQ, banking/payment apps, and strict anti-cheat games can detect cross-device credential cloning and impose 7-day or permanent bans.\n• Strongly NOT recommended for WeChat, QQ, or any primary account. Use APK-only migration to sign in cleanly.\n\nIf you understand the risk (offline/disposable test accounts only), type exactly below: %1$s"</string>
+    <string name="ui_9cd99c7deb2f" formatted="false">"Install directly onto host system"</string>
+    <string name="ui_c657c81e6b40" formatted="false">"DCIM"</string>
     <string name="ui_3c06abe11651" formatted="false">"Confirm deletion"</string>
     <string name="ui_c2f495d6703b" formatted="false">"Confirmation text did not match; /data/data migration remains disabled"</string>
+    <string name="ui_36dd2c20f01e" formatted="false">"Clean &amp; Uninstall"</string>
     <string name="ui_30a6079ce340" formatted="false">"Confirm reset"</string>
     <string name="ui_843303cad082" formatted="false">"CONFIRM HIGH RISK"</string>
+    <string name="ui_b25d00c676ca" formatted="false">"Block I/O weight"</string>
     <string name="ui_fec9a1b14a61" formatted="false">"Not enough disk space. At least 2 GiB of headroom is required."</string>
     <string name="ui_983198675136" formatted="false">"WeChat / QQ /data/data Migration Blocked"</string>
     <string name="ui_d5cf29ae57e3" formatted="false">"Portrait"</string>
@@ -423,6 +542,7 @@
     <string name="ui_d9dce1b78d9e" formatted="false">"Waiting for instance startup"</string>
     <string name="ui_1316079be06d" formatted="false">"Waiting for the instance desktop"</string>
     <string name="ui_1226729a0d9e" formatted="false">"Waiting for this startup\'s first preview"</string>
+    <string name="ui_e5d30bfd38b6" formatted="false">"Waiting"</string>
     <string name="ui_f1665ef75544" formatted="false">"Waiting for a complete frame"</string>
     <string name="ui_652033f9b4dc" formatted="false">"Folder cleanup exceeded five seconds"</string>
     <string name="ui_11be8eec3f7c" formatted="false">"Folder cleanup exceeded five seconds. Refresh shortly."</string>
@@ -431,6 +551,10 @@
     <string name="ui_a3415b5adf19" formatted="false">"Manager response is too large"</string>
     <string name="ui_8551a052e534" formatted="false">"Manager receipt has a different instance identity"</string>
     <string name="ui_34cbe1449ed7" formatted="false">"Manager connection expired. Reopen from the list."</string>
+    <string name="ui_770a40f9567e" formatted="false">"Tuning"</string>
+    <string name="ui_bf0456f41f32" formatted="false">"Failed to save tuning: "</string>
+    <string name="ui_79f357c99e1c" formatted="false">"Tuning saved and applied"</string>
+    <string name="ui_52298037b187" formatted="false">"System default"</string>
     <string name="ui_e103b9dd6d67" formatted="false">"Bound UUID: %1$s\n"</string>
     <string name="ui_2c89da98d9c0" formatted="false">"Bound UUID: Not bound\n"</string>
     <string name="ui_b22e5edeb5a7" formatted="false">"Valid file verification data is missing; export refused"</string>
@@ -454,8 +578,11 @@
     <string name="ui_4afad877551a" formatted="false">"Auto"</string>
     <string name="ui_1da381822229" formatted="false">"Auto by uplink (Domestic for direct / Overseas for VPN/proxy)"</string>
     <string name="ui_47850cbbbbb0" formatted="false">"Follow host uplink (default, live switching)"</string>
+    <string name="ui_7c15e1b55d5d" formatted="false">"Auto (by resolution)"</string>
+    <string name="ui_4f16bbc267a8" formatted="false">"Auto (board default: "</string>
     <string name="ui_c493338e8c33" formatted="false">"Custom"</string>
     <string name="ui_22e3ff6e9a54" formatted="false">"Custom DNS (1-2 IPv4 addresses, comma-separated)"</string>
+    <string name="ui_1247750174d8" formatted="false">"Choose save location (System file picker)"</string>
     <string name="ui_b4b039705f8b" formatted="false">"IrisBox · ARM64 Android Containers"</string>
     <string name="ui_f8c2bbefe46a" formatted="false">"IrisBox · Instances"</string>
     <string name="ui_1e14f55edbd2" formatted="false">"IrisBox · Raspberry Pi Android"</string>
@@ -469,6 +596,7 @@
     <string name="ui_b25a8607e14c" formatted="false">"Stop all IrisBox instances before unmounting external storage"</string>
     <string name="ui_5755deb61f71" formatted="false">"Stop all IrisBox instances before changing swap."</string>
     <string name="ui_e9813c6d4b9f" formatted="false">"Install the engine and import a compatible ROM first.\n"</string>
+    <string name="ui_de4ffb8c462c" formatted="false">"Complete engine install and ROM import before managing instances."</string>
     <string name="ui_f82e3b292bba" formatted="false">"Request sent. Processing…"</string>
     <string name="ui_4216aa6e21bd" formatted="false">"Request incomplete ("</string>
     <string name="ui_75f8cff9ecbb" formatted="false">"Enter "</string>
@@ -478,8 +606,10 @@
     <string name="ui_0a5e0d6f0cc9" formatted="false">"Choose a trusted IrisBox ROM adapted for the current host device. After verification, it will be used for new instances."</string>
     <string name="ui_926bfbf0ee0b" formatted="false">"Choose a trusted IrisBox ROM adapted for Raspberry Pi AOSP 13. After verification, it will be used for new instances."</string>
     <string name="ui_fca4b0aaeb83" formatted="false">"Select a ROM using the system file picker"</string>
+    <string name="ui_b18093a046dc" formatted="false">"Failed to load instance app list; retry shortly"</string>
     <string name="ui_cfbc5107c8bf" formatted="false">"Failed to load host app list; retry shortly"</string>
     <string name="ui_09cb521a07d3" formatted="false">"Loading status"</string>
+    <string name="ui_996dd1b3d309" formatted="false">"Failed to load precision tuning; retry shortly"</string>
     <string name="ui_e53905718aa8" formatted="false">"Route via host VPN tunnel (e.g. FlClash tun0)"</string>
     <string name="ui_296877a88812" formatted="false">"Use host proxy port (auto-sets and clears guest HTTP proxy)"</string>
     <string name="ui_140a67b51a72" formatted="false">"Follow app"</string>
@@ -487,9 +617,12 @@
     <string name="ui_db2b25e5c8ee" formatted="false">"Enter %1$s–%2$s GiB, for example %3$s.\nThis is a usage ceiling, not reserved RAM, and does not increase CPU or GPU performance.\nHigher limits suit single-instance heavy workloads; the runtime guard can stop an instance if host memory becomes critically low.\nStop the instance before saving; changes apply at next startup."</string>
     <string name="ui_976a4799e83f" formatted="false">"Enter 0.5–2.5 GiB, for example 1.25 or 2.5.\nThis is a usage ceiling, not reserved RAM, and does not increase CPU or GPU performance.\n2.5 GiB is intended for single-instance testing. The host and other instances need memory too; the runtime guard can stop an instance if host memory becomes critically low.\nStop the instance before saving; changes apply at next startup."</string>
     <string name="ui_7570be66f8ac" formatted="false">"Connecting input"</string>
+    <string name="ui_80eb81242ba2" formatted="false">"Microphone input: no hardware mic passthrough; muted by default."</string>
     <string name="ui_b69bd19456b6" formatted="false">"Input: touch"</string>
     <string name="ui_eaa5b90e3aa4" formatted="false">"Input: mouse"</string>
+    <string name="ui_aa6af15f3ccd" formatted="false">"Output volume: "</string>
     <string name="ui_594249700590" formatted="false">"Running"</string>
+    <string name="ui_f7c7d8364d3b" formatted="false">"Running (pids.max &amp; graphics require stop; others apply live)"</string>
     <string name="ui_37a78c8dc0a6" formatted="false">"Running memory limit: "</string>
     <string name="ui_da31dfc47974" formatted="false">"Running resolution: "</string>
     <string name="ui_2da1ac5ce9bc" formatted="false">"Runtime: ARM64 Android · Board Profile · Magisk · Permissive"</string>
@@ -498,19 +631,30 @@
     <string name="ui_5abb2c0afb2b" formatted="false">"Back to preview"</string>
     <string name="ui_9e3a5417b05e" formatted="false">"This is the actual rendering size. Higher resolution uses more graphics resources and memory.\nUse 960×540 when diagnosing slow rendering. Legacy mode still renders at 1080p and scales the display.\nStop the instance before saving; changes apply at next startup."</string>
     <string name="ui_0e25578e8fa1" formatted="false">"Enter"</string>
+    <string name="ui_c042d225ccf1" formatted="false">"Open instance panel: lifecycle, audio, tuning, and display"</string>
+    <string name="ui_9901a8470fa7" formatted="false">"Open Instances"</string>
+    <string name="ui_1a9d30ae320c" formatted="false">"Process/thread ceiling (pids.max · requires stop)"</string>
     <string name="ui_7d536627a3c1" formatted="false">"Connection cancelled. Select Reconnect."</string>
     <string name="ui_2c23c90e1f3a" formatted="false">"Connection ended. Reopen the instance."</string>
     <string name="ui_b8f44104e192" formatted="false">"Connection timed out. Check Magisk authorization and select Reconnect."</string>
     <string name="ui_2606bfea5aad" formatted="false">"Select a host-installed app to import APK and optional OBB into this instance:"</string>
     <string name="ui_f63db871a067" formatted="false">"Select App Source"</string>
     <string name="ui_f45b850c64cc" formatted="false">"Select an app from the source to stream-install into this instance:"</string>
+    <string name="ui_88a5c2ff30b9" formatted="false">"Select a guest app to export (APKs and optional OBB only; /data/data excluded):"</string>
+    <string name="ui_4865c3e7f2e4" formatted="false">"Deploy or verify container runtime engine (synced with APK)"</string>
     <string name="ui_bd76d510bf82" formatted="false">"Invalid configuration. Select Restore default first."</string>
     <string name="ui_633cbf0c15d0" formatted="false">"Restore after reboot (host Magisk)"</string>
     <string name="ui_bac95e1e52fe" formatted="false">"Reconnect"</string>
     <string name="ui_3d81345303ab" formatted="false">"Reset"</string>
     <string name="ui_13357ab34dca" formatted="false">"Reset creates fresh Android data while keeping the instance, resolution, memory limit, root option and Google component selection."</string>
     <string name="ui_b1dd040286c1" formatted="false">"Reset data"</string>
+    <string name="ui_a376b2d8bbfb" formatted="false">"Host Root (Magisk) authorization is required to clean protected system directories."</string>
     <string name="ui_67f5da279d03" formatted="false">"Raw ext4 image required; sparse/boot/super is unsupported: "</string>
+    <string name="ui_7e2ccf14a056" formatted="false">"Mute (keep audio sink active)"</string>
+    <string name="ui_461189f186ab" formatted="false">"Audio"</string>
+    <string name="ui_e99f853981ea" formatted="false">"Audio Control"</string>
+    <string name="ui_a9ce0cc1fbf6" formatted="false">"Failed to apply audio settings"</string>
+    <string name="ui_3314d68b0e1b" formatted="false">"Audio settings applied"</string>
     <string name="ui_dca586ba4d8b" formatted="false">"Page closed"</string>
     <string name="ui_6c0c3a871ed5" formatted="false">"Page closed; transfer cancelled"</string>
     <string name="ui_aa135ad31231" formatted="false">"Preview expired; waiting for a new frame"</string>
@@ -518,10 +662,13 @@
     <string name="ui_c7d02585d66f" formatted="false">"Previews update about once a second. Fullscreen uses a separate stream. Returning to this list keeps instances running; select Stop to stop one."</string>
     <string name="ui_8dec65600663" formatted="false">"Supported: Raspberry Pi 4 · Matched AOSP 13 · ARM64 · Magisk · Permissive"</string>
     <string name="ui_15420a5702e0" formatted="false">"High-Risk App Notice"</string>
+    <string name="ui_65163fc02cea" formatted="false">"Default ROM: "</string>
     <string name="ui_8bf7092bfac6" formatted="false">"Mouse and keyboard enabled"</string>
     <string name="ui_3d4cf10d60ad" formatted="false">"Touch emulation · Keyboard enabled"</string>
     <string name="ui_9630b7b37bf7" formatted="false">" (%1$d splits)"</string>
+    <string name="ui_23053d3801b4" formatted="false">" (matches APK)"</string>
     <string name="ui_43d8ec69b3ed" formatted="false">" (reopen after expiry)"</string>
+    <string name="ui_4a906cd7944c" formatted="false">"(Browse and export guest storage files; imports go to Download/IrisExchange)"</string>
     <string name="ui_5d8e922bf35b" formatted="false">"; finishing transfer…"</string>
     <string name="ui_7e893fad9c38" formatted="false">"; import is unconfirmed. Refresh the folder."</string>
     <string name="ui_0aaab18dfb19" formatted="false">"; check the selected location for a partial file."</string>

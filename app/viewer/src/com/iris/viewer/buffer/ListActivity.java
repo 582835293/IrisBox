@@ -8,6 +8,10 @@ import android.content.ClipboardManager;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.widget.ProgressBar;
+import android.widget.SeekBar;
+import android.widget.Spinner;
+import android.widget.Switch;
+import android.widget.ArrayAdapter;
 import android.widget.Toast;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -601,11 +605,13 @@ public final class ListActivity extends Activity {
                 (long) bounds.outWidth * bounds.outHeight > 16777216)
                 throw new IOException("Preview dimensions");
 
-            // 2. 采用 RGB_565 并计算采样率（缩小至 640×360 范围内）
+            // 2. 采用 RGB_565 并按长/短边比例计算采样率（横竖屏皆适配 640×360 / 360×640，避免竖屏压扁）
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inPreferredConfig = Bitmap.Config.RGB_565;
             options.inSampleSize = 1;
-            while (bounds.outWidth / options.inSampleSize > 640 || bounds.outHeight / options.inSampleSize > 360)
+            int longSide = Math.max(bounds.outWidth, bounds.outHeight);
+            int shortSide = Math.min(bounds.outWidth, bounds.outHeight);
+            while (longSide / options.inSampleSize > 640 || shortSide / options.inSampleSize > 360)
                 options.inSampleSize *= 2;
 
             decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
@@ -1026,12 +1032,16 @@ public final class ListActivity extends Activity {
                             if (entry == null) continue;
                             String pkg = entry.optString("pkg", "");
                             if (pkg.isEmpty()) continue;
-                            String appLabel = pkg;
-                            try {
-                                ApplicationInfo ai = pm.getApplicationInfo(pkg, 0);
-                                CharSequence cs = pm.getApplicationLabel(ai);
-                                if (cs != null && cs.length() > 0) appLabel = cs.toString();
-                            } catch (Exception ignored) {}
+                            String appLabel = entry.optString("label", "").trim();
+                            if (appLabel.isEmpty() || appLabel.equals(pkg)) {
+                                String resolved = pkg;
+                                try {
+                                    ApplicationInfo ai = pm.getApplicationInfo(pkg, 0);
+                                    CharSequence cs = pm.getApplicationLabel(ai);
+                                    if (cs != null && cs.length() > 0) resolved = cs.toString();
+                                } catch (Exception ignored) {}
+                                appLabel = resolved;
+                            }
                             entry.put("label", appLabel);
                             items.add(entry);
                         }
@@ -1322,6 +1332,471 @@ public final class ListActivity extends Activity {
         if (bytes >= 1048576L) return String.format(java.util.Locale.ROOT, "%.1f MiB", bytes / 1048576.0);
         if (bytes >= 1024L) return String.format(java.util.Locale.ROOT, "%.1f KiB", bytes / 1024.0);
         return bytes + " B";
+    }
+
+    /** 双向应用互通入口：支持从宿主机/其他实例导入到本实例，或从本实例导出安装包/直接安装到宿主机 */
+    private void importOrExportApp(Panel panel) {
+        if (!panel.ready || !validSession(panel.session)) return;
+        String[] modes = {
+            I18n.known("导入应用到本实例（来自宿主机 / 其他实例）"),
+            I18n.known("导出应用到宿主机（保存 APK 或安装到宿主机）")
+        };
+        new AlertDialog.Builder(this)
+            .setTitle(InstanceNames.title(panel.number) + " · " + I18n.known("导入/导出应用"))
+            .setItems(modes, (d, which) -> {
+                if (which == 0) importHostApp(panel);
+                else exportAppFromGuest(panel);
+            })
+            .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787), null)
+            .show();
+    }
+
+    /** 从当前实例枚举已安装第三方应用并导出至宿主机（APK 文件或宿主机 pm 安装，严禁导出 /data/data） */
+    private void exportAppFromGuest(Panel panel) {
+        if (!panel.ready || !validSession(panel.session)) return;
+        final int epoch = generation, id = panel.id, number = panel.number;
+        final String session = panel.session;
+        final AlertDialog loading = new AlertDialog.Builder(this)
+            .setTitle(InstanceNames.title(number) + " · " + I18n.known("导出应用到宿主机"))
+            .setMessage(I18n.s(R.string.ui_8c5e2a1bcdac))
+            .setCancelable(true)
+            .show();
+        try {
+            actions.execute(() -> {
+                try {
+                    String listPath = "/apps/list?source=" + URLEncoder.encode("instance:" + id, "UTF-8");
+                    JSONObject resp = new JSONObject(new String(request("GET", listPath, 200, epoch, 30000, 1048576), "UTF-8"));
+                    JSONArray raw = resp.optJSONArray("apps");
+                    final ArrayList<JSONObject> items = new ArrayList<>();
+                    if (raw != null) {
+                        for (int n = 0; n < raw.length(); n++) {
+                            JSONObject entry = raw.optJSONObject(n);
+                            if (entry != null && !entry.optString("pkg", "").isEmpty()) items.add(entry);
+                        }
+                    }
+                    java.util.Collections.sort(items, (a, b) -> Long.compare(b.optLong("apkBytes", 0), a.optLong("apkBytes", 0)));
+
+                    ui.post(() -> {
+                        if (loading.isShowing()) loading.dismiss();
+                        if (epoch != generation || !resumed || !validSession(panel.session)) return;
+                        if (items.isEmpty()) {
+                            new AlertDialog.Builder(this)
+                                .setTitle(InstanceNames.title(number) + " · " + I18n.known("导出应用到宿主机"))
+                                .setMessage(I18n.known("当前实例未找到可导出的第三方应用。"))
+                                .setPositiveButton(android.R.string.ok, null).show();
+                            return;
+                        }
+                        LinearLayout box = column();
+                        box.setPadding(dp(16), dp(8), dp(16), dp(6));
+                        TextView tip = text(I18n.known("选择要导出的容器应用（仅导出 APK 与可选 OBB，不含账号私密数据）："), 13);
+                        box.addView(tip);
+                        RadioGroup rg = new RadioGroup(this);
+                        for (int i = 0; i < items.size(); i++) {
+                            JSONObject it = items.get(i);
+                            RadioButton rb = new RadioButton(this);
+                            rb.setId(View.generateViewId());
+                            int splits = it.optInt("splitCount", 1);
+                            long obbB = it.optLong("obbBytes", 0);
+                            String pkg = it.optString("pkg", "");
+                            String appLabel = it.optString("label", "").trim();
+                            if (appLabel.isEmpty()) appLabel = pkg;
+                            String appTitle = appLabel.equals(pkg) ? pkg : (appLabel + "  (" + pkg + ")");
+                            String line = appTitle + "\nAPK " + formatAppSize(it.optLong("apkBytes", 0))
+                                + (splits > 1 ? " (" + splits + " splits)" : "")
+                                + (obbB > 0 ? " · OBB " + formatAppSize(obbB) : "");
+                            rb.setText(line);
+                            rb.setTextSize(13);
+                            rb.setPadding(dp(4), dp(6), dp(4), dp(6));
+                            rg.addView(rb);
+                            if (i == 0) rb.setChecked(true);
+                        }
+                        ScrollView sc = new ScrollView(this);
+                        sc.addView(rg);
+                        box.addView(sc, new LinearLayout.LayoutParams(-1, dp(260)));
+
+                        final int[] modeChoice = {0};
+                        RadioGroup targetGroup = new RadioGroup(this);
+                        RadioButton rFile = new RadioButton(this);
+                        rFile.setId(View.generateViewId());
+                        rFile.setText(I18n.known("导出安装包至宿主下载目录 (Download/IrisBoxExport)"));
+                        rFile.setChecked(true);
+                        rFile.setOnClickListener(v -> modeChoice[0] = 0);
+                        RadioButton rInstall = new RadioButton(this);
+                        rInstall.setId(View.generateViewId());
+                        rInstall.setText(I18n.known("直接安装到宿主机系统"));
+                        rInstall.setOnClickListener(v -> modeChoice[0] = 1);
+                        targetGroup.addView(rFile);
+                        targetGroup.addView(rInstall);
+                        box.addView(targetGroup);
+
+                        CheckBox cbObb = new CheckBox(this);
+                        cbObb.setText(I18n.known("同时迁入 OBB 数据包（若有）"));
+                        cbObb.setChecked(true);
+                        box.addView(cbObb);
+
+                        new AlertDialog.Builder(this)
+                            .setTitle(InstanceNames.title(number) + " · " + I18n.known("导出应用到宿主机"))
+                            .setView(box)
+                            .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787), null)
+                            .setPositiveButton(I18n.known("开始导出"), (dlg, w) -> {
+                                int idx = rg.indexOfChild(rg.findViewById(rg.getCheckedRadioButtonId()));
+                                if (idx < 0 || idx >= items.size()) return;
+                                JSONObject picked = items.get(idx);
+                                String pkg = picked.optString("pkg", "");
+                                String appLabel = picked.optString("label", "").trim();
+                                if (appLabel.isEmpty()) appLabel = pkg;
+                                String mode = modeChoice[0] == 1 ? "install_host" : "apk_file";
+                                startGuestAppExport(panel, id, number, session, pkg, appLabel, mode, cbObb.isChecked(), epoch);
+                            }).show();
+                    });
+                } catch (Exception e) {
+                    ui.post(() -> {
+                        if (loading.isShowing()) loading.dismiss();
+                        if (epoch == generation && resumed) notice.setText(I18n.known("读取容器应用列表失败，请稍后重试"));
+                    });
+                }
+            });
+        } catch (Exception busy) {
+            if (loading.isShowing()) loading.dismiss();
+            notice.setText(I18n.s(R.string.ui_4a5b3e65561d));
+        }
+    }
+
+    private void startGuestAppExport(Panel panel, int id, int number, String session,
+            String pkg, String appLabel, String targetMode, boolean withObb, int epoch) {
+        final String displayName = (appLabel == null || appLabel.isEmpty() || appLabel.equals(pkg))
+            ? pkg : (appLabel + " (" + pkg + ")");
+        final boolean[] closed = {false};
+        LinearLayout box = column();
+        box.setPadding(dp(20), dp(14), dp(20), dp(10));
+        TextView detail = text(I18n.known("正在准备导出应用：") + displayName, 14);
+        box.addView(detail);
+        ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        bar.setMax(1000);
+        bar.setIndeterminate(true);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.topMargin = dp(12);
+        box.addView(bar, lp);
+
+        final AlertDialog progressDialog = new AlertDialog.Builder(this)
+            .setTitle(InstanceNames.title(number) + " · " + displayName)
+            .setView(box)
+            .setCancelable(true)
+            .setNegativeButton(I18n.known("后台继续"), (d, w) -> closed[0] = true)
+            .setOnCancelListener(d -> closed[0] = true)
+            .create();
+        progressDialog.show();
+
+        try {
+            actions.execute(() -> {
+                try {
+                    String path = "/apps/export?id=" + id
+                        + "&session=" + URLEncoder.encode(session, "UTF-8")
+                        + "&pkg=" + URLEncoder.encode(pkg, "UTF-8")
+                        + "&targetMode=" + URLEncoder.encode(targetMode, "UTF-8")
+                        + "&obb=" + (withObb ? "1" : "0");
+                    request("POST", path, 202, epoch, 20000, 65536);
+                    ui.postDelayed(() -> pollGuestAppExport(id, session, pkg, epoch, progressDialog, detail, bar, closed), 600);
+                } catch (Exception e) {
+                    ui.post(() -> {
+                        if (progressDialog.isShowing()) progressDialog.dismiss();
+                        if (epoch == generation && resumed) {
+                            Toast.makeText(this, I18n.known("提交应用导出失败：") + e.getMessage(), Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
+            });
+        } catch (Exception busy) {
+            if (progressDialog.isShowing()) progressDialog.dismiss();
+            notice.setText(I18n.s(R.string.ui_4a5b3e65561d));
+        }
+    }
+
+    private void pollGuestAppExport(int id, String session, String pkg, int epoch,
+            AlertDialog dialog, TextView detail, ProgressBar bar, boolean[] closed) {
+        if (epoch != generation || !resumed) return;
+        try {
+            actions.execute(() -> {
+                try {
+                    String path = "/apps/export/status?id=" + id + "&session=" + URLEncoder.encode(session, "UTF-8");
+                    JSONObject st = new JSONObject(new String(request("GET", path, 200, epoch, 3000, 65536), "UTF-8"));
+                    boolean finished = st.optBoolean("finished");
+                    boolean success = st.optBoolean("success");
+                    long done = st.optLong("doneBytes", 0), total = st.optLong("totalBytes", 0);
+                    String statusDetail = st.optString("detail", "");
+                    String error = st.optString("error", "");
+
+                    ui.post(() -> {
+                        if (epoch != generation || !resumed) return;
+                        if (!closed[0] && dialog.isShowing()) {
+                            if (total > 0) {
+                                bar.setIndeterminate(false);
+                                bar.setProgress((int) Math.min(1000L, done * 1000L / total));
+                                detail.setText(statusDetail + "\n" + formatAppSize(done) + " / " + formatAppSize(total));
+                            } else if (!statusDetail.isEmpty()) {
+                                detail.setText(statusDetail);
+                            }
+                        }
+                        if (finished) {
+                            if (success) {
+                                if (!closed[0] && dialog.isShowing()) dialog.dismiss();
+                                Toast.makeText(this, statusDetail, Toast.LENGTH_LONG).show();
+                                notice.setText(statusDetail);
+                            } else {
+                                if (!closed[0] && dialog.isShowing()) {
+                                    bar.setIndeterminate(false);
+                                    bar.setProgress(0);
+                                    detail.setText(I18n.known("应用导出失败：") + error);
+                                }
+                                Toast.makeText(this, I18n.known("应用导出失败：") + error, Toast.LENGTH_LONG).show();
+                            }
+                        } else {
+                            ui.postDelayed(() -> pollGuestAppExport(id, session, pkg, epoch, dialog, detail, bar, closed), 800);
+                        }
+                    });
+                } catch (Exception e) {
+                    ui.postDelayed(() -> pollGuestAppExport(id, session, pkg, epoch, dialog, detail, bar, closed), 1200);
+                }
+            });
+        } catch (Exception ignored) {
+            ui.postDelayed(() -> pollGuestAppExport(id, session, pkg, epoch, dialog, detail, bar, closed), 1200);
+        }
+    }
+
+    /** 弹出实例音频控制弹窗（输出开关、静音、实时音量及输入说明） */
+    private void audioControl(Panel panel) {
+        final int epoch = generation, id = panel.id;
+        LinearLayout box = column();
+        box.setPadding(dp(18), dp(10), dp(18), dp(6));
+
+        Switch swOut = new Switch(this);
+        swOut.setText(I18n.known("启用实例音频输出"));
+        swOut.setChecked(panel.audioOutEnabled);
+        box.addView(swOut);
+
+        Switch swMute = new Switch(this);
+        swMute.setText(I18n.known("静音（保活连接不卡应用）"));
+        swMute.setChecked(panel.audioMuted);
+        box.addView(swMute);
+
+        TextView volLabel = text(I18n.known("输出音量：") + panel.audioVolume + "%", 14);
+        volLabel.setPadding(0, dp(10), 0, dp(4));
+        box.addView(volLabel);
+
+        SeekBar volBar = new SeekBar(this);
+        volBar.setMax(100);
+        volBar.setProgress(panel.audioVolume);
+        volBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar s, int p, boolean u) { volLabel.setText(I18n.known("输出音量：") + p + "%"); }
+            @Override public void onStartTrackingTouch(SeekBar s) {}
+            @Override public void onStopTrackingTouch(SeekBar s) {}
+        });
+        box.addView(volBar);
+
+        TextView micNote = text(I18n.known("输入（麦克风）：当前设备无物理麦克风直通，默认保持静音输入。"), 12);
+        micNote.setTextColor(Color.LTGRAY);
+        micNote.setPadding(0, dp(10), 0, 0);
+        box.addView(micNote);
+
+        new AlertDialog.Builder(this)
+            .setTitle(InstanceNames.title(panel.number) + " · " + I18n.known("音频控制"))
+            .setView(box)
+            .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787), null)
+            .setPositiveButton(I18n.known("保存"), (d, w) -> {
+                boolean nextOut = swOut.isChecked();
+                boolean nextMute = swMute.isChecked();
+                int nextVol = volBar.getProgress();
+                try {
+                    actions.execute(() -> {
+                        try {
+                            String path = "/audio/config?id=" + id
+                                + "&outputEnabled=" + (nextOut ? "1" : "0")
+                                + "&muted=" + (nextMute ? "1" : "0")
+                                + "&volume=" + nextVol
+                                + "&inputPolicy=" + URLEncoder.encode(panel.audioInPolicy, "UTF-8");
+                            request("POST", path, 200, epoch);
+                            ui.post(() -> {
+                                if (epoch == generation && resumed) {
+                                    panel.audioOutEnabled = nextOut;
+                                    panel.audioMuted = nextMute;
+                                    panel.audioVolume = nextVol;
+                                    notice.setText(I18n.known("音频设置已生效"));
+                                }
+                            });
+                        } catch (Exception e) {
+                            ui.post(() -> {
+                                if (epoch == generation && resumed) notice.setText(I18n.known("音频设置失败，请重试"));
+                            });
+                        }
+                    });
+                } catch (Exception busy) {
+                    notice.setText(I18n.s(R.string.ui_4a5b3e65561d));
+                }
+            }).show();
+    }
+
+    /** 弹出实例精准参数调节弹窗（线程上限、CPU 亲和/配额/权重、IO 权重、显示 DPI、安装编译优化、图形模式） */
+    private void precisionTuning(Panel panel) {
+        final int epoch = generation, id = panel.id;
+        final AlertDialog loading = new AlertDialog.Builder(this)
+            .setTitle(InstanceNames.title(panel.number) + " · " + I18n.known("精准参数"))
+            .setMessage(I18n.known("正在读取精准参数配置…"))
+            .setCancelable(true)
+            .show();
+
+        try {
+            actions.execute(() -> {
+                try {
+                    JSONObject cur = new JSONObject(new String(request("GET", "/tuning/get?id=" + id, 200, epoch, 10000, 65536), "UTF-8"));
+                    ui.post(() -> {
+                        if (loading.isShowing()) loading.dismiss();
+                        if (epoch != generation || !resumed) return;
+                        showPrecisionTuningDialog(panel, cur, epoch);
+                    });
+                } catch (Exception e) {
+                    ui.post(() -> {
+                        if (loading.isShowing()) loading.dismiss();
+                        if (epoch == generation && resumed) notice.setText(I18n.known("读取精准参数失败，请稍后重试"));
+                    });
+                }
+            });
+        } catch (Exception busy) {
+            if (loading.isShowing()) loading.dismiss();
+            notice.setText(I18n.s(R.string.ui_4a5b3e65561d));
+        }
+    }
+
+    private Spinner addTuningSpinner(LinearLayout box, String label, String[] keys, String[] titles, String current, boolean enabled) {
+        TextView tv = text(label, 13);
+        tv.setPadding(0, dp(8), 0, dp(2));
+        box.addView(tv);
+        Spinner sp = new Spinner(this);
+        ArrayAdapter<String> ad = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, titles);
+        ad.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sp.setAdapter(ad);
+        int sel = 0;
+        for (int i = 0; i < keys.length; i++) if (keys[i].equals(current)) { sel = i; break; }
+        sp.setSelection(sel);
+        sp.setEnabled(enabled);
+        box.addView(sp);
+        return sp;
+    }
+
+    private void showPrecisionTuningDialog(Panel panel, JSONObject cur, int epoch) {
+        boolean isRunning = cur.optBoolean("running", panel.running);
+        LinearLayout box = column();
+        box.setPadding(dp(18), dp(8), dp(18), dp(8));
+
+        TextView head = text(
+            I18n.known("宿主核心：") + cur.optString("hostCpus")
+            + " · " + I18n.known("大核：") + cur.optString("hostBigCpus")
+            + " · " + I18n.known("小核：") + cur.optString("hostLittleCpus")
+            + (isRunning ? ("\n" + I18n.known("运行中（线程上限与图形模式需停机后修改，其余即时生效）")) : ""), 12);
+        head.setTextColor(Color.rgb(176, 196, 222));
+        box.addView(head);
+
+        final String[] pidsKeys = {"auto", "2048", "4096", "6144", "8192", "12288", "16384"};
+        final String[] pidsLabels = {
+            I18n.known("自动（板卡默认：") + cur.optString("boardDefaultTasks", "4096") + ")",
+            "2048", "4096", "6144", "8192", "12288", "16384"
+        };
+        Spinner spPids = addTuningSpinner(box, I18n.known("进程/线程上限 (pids.max · 需停机改)"), pidsKeys, pidsLabels, cur.optString("pidsMax", "auto"), !isRunning);
+
+        final String[] cpuKeys = {"all", "big", "little", "0-3", "4-7", "0-5"};
+        final String[] cpuLabels = {
+            I18n.known("全部 CPU 核心 (") + cur.optString("hostCpus") + ")",
+            I18n.known("仅性能大核 (") + cur.optString("hostBigCpus") + ")",
+            I18n.known("仅能效小核 (") + cur.optString("hostLittleCpus") + ")",
+            "0-3", "4-7", "0-5"
+        };
+        Spinner spCpu = addTuningSpinner(box, I18n.known("CPU 核心亲和性 (cpuset)"), cpuKeys, cpuLabels, cur.optString("cpusetCpus", "all"), true);
+
+        final String[] quotaKeys = {"0", "100", "200", "400", "600", "800"};
+        final String[] quotaLabels = {I18n.known("不限制 (默认)"), "100% (1核)", "200% (2核)", "400% (4核)", "600% (6核)", "800% (8核)"};
+        Spinner spQuota = addTuningSpinner(box, I18n.known("CPU 算力配额上限"), quotaKeys, quotaLabels, Integer.toString(cur.optInt("cpuQuotaPct", 0)), true);
+
+        final String[] shareKeys = {"512", "1024", "2048", "4096"};
+        final String[] shareLabels = {I18n.known("512 · 后台低优"), I18n.known("1024 · 标准 (默认)"), I18n.known("2048 · 游戏优先"), I18n.known("4096 · 极高权重")};
+        Spinner spShares = addTuningSpinner(box, I18n.known("CPU 调度优先级权重"), shareKeys, shareLabels, Integer.toString(cur.optInt("cpuShares", 1024)), true);
+
+        final String[] blkKeys = {"250", "500", "800", "1000"};
+        final String[] blkLabels = {"250", I18n.known("500 · 标准 (默认)"), "800", I18n.known("1000 · 存储最高优先")};
+        Spinner spBlk = addTuningSpinner(box, I18n.known("磁盘 I/O 调度权重"), blkKeys, blkLabels, Integer.toString(cur.optInt("blkioWeight", 500)), true);
+
+        final String[] dpiKeys = {"auto", "240", "320", "420", "440"};
+        final String[] dpiLabels = {
+            I18n.known("自动（按分辨率默认）"),
+            I18n.known("240 · 平板大视野"),
+            I18n.known("320 · 高清平衡"),
+            I18n.known("420 · 手机标准（修复拼多多等比例）"),
+            I18n.known("440 · 手机紧凑")
+        };
+        Spinner spDpi = addTuningSpinner(box, I18n.known("显示密度 (DPI · 即时生效)"), dpiKeys, dpiLabels, cur.optString("displayDpi", "auto"), true);
+
+        final String[] dexKeys = {"verify", "speed-profile", "speed"};
+        final String[] dexLabels = {
+            I18n.known("verify · 极速安装（推荐，大幅加快装包）"),
+            I18n.known("speed-profile · 折中优化"),
+            I18n.known("speed · 全量预编译（装包慢）")
+        };
+        Spinner spDex = addTuningSpinner(box, I18n.known("安装编译模式 (pm.dexopt.install)"), dexKeys, dexLabels, cur.optString("dexoptInstall", "verify"), true);
+
+        final String[] thrKeys = {"0", "2", "4", "6", "8"};
+        final String[] thrLabels = {I18n.known("系统默认"), "2 线程", I18n.known("4 线程 (推荐)"), "6 线程", "8 线程"};
+        Spinner spThr = addTuningSpinner(box, I18n.known("安装编译并发线程数 (dex2oat)"), thrKeys, thrLabels, Integer.toString(cur.optInt("dex2oatThreads", 4)), true);
+
+        final String[] gfxKeys = {"native", "opengl"};
+        final String[] gfxLabels = {I18n.known("native · 原生 Vulkan + GLES"), I18n.known("opengl · GLES 3.0 游戏兼容")};
+        Spinner spGfx = addTuningSpinner(box, I18n.known("图形渲染模式 · 需停机改"), gfxKeys, gfxLabels, cur.optString("graphicsMode", "native"), !isRunning);
+
+        ScrollView sc = new ScrollView(this);
+        sc.addView(box);
+
+        new AlertDialog.Builder(this)
+            .setTitle(InstanceNames.title(panel.number) + " · " + I18n.known("精准参数"))
+            .setView(sc)
+            .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787), null)
+            .setPositiveButton(I18n.known("保存"), (d, w) -> {
+                String pPids = pidsKeys[spPids.getSelectedItemPosition()];
+                String pCpu = cpuKeys[spCpu.getSelectedItemPosition()];
+                String pQuota = quotaKeys[spQuota.getSelectedItemPosition()];
+                String pShares = shareKeys[spShares.getSelectedItemPosition()];
+                String pBlk = blkKeys[spBlk.getSelectedItemPosition()];
+                String pDpi = dpiKeys[spDpi.getSelectedItemPosition()];
+                String pDex = dexKeys[spDex.getSelectedItemPosition()];
+                String pThr = thrKeys[spThr.getSelectedItemPosition()];
+                String pGfx = gfxKeys[spGfx.getSelectedItemPosition()];
+                try {
+                    actions.execute(() -> {
+                        try {
+                            String path = "/tuning/set?id=" + panel.id
+                                + "&session=" + URLEncoder.encode(panel.session, "UTF-8")
+                                + "&pidsMax=" + URLEncoder.encode(pPids, "UTF-8")
+                                + "&cpusetCpus=" + URLEncoder.encode(pCpu, "UTF-8")
+                                + "&cpuQuotaPct=" + pQuota
+                                + "&cpuShares=" + pShares
+                                + "&blkioWeight=" + pBlk
+                                + "&displayDpi=" + URLEncoder.encode(pDpi, "UTF-8")
+                                + "&dexoptInstall=" + URLEncoder.encode(pDex, "UTF-8")
+                                + "&dex2oatThreads=" + pThr
+                                + "&graphicsMode=" + (!isRunning ? URLEncoder.encode(pGfx, "UTF-8") : "");
+                            request("POST", path, 200, epoch);
+                            ui.post(() -> {
+                                if (epoch == generation && resumed) {
+                                    notice.setText(I18n.known("精准参数已保存并应用"));
+                                    Toast.makeText(this, I18n.known("精准参数已保存并应用"), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        } catch (Exception e) {
+                            ui.post(() -> {
+                                if (epoch == generation && resumed) notice.setText(I18n.known("精准参数保存失败：") + e.getMessage());
+                            });
+                        }
+                    });
+                } catch (Exception busy) {
+                    notice.setText(I18n.s(R.string.ui_4a5b3e65561d));
+                }
+            }).show();
     }
 
     /** 弹出屏幕分辨率预设选择对话框（单选列表） */
@@ -1972,7 +2447,7 @@ public final class ListActivity extends Activity {
         final ImageView image;
         final LinearLayout overlay;
         final ListView logScroll;
-        final Button start, stop, enter, settings, clock, files, importApp, logs, monitor, resolution, memory, network, reset, delete, applicationRoot;
+        final Button start, stop, enter, files, audioBtn, tuningBtn, importApp, logs, monitor, resolution, memory, network, reset, delete, applicationRoot;
 
         // 日志分页拉取与滑动状态
         volatile String logKey = "";
@@ -2009,6 +2484,11 @@ public final class ListActivity extends Activity {
             netEffectiveUplink = "", netEffectiveMode = "";
         int netPort = 7890;
         boolean netProxyApplied;
+
+        // 音频配置缓存
+        boolean audioOutEnabled = true, audioMuted = false;
+        int audioVolume = 100;
+        String audioInPolicy = "mute_no_mic";
 
         // 运行时状态标志
         volatile String session = "";
@@ -2125,21 +2605,26 @@ public final class ListActivity extends Activity {
             perfText.setEllipsize(TextUtils.TruncateAt.END);
             root.addView(perfText);
 
-            // 6. 快捷应用与配置栏（设置、时钟、文件、分辨率、内存）
+            // 6. 常用功能与参数调节栏（文件、分辨率、内存、音频、精准参数）
             LinearLayout apps = new LinearLayout(ListActivity.this);
-            settings = button(I18n.s(R.string.ui_7debf9cb0372), "settings", () -> action(this, "app", "settings"));
-            clock = button(I18n.s(R.string.ui_cb6d970c41b1), "clock", () -> action(this, "app", "clock"));
             files = button(I18n.s(R.string.ui_49deaf7da20d), "files", () -> files(this));
             resolution = button(I18n.s(R.string.ui_cde9b52b2395), "resolution", () -> resolution(this));
             memory = button(I18n.s(R.string.ui_d014ab77038c), "memory", () -> memory(this));
-            apps.addView(settings, new LinearLayout.LayoutParams(0, dp(38), 1));
-            apps.addView(clock, new LinearLayout.LayoutParams(0, dp(38), 1));
+            audioBtn = button(I18n.known("音频"), "audio", () -> audioControl(this));
+            tuningBtn = button(I18n.known("精准参数"), "tuning", () -> precisionTuning(this));
+            files.setTextSize(13);
+            resolution.setTextSize(13);
+            memory.setTextSize(13);
+            audioBtn.setTextSize(13);
+            tuningBtn.setTextSize(13);
             apps.addView(files, new LinearLayout.LayoutParams(0, dp(38), 1));
             apps.addView(resolution, new LinearLayout.LayoutParams(0, dp(38), 1));
             apps.addView(memory, new LinearLayout.LayoutParams(0, dp(38), 1));
+            apps.addView(audioBtn, new LinearLayout.LayoutParams(0, dp(38), 1));
+            apps.addView(tuningBtn, new LinearLayout.LayoutParams(0, dp(38), 1));
             root.addView(apps);
 
-            // 7. 高级与数据维护栏（网络出口、Root、导应用、重置数据、删除实例）
+            // 7. 高级与数据维护栏（网络出口、Root、导入/导出、重置数据、删除实例）
             LinearLayout data = new LinearLayout(ListActivity.this);
             network = button(I18n.s(R.string.ui_c0164072e48e), "network", () -> network(this));
             network.setTextSize(13);
@@ -2147,7 +2632,7 @@ public final class ListActivity extends Activity {
             applicationRoot = button(I18n.s(R.string.ui_b72827b39c61), "root", () -> applicationRoot(this));
             applicationRoot.setTextSize(13);
             data.addView(applicationRoot, new LinearLayout.LayoutParams(0, dp(36), 1));
-            importApp = button(I18n.s(R.string.ui_0af9e5facfeb), "import-app", () -> importHostApp(this));
+            importApp = button(I18n.known("导入/导出"), "import-app", () -> importOrExportApp(this));
             importApp.setTextSize(13);
             data.addView(importApp, new LinearLayout.LayoutParams(0, dp(36), 1));
             reset = button(I18n.s(R.string.ui_b1dd040286c1), "reset", () -> clearData(this, "reset"));
@@ -2292,11 +2777,19 @@ public final class ListActivity extends Activity {
                     running ? I18n.s(R.string.ui_dd920408cf5b) : I18n.s(R.string.ui_d9dce1b78d9e);
             }
             status.setText(stage + (operationError.isEmpty() ? "" : I18n.s(R.string.ui_4958d1bb5dd6)));
+            JSONObject audioObj = state.optJSONObject("audio");
+            if (audioObj != null) {
+                audioOutEnabled = audioObj.optBoolean("outputEnabled", true);
+                audioMuted = audioObj.optBoolean("muted", false);
+                audioVolume = audioObj.optInt("volume", 100);
+                audioInPolicy = audioObj.optString("inputPolicy", "mute_no_mic");
+            }
+            audioBtn.setEnabled(!brokerToken.isEmpty() && free && !state.optBoolean("cleanupPending"));
+            tuningBtn.setEnabled(!brokerToken.isEmpty() && free && !state.optBoolean("cleanupPending"));
+
             start.setEnabled(!running && free && !state.optBoolean("cleanupPending"));
             stop.setEnabled(running && free);
             enter.setEnabled(ready && free && validSession(session));
-            settings.setEnabled(ready && free);
-            clock.setEnabled(ready && free);
             files.setEnabled(ready && free && validSession(session));
             importApp.setEnabled(ready && free && validSession(session));
             image.setEnabled(enter.isEnabled());
@@ -2364,8 +2857,8 @@ public final class ListActivity extends Activity {
             start.setEnabled(false);
             stop.setEnabled(false);
             enter.setEnabled(false);
-            settings.setEnabled(false);
-            clock.setEnabled(false);
+            audioBtn.setEnabled(false);
+            tuningBtn.setEnabled(false);
             files.setEnabled(false);
             importApp.setEnabled(false);
             resolution.setEnabled(false);

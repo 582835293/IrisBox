@@ -20,3 +20,7 @@ engine/runtime/browser/IrisBoxBrowser.apk
 
 engine/runtime/irisbox_ns
 engine/runtime/irisbox_userns
+docs.zip
+docs/.obsidian/
+docs/beginner/
+docs/tutorial/

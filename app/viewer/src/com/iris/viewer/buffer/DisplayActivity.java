@@ -28,6 +28,8 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import org.json.JSONObject;
@@ -78,7 +80,7 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
     private long pointerWidth,pointerHeight,pointerRotation=-1;
     private SurfaceView surface;
     private TextView status,hudView;
-    private Button guestHome,guestRecents,guestBack,pointerMode,orientationButton,hudToggle;
+    private Button guestHome,guestRecents,guestBack,pointerMode,orientationButton,audioButton,hudToggle;
     private volatile boolean orientationBusy,hudVisible,hudFetching;
     private volatile long lastTelemetryAt;
     private volatile JSONObject lastHostTel,lastInstTel;
@@ -104,6 +106,7 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
             guestRecents.setEnabled(brokerReady);
             pointerMode.setEnabled(ready);
             orientationButton.setEnabled(brokerReady);
+            audioButton.setEnabled(brokerReady);
             long left=Math.max(0,seconds-(SystemClock.elapsedRealtime()-displayStartedAt)/1000);
             String remaining=String.format(java.util.Locale.US,"%d:%02d",left/60,left%60);
             status.setText(InstanceNames.title(number)+" · "+(ready?(touchMode?I18n.s(R.string.ui_3d4cf10d60ad):I18n.s(R.string.ui_8bf7092bfac6)):problem.isEmpty()?I18n.s(R.string.ui_7570be66f8ac):I18n.known(problem))+(seconds>0?I18n.s(R.string.ui_a005d2b0e33d)+remaining+(left<=20?I18n.s(R.string.ui_43d8ec69b3ed):""):""));
@@ -132,6 +135,7 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
         tools.addView(status,new LinearLayout.LayoutParams(0,-1,1));
         pointerMode=button(I18n.s(R.string.ui_eaa5b90e3aa4),"pointer-mode",this::togglePointerMode);tools.addView(pointerMode);pointerMode.setEnabled(false);
         hudToggle=button(I18n.known("性能"),"display-hud",this::toggleHud);tools.addView(hudToggle);
+        audioButton=button(I18n.known("音频"),"guest-audio",this::openAudioDialog);tools.addView(audioButton);
         orientationButton=button(I18n.known("横竖屏"),"guest-orientation",this::chooseOrientation);tools.addView(orientationButton);orientationButton.setEnabled(false);
         guestHome=button(I18n.s(R.string.ui_428cbfb8a4e1),"guest-home",()->key("HOME"));tools.addView(guestHome);
         guestRecents=button(I18n.known("后台"),"guest-recents",this::openRecents);tools.addView(guestRecents);
@@ -362,6 +366,54 @@ public final class DisplayActivity extends Activity implements SurfaceHolder.Cal
             if(GuestOrientation.validToken(brokerToken)&&!hudFetching)refreshHudTelemetry();
         }
         surface.requestFocus();
+    }
+    private void openAudioDialog() {
+        if(!GuestOrientation.validToken(brokerToken)||closing.get())return;
+        cancelKeyboard();cancelPointer();
+        telemetryWorker.execute(()->{
+            try {
+                JSONObject st=TelemetryUi.brokerRequest(brokerToken,"GET","/state?offset=0&limit=128");
+                org.json.JSONArray arr=st.optJSONArray("instances");
+                JSONObject audioCfg=new JSONObject();
+                if(arr!=null)for(int i=0;i<arr.length();i++){JSONObject o=arr.optJSONObject(i);if(o!=null&&o.optInt("id")==id){audioCfg=o.optJSONObject("audio");break;}}
+                final JSONObject cur=audioCfg!=null?audioCfg:new JSONObject();
+                ui.post(()->{
+                    if(closing.get()||!resumed)return;
+                    boolean outEn=cur.optBoolean("outputEnabled",true);
+                    boolean muted=cur.optBoolean("muted",false);
+                    int vol=cur.optInt("volume",100);
+                    String inPol=cur.optString("inputPolicy","mute_no_mic");
+
+                    LinearLayout box=new LinearLayout(this);box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(18),dp(10),dp(18),dp(6));
+                    Switch swOut=new Switch(this);swOut.setText(I18n.known("启用实例音频输出"));swOut.setChecked(outEn);box.addView(swOut);
+                    Switch swMute=new Switch(this);swMute.setText(I18n.known("静音（保活连接不卡应用）"));swMute.setChecked(muted);box.addView(swMute);
+                    TextView volLabel=new TextView(this);volLabel.setText(I18n.known("输出音量：")+vol+"%");volLabel.setPadding(0,dp(8),0,dp(4));box.addView(volLabel);
+                    SeekBar bar=new SeekBar(this);bar.setMax(100);bar.setProgress(vol);
+                    bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){
+                        @Override public void onProgressChanged(SeekBar s,int p,boolean fromUser){volLabel.setText(I18n.known("输出音量：")+p+"%");}
+                        @Override public void onStartTrackingTouch(SeekBar s){}
+                        @Override public void onStopTrackingTouch(SeekBar s){}
+                    });
+                    box.addView(bar);
+                    TextView micNote=new TextView(this);micNote.setTextSize(12);micNote.setPadding(0,dp(8),0,0);
+                    micNote.setText(I18n.known("输入（麦克风）：当前设备无物理麦克风直通，默认保持静音输入。"));
+                    box.addView(micNote);
+                    new AlertDialog.Builder(this).setTitle(InstanceNames.title(number)+" · "+I18n.known("音频控制"))
+                        .setView(box)
+                        .setNegativeButton(android.R.string.cancel,null)
+                        .setPositiveButton(I18n.known("保存"),(d,w)->{
+                            final boolean nextOut=swOut.isChecked(),nextMute=swMute.isChecked();
+                            final int nextVol=bar.getProgress();
+                            telemetryWorker.execute(()->{
+                                try {
+                                    TelemetryUi.brokerRequest(brokerToken,"POST","/audio/config?id="+id+"&outputEnabled="+(nextOut?"1":"0")+"&muted="+(nextMute?"1":"0")+"&volume="+nextVol+"&inputPolicy="+inPol);
+                                    ui.post(()->Toast.makeText(this,I18n.known("音频设置已生效"),Toast.LENGTH_SHORT).show());
+                                } catch(Exception e){ui.post(()->Toast.makeText(this,I18n.known("音频设置失败，请重试"),Toast.LENGTH_SHORT).show());}
+                            });
+                        }).show();
+                });
+            } catch(Exception ignored){}
+        });
     }
     private void refreshHudTelemetry() {
         hudFetching=true;

@@ -16,7 +16,10 @@ import java.security.NoSuchAlgorithmException;
 public final class ExchangeProtocol {
     public static final long MAX_FILE_BYTES = 4L * 1024 * 1024 * 1024;
     public static final int MAX_FILES = 128;
+    public static final int MAX_LIST_ENTRIES = 512;
     public static final int MAX_NAME_UTF8_BYTES = 128;
+    public static final int MAX_DIR_UTF8_BYTES = 512;
+    public static final int MAX_DIR_DEPTH = 12;
     public static final int BLOCK_BYTES = 64 * 1024;
     public static final int TRANSFER_SECONDS = 1800;
     public static final int IDLE_SECONDS = 15;
@@ -89,6 +92,42 @@ public final class ExchangeProtocol {
             offset += Character.charCount(cp);
         }
         return name;
+    }
+
+    /** 校验并规范化相对共享存储子目录路径（允许 "" 代表 /sdcard 根，禁止 .. / 隐藏目录 / Android 沙盒目录）。 */
+    public static String relativeDir(String raw) throws Failure {
+        if (raw == null || raw.isEmpty()) return "";
+        for (int offset = 0; offset < raw.length();) {
+            int cp = raw.codePointAt(offset);
+            if (cp == '\\' || Character.isISOControl(cp) ||
+                    Character.getType(cp) == Character.FORMAT ||
+                    (cp >= 0xD800 && cp <= 0xDFFF) || cp == 0xFFFD) {
+                throw new Failure(400, "INVALID_PATH", "目录路径包含非法字符");
+            }
+            offset += Character.charCount(cp);
+        }
+        int start = 0, end = raw.length();
+        while (start < end && raw.charAt(start) == '/') start++;
+        while (end > start && raw.charAt(end - 1) == '/') end--;
+        if (start >= end) return "";
+        String trimmed = raw.substring(start, end);
+        if (trimmed.getBytes(StandardCharsets.UTF_8).length > MAX_DIR_UTF8_BYTES) {
+            throw new Failure(400, "INVALID_PATH", "目录路径过长");
+        }
+        String[] segments = trimmed.split("/", -1);
+        if (segments.length > MAX_DIR_DEPTH) {
+            throw new Failure(400, "INVALID_PATH", "目录层级过深");
+        }
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < segments.length; i++) {
+            String seg = filename(segments[i]);
+            if (i == 0 && "Android".equalsIgnoreCase(seg)) {
+                throw new Failure(400, "RESTRICTED_DIR", "应用数据与 OBB 目录请使用「导入/导出应用」操作");
+            }
+            if (i > 0) out.append('/');
+            out.append(seg);
+        }
+        return out.toString();
     }
 
     /** Never reads more than the declared size and never allocates by file size. */

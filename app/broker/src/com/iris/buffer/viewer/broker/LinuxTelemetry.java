@@ -286,11 +286,11 @@ final class LinuxTelemetry {
         long cpuUsec = cpuStat.getOrDefault("usage_usec", -1L);
         long nrThrottled = cpuStat.getOrDefault("nr_throttled", 0L);
 
-        // 3. 虚拟网卡统计
+        // 3. 虚拟网卡统计（rv<id>h 为宿主机侧对端：宿主发送 tx = 容器接收下载↓，宿主接收 rx = 容器发送上传↑）
         String iface = "rv" + id + "h";
         Path netStats = Paths.get("/sys/class/net", iface, "statistics");
-        long rxBytes = parseLongSafe(readKernel(netStats.resolve("rx_bytes")), -1);
-        long txBytes = parseLongSafe(readKernel(netStats.resolve("tx_bytes")), -1);
+        long rxBytes = parseLongSafe(readKernel(netStats.resolve("tx_bytes")), -1);
+        long txBytes = parseLongSafe(readKernel(netStats.resolve("rx_bytes")), -1);
 
         long nowNs = SystemClock.elapsedRealtimeNanos();
         InstanceSample prev = samples.get(id);

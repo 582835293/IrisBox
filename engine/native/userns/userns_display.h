@@ -56,8 +56,16 @@ static void resolve_producer_source(unsigned id, char *out, size_t cap) {
             if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' || c == '_' || c == '-')) ok = 0;
         }
         if (ok) {
+            char prof[128] = {0};
+            snprintf(prof, sizeof(prof), "%s", rom_id);
+            if (len > 4 && strcmp(prof + len - 4, "-rom") == 0) prof[len - 4] = 0;
             char cand[512];
             struct stat st;
+            snprintf(cand, sizeof(cand), HOME_BASE "/display/buffer_bridge/iris_buffer_producer.%s", prof);
+            if (!lstat(cand, &st) && S_ISREG(st.st_mode) && !st.st_uid && strlen(cand) < cap) {
+                strcpy(out, cand);
+                return;
+            }
             snprintf(cand, sizeof(cand), HOME_BASE "/roms/%s/compat/payload/iris_buffer_producer", rom_id);
             if (!lstat(cand, &st) && S_ISREG(st.st_mode) && !st.st_uid && strlen(cand) < cap) {
                 strcpy(out, cand);

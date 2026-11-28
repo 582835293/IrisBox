@@ -1,8 +1,13 @@
 package com.irisbox.buffer.viewer.broker;
 
+import android.content.res.AssetManager;
+import android.content.res.Configuration;
+import android.content.res.Resources;
+import android.content.res.XmlResourceParser;
 import android.os.SystemClock;
 import android.system.Os;
 import android.system.StructStat;
+import android.util.DisplayMetrics;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.*;
@@ -22,12 +27,20 @@ import java.util.regex.Pattern;
 final class HostAppImporter {
     private static final String BASE = "/data/irisbox/runtime", BB = "/data/irisbox/host/bin/busybox";
     private static final String DATA_ROOT = "/data/irisbox", HOST_OBB_ROOT = "/data/media/0/Android/obb";
+    private static final String HOST_EXPORT_ROOT = "/data/media/0/Download/IrisBoxExport";
     private static final String GUEST_DATA_EXT_ROOT = "/data/media/0/Android/data";
     private static final String GUEST_DATA_PRIV_ROOT = "/data/data";
     private static final String GUEST_DATA_DE_ROOT = "/data/user_de/0";
     private static final Pattern SESSION_PATTERN = Pattern.compile("\\[([0-9]+)\\]");
     private static final long MIN_FREE_HEADROOM_BYTES = 512L * 1024 * 1024;
     private static final int COPY_BUFFER_BYTES = 1024 * 1024;
+    private static final int LABEL_CACHE_MAX = 512;
+    private static final Map<String, String> LABEL_CACHE = Collections.synchronizedMap(
+        new LinkedHashMap<String, String>(128, 0.75f, true) {
+            @Override protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+                return size() > LABEL_CACHE_MAX;
+            }
+        });
 
     interface State {
         String session(int id);
@@ -39,6 +52,7 @@ final class HostAppImporter {
     static final class Job {
         final int id, srcId;
         final String session, srcSession, source, pkg, token;
+        final String direction, targetMode, exportDir;
         final boolean includeObb, includeExtData, includeAppData;
         final List<String> apkPaths;
         final List<String> obbNames;
@@ -48,12 +62,16 @@ final class HostAppImporter {
         volatile String phase = "queued", detail = "", error = "";
         volatile boolean finished, success;
 
-        Job(int id, String session, int srcId, String srcSession, String source, String pkg,
+        Job(int id, String session, String direction, String targetMode, String exportDir,
+                int srcId, String srcSession, String source, String pkg,
                 boolean includeObb, boolean includeExtData, boolean includeAppData,
                 List<String> apkPaths, List<String> obbNames,
                 long apkBytes, long obbBytes, long extDataBytes, long appDataBytes) {
             this.id = id;
             this.session = session;
+            this.direction = direction;
+            this.targetMode = targetMode;
+            this.exportDir = exportDir;
             this.srcId = srcId;
             this.srcSession = srcSession;
             this.source = source;
@@ -79,6 +97,9 @@ final class HostAppImporter {
             return new JSONObject()
                 .put("id", id)
                 .put("session", session)
+                .put("direction", direction)
+                .put("targetMode", targetMode)
+                .put("exportDir", exportDir)
                 .put("source", source)
                 .put("pkg", pkg)
                 .put("includeObb", includeObb)
@@ -103,6 +124,7 @@ final class HostAppImporter {
     private final State state;
     private final ExecutorService workers = Executors.newCachedThreadPool();
     private final ConcurrentHashMap<Integer, Job> jobs = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, Job> exportJobs = new ConcurrentHashMap<>();
 
     HostAppImporter(State state) {
         this.state = state;
@@ -162,9 +184,19 @@ final class HostAppImporter {
                 long obbBytes = 0;
                 for (Path p : obbs) obbBytes += safeSize(p);
                 long extDataBytes = safeDirBytesHost(Paths.get(HOST_OBB_ROOT).getParent().resolve("data").resolve(pkg));
+                Path labelApk = null;
+                if (isAllowedHostApkPath(baseApkStr)) {
+                    Path candidate = Paths.get(baseApkStr).normalize();
+                    if (!Files.isSymbolicLink(candidate) && Files.isRegularFile(candidate, LinkOption.NOFOLLOW_LINKS)) {
+                        labelApk = candidate;
+                    }
+                }
+                if (labelApk == null && !apks.isEmpty()) labelApk = apks.get(0);
+                String label = resolveApkLabel(labelApk, pkg);
 
                 JSONObject item = new JSONObject()
                     .put("pkg", pkg)
+                    .put("label", label)
                     .put("apkBytes", apkBytes)
                     .put("splitCount", apks.size())
                     .put("obbCount", obbs.size())
@@ -229,7 +261,7 @@ final class HostAppImporter {
             "      done\n" +
             "    fi\n" +
             "  fi\n" +
-            "  printf '%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n' \"$pkg\" \"$splits\" \"${apk_b:-0}\" \"$obb_c\" \"${obb_b:-0}\" \"${ek:-0}\" \"${ak:-0}\"\n" +
+            "  printf '%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\t%s\\n' \"$pkg\" \"$splits\" \"${apk_b:-0}\" \"$obb_c\" \"${obb_b:-0}\" \"${ek:-0}\" \"${ak:-0}\" \"$base\"\n" +
             "done\n";
         String out = execContainer(srcId, srcSess, 45, null, "/system/bin/sh", "-c", script);
         TreeMap<String, JSONObject> unique = new TreeMap<>();
@@ -244,8 +276,12 @@ final class HostAppImporter {
             long obbBytes = parseLongSafe(cols[4], 0L);
             long extDataBytes = parseLongSafe(cols[5], 0L) * 1024L;
             long appDataBytes = parseLongSafe(cols[6], 0L) * 1024L;
+            String baseGuestApk = cols.length >= 8 ? cols[7].trim() : "";
+            Path hostBaseApk = safeInstanceDataPath(srcId, baseGuestApk);
+            String label = resolveApkLabel(hostBaseApk, pkg);
             JSONObject item = new JSONObject()
                 .put("pkg", pkg)
+                .put("label", label)
                 .put("apkBytes", apkBytes)
                 .put("splitCount", splits)
                 .put("obbCount", obbCount)
@@ -393,7 +429,7 @@ final class HostAppImporter {
                     String.format(Locale.US, "外置存储空间不足：需要约 %d MiB，可用 %d MiB", need / (1024 * 1024), usable / (1024 * 1024)));
             }
 
-            Job job = new Job(id, expectedSession, srcId, srcSession, normSource, pkg,
+            Job job = new Job(id, expectedSession, "import", "", "", srcId, srcSession, normSource, pkg,
                 includeObb, includeExtData, includeAppData,
                 apkPaths, obbNames, apkBytes, obbBytes, extDataBytes, appDataBytes);
             jobs.put(id, job);
@@ -412,6 +448,288 @@ final class HostAppImporter {
             return new JSONObject().put("id", id).put("session", expectedSession).put("phase", "idle").put("finished", true).put("success", false);
         }
         return job.toJson();
+    }
+
+    /** 提交容器应用导出至宿主机任务（支持导出安装包到 Download/IrisBoxExport 或直接安装到宿主机；严禁导出 /data/data） */
+    JSONObject startExportToHost(int srcId, String expectedSession, String pkg, String targetMode, boolean includeObb) throws Exception {
+        if (!InstanceCatalog.contains(srcId) || expectedSession == null || expectedSession.isEmpty()
+                || !validPkg(pkg) || pkg.startsWith("com.irisbox.")
+                || (!"apk_file".equals(targetMode) && !"install_host".equals(targetMode))) {
+            throw new ExchangeProtocol.Failure(400, "INVALID_REQUEST", "无效的导出参数或包名");
+        }
+        String current = state.session(srcId);
+        if (!expectedSession.equals(current) || !state.ready(srcId, expectedSession) || state.stopping(srcId)) {
+            throw new ExchangeProtocol.Failure(409, "INSTANCE_NOT_READY", "来源实例未就绪或会话已变化");
+        }
+        if (state.busy(srcId)) {
+            throw new ExchangeProtocol.Failure(423, "INSTANCE_BUSY", "来源实例正在执行其他操作，请稍后再试");
+        }
+
+        synchronized (exportJobs) {
+            Job active = exportJobs.get(srcId);
+            if (active != null && !active.finished) {
+                throw new ExchangeProtocol.Failure(409, "EXPORT_IN_PROGRESS", "当前已有应用导出任务正在执行");
+            }
+
+            String probeScript =
+                "PKG=\"$1\"\n" +
+                "OUT=$(/system/bin/cmd package path \"$PKG\" 2>/dev/null || /system/bin/pm path \"$PKG\")\n" +
+                "for l in $OUT; do\n" +
+                "  case \"$l\" in package:*) ;; *) continue ;; esac\n" +
+                "  p=${l#package:}\n" +
+                "  case \"$p\" in *..*) continue ;; /data/app/*.apk|/mnt/asec/*.apk) ;; *) continue ;; esac\n" +
+                "  [ -f \"$p\" ] && [ ! -L \"$p\" ] || continue\n" +
+                "  sz=$(/system/bin/busybox stat -c %s \"$p\" 2>/dev/null || echo 0)\n" +
+                "  printf 'APK\\t%s\\t%s\\n' \"$p\" \"$sz\"\n" +
+                "done\n" +
+                "if [ \"$2\" = 1 ] && [ -d \"/data/media/0/Android/obb/$PKG\" ] && [ ! -L \"/data/media/0/Android/obb/$PKG\" ]; then\n" +
+                "  for o in \"/data/media/0/Android/obb/$PKG\"/*.obb; do\n" +
+                "    [ -f \"$o\" ] && [ ! -L \"$o\" ] || continue\n" +
+                "    n=${o##*/}; sz=$(/system/bin/busybox stat -c %s \"$o\" 2>/dev/null || echo 0)\n" +
+                "    printf 'OBB\\t%s\\t%s\\n' \"$n\" \"$sz\"\n" +
+                "  done\n" +
+                "fi\n";
+            String probeOut = execContainer(srcId, expectedSession, 30, null,
+                "/system/bin/sh", "-c", probeScript, "sh", pkg, includeObb ? "1" : "0");
+            List<String> apkPaths = new ArrayList<>();
+            List<String> obbNames = new ArrayList<>();
+            long apkBytes = 0, obbBytes = 0;
+            for (String line : probeOut.split("\n")) {
+                String[] cols = line.trim().split("\t");
+                if (cols.length >= 3 && "APK".equals(cols[0]) && isAllowedHostApkPath(cols[1])) {
+                    apkPaths.add(cols[1]);
+                    apkBytes += parseLongSafe(cols[2], 0L);
+                } else if (cols.length >= 3 && "OBB".equals(cols[0])) {
+                    String n = cols[1];
+                    if (n.endsWith(".obb") && n.matches("[a-zA-Z0-9._-]+")) {
+                        obbNames.add(n);
+                        obbBytes += parseLongSafe(cols[2], 0L);
+                    }
+                }
+            }
+            if (apkPaths.isEmpty()) {
+                throw new ExchangeProtocol.Failure(404, "APP_NOT_FOUND", "容器中未找到可导出的第三方安装包：" + pkg);
+            }
+
+            long usableHost = new File("/data/media/0").getUsableSpace();
+            long need = apkBytes + obbBytes + 256L * 1024 * 1024;
+            if (usableHost < need) {
+                throw new ExchangeProtocol.Failure(507, "INSUFFICIENT_STORAGE",
+                    String.format(Locale.US, "宿主机内部存储空间不足：需要约 %d MiB，可用 %d MiB", need / (1024 * 1024), usableHost / (1024 * 1024)));
+            }
+
+            String exportDir = "apk_file".equals(targetMode) ? ("Download/IrisBoxExport/" + pkg) : "宿主机应用";
+            Job job = new Job(srcId, expectedSession, "export", targetMode, exportDir,
+                srcId, expectedSession, "instance:" + srcId, pkg,
+                includeObb, false, false, apkPaths, obbNames, apkBytes, obbBytes, 0L, 0L);
+            exportJobs.put(srcId, job);
+            workers.execute(() -> executeExport(job));
+            return job.toJson();
+        }
+    }
+
+    /** 查询最近一次应用导出任务的状态 */
+    JSONObject exportStatus(int srcId, String expectedSession) throws Exception {
+        if (!InstanceCatalog.contains(srcId) || expectedSession == null || expectedSession.isEmpty()) {
+            throw new ExchangeProtocol.Failure(400, "INVALID_REQUEST", "无效的导出状态查询");
+        }
+        Job job = exportJobs.get(srcId);
+        if (job == null || !expectedSession.equals(job.session)) {
+            return new JSONObject().put("id", srcId).put("session", expectedSession).put("direction", "export")
+                .put("phase", "idle").put("finished", true).put("success", false);
+        }
+        return job.toJson();
+    }
+
+    private void executeExport(Job job) {
+        String hostInstallSession = "";
+        try {
+            ensureAlive(job);
+            if ("apk_file".equals(job.targetMode)) {
+                Path baseRoot = Paths.get(HOST_EXPORT_ROOT);
+                ensureDirOwned(baseRoot, 1023, 1079, 0775);
+                Path pkgDir = baseRoot.resolve(job.pkg).normalize();
+                if (!pkgDir.startsWith(baseRoot)) throw new IOException("非法导出路径");
+                ensureDirOwned(pkgDir, 1023, 1079, 0775);
+
+                job.phase = "exporting_apk";
+                for (int i = 0; i < job.apkPaths.size(); i++) {
+                    ensureAlive(job);
+                    String guestApk = job.apkPaths.get(i);
+                    String rawName = Paths.get(guestApk).getFileName().toString();
+                    String safeName = sanitizeName(rawName, "part_" + i + ".apk");
+                    if (job.apkPaths.size() == 1 && "base.apk".equals(safeName)) safeName = job.pkg + ".apk";
+                    Path outApk = pkgDir.resolve(safeName);
+                    long len = getSourceFileLength(job, guestApk);
+                    job.detail = String.format(Locale.US, "导出 APK (%d/%d): %s", i + 1, job.apkPaths.size(), safeName);
+                    streamGuestFileToHost(job, guestApk, outApk, len, 1023, 1079, 0664);
+                    scanMediaFileHost("/sdcard/Download/IrisBoxExport/" + job.pkg + "/" + safeName);
+                }
+
+                if (job.includeObb && !job.obbNames.isEmpty()) {
+                    job.phase = "exporting_obb";
+                    Path obbDir = pkgDir.resolve("obb");
+                    ensureDirOwned(obbDir, 1023, 1079, 0775);
+                    for (int i = 0; i < job.obbNames.size(); i++) {
+                        ensureAlive(job);
+                        String obbName = sanitizeName(job.obbNames.get(i), "main_" + i + ".obb");
+                        String srcObb = HOST_OBB_ROOT + "/" + job.pkg + "/" + obbName;
+                        long len = getSourceFileLength(job, srcObb);
+                        job.detail = String.format(Locale.US, "导出 OBB (%d/%d): %s", i + 1, job.obbNames.size(), obbName);
+                        streamGuestFileToHost(job, srcObb, obbDir.resolve(obbName), len, 1023, 1079, 0664);
+                    }
+                }
+                try { runHost(20, "/system/bin/restorecon", "-R", pkgDir.toString()); } catch (Exception ignored) {}
+                job.doneBytes = job.totalBytes;
+                job.phase = "done";
+                job.detail = "已导出至宿主机 /sdcard/Download/IrisBoxExport/" + job.pkg;
+                job.success = true;
+            } else {
+                job.phase = "installing_host";
+                job.detail = "正在宿主机创建安装会话…";
+                String createOut = runHost(30, "/system/bin/pm", "install-create", "-r", "-S", Long.toString(job.apkBytes));
+                Matcher m = SESSION_PATTERN.matcher(createOut);
+                if (!m.find()) throw new IOException("宿主机创建安装会话失败：" + trimMsg(createOut));
+                hostInstallSession = m.group(1);
+
+                for (int i = 0; i < job.apkPaths.size(); i++) {
+                    ensureAlive(job);
+                    String guestApk = job.apkPaths.get(i);
+                    long len = getSourceFileLength(job, guestApk);
+                    String safeName = sanitizeName(Paths.get(guestApk).getFileName().toString(), "split_" + i + ".apk");
+                    job.detail = String.format(Locale.US, "安装至宿主机 (%d/%d): %s", i + 1, job.apkPaths.size(), safeName);
+                    streamGuestApkToHostPm(job, guestApk, len, hostInstallSession, i + "_" + safeName);
+                }
+
+                ensureAlive(job);
+                job.detail = "提交宿主机安装…";
+                String commitOut = runHost(600, "/system/bin/pm", "install-commit", hostInstallSession);
+                if (!commitOut.contains("Success")) throw new IOException("宿主机安装失败：" + trimMsg(commitOut));
+                hostInstallSession = "";
+
+                if (job.includeObb && !job.obbNames.isEmpty()) {
+                    job.phase = "exporting_obb";
+                    int hostAppUid = resolveHostAppUid(job.pkg);
+                    int obbUid = hostAppUid >= 10000 ? hostAppUid : 1023;
+                    int obbGid = hostAppUid >= 10000 ? 1079 : 1023;
+                    Path hostObbDir = Paths.get(HOST_OBB_ROOT, job.pkg).normalize();
+                    if (!hostObbDir.startsWith(Paths.get(HOST_OBB_ROOT))) throw new IOException("非法 OBB 目录");
+                    ensureDirOwned(hostObbDir, obbUid, obbGid, 0770);
+                    for (int i = 0; i < job.obbNames.size(); i++) {
+                        ensureAlive(job);
+                        String obbName = sanitizeName(job.obbNames.get(i), "main_" + i + ".obb");
+                        String srcObb = HOST_OBB_ROOT + "/" + job.pkg + "/" + obbName;
+                        long len = getSourceFileLength(job, srcObb);
+                        job.detail = String.format(Locale.US, "导出 OBB 至宿主机 (%d/%d): %s", i + 1, job.obbNames.size(), obbName);
+                        streamGuestFileToHost(job, srcObb, hostObbDir.resolve(obbName), len, obbUid, obbGid, 0660);
+                    }
+                    try { runHost(20, "/system/bin/restorecon", "-R", hostObbDir.toString()); } catch (Exception ignored) {}
+                }
+                job.doneBytes = job.totalBytes;
+                job.phase = "done";
+                job.detail = "已安装到宿主机：" + job.pkg;
+                job.success = true;
+            }
+        } catch (Exception e) {
+            if (!hostInstallSession.isEmpty()) {
+                try { runHost(15, "/system/bin/pm", "install-abandon", hostInstallSession); } catch (Exception ignored) {}
+            }
+            job.phase = "failed";
+            job.error = trimMsg(e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage());
+            job.detail = job.error;
+            job.success = false;
+        } finally {
+            job.finished = true;
+        }
+    }
+
+    private void streamGuestFileToHost(Job job, String guestSrc, Path hostDst, long expectedLen, int uid, int gid, int mode) throws Exception {
+        Process srcProc = startCtlExec(job.srcId, job.srcSession, 900, false, "/system/bin/cat", guestSrc);
+        srcProc.getOutputStream().close();
+        ByteArrayOutputStream srcErr = new ByteArrayOutputStream();
+        Thread errDrainer = drainStreamAsync(srcProc.getErrorStream(), srcErr);
+        Files.deleteIfExists(hostDst);
+        long written = 0;
+        try (InputStream in = srcProc.getInputStream();
+             OutputStream out = Files.newOutputStream(hostDst, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
+            byte[] buf = new byte[COPY_BUFFER_BYTES];
+            int n;
+            while ((n = in.read(buf)) != -1) {
+                ensureAlive(job);
+                out.write(buf, 0, n);
+                written += n;
+                job.doneBytes += n;
+            }
+            out.flush();
+            if (!srcProc.waitFor(905L, TimeUnit.SECONDS)) throw new IOException("读取容器文件超时");
+            errDrainer.join(500);
+            if (srcProc.exitValue() != 0) throw new IOException("读取容器文件失败：" + trimMsg(srcErr.toString(StandardCharsets.UTF_8.name())));
+        } finally {
+            srcProc.destroyForcibly();
+        }
+        if (written != expectedLen) {
+            try { Files.deleteIfExists(hostDst); } catch (Exception ignored) {}
+            throw new IOException("导出文件长度不一致（期望 " + expectedLen + " 字节，实际 " + written + " 字节）");
+        }
+        Os.lchown(hostDst.toString(), uid, gid);
+        Os.chmod(hostDst.toString(), mode);
+    }
+
+    private void streamGuestApkToHostPm(Job job, String guestApk, long expectedLen, String pmSession, String splitName) throws Exception {
+        Process srcProc = startCtlExec(job.srcId, job.srcSession, 900, false, "/system/bin/cat", guestApk);
+        srcProc.getOutputStream().close();
+        ByteArrayOutputStream srcErr = new ByteArrayOutputStream();
+        Thread srcErrDrainer = drainStreamAsync(srcProc.getErrorStream(), srcErr);
+
+        ProcessBuilder pmPb = new ProcessBuilder(BB, "timeout", "600",
+            "/system/bin/pm", "install-write", "-S", Long.toString(expectedLen), pmSession, splitName, "-");
+        pmPb.environment().remove("CLASSPATH");
+        pmPb.redirectErrorStream(true);
+        Process pmProc = pmPb.start();
+        ByteArrayOutputStream pmOut = new ByteArrayOutputStream();
+        Thread pmOutDrainer = drainStreamAsync(pmProc.getInputStream(), pmOut);
+
+        long written = 0;
+        try (InputStream in = srcProc.getInputStream();
+             OutputStream pmIn = pmProc.getOutputStream()) {
+            byte[] buf = new byte[COPY_BUFFER_BYTES];
+            int n;
+            while ((n = in.read(buf)) != -1) {
+                ensureAlive(job);
+                pmIn.write(buf, 0, n);
+                written += n;
+                job.doneBytes += n;
+            }
+            pmIn.flush();
+        } catch (IOException e) {
+            pmOutDrainer.join(500);
+            throw new IOException("写入宿主机安装包失败：" + trimMsg(pmOut.toString(StandardCharsets.UTF_8.name()) + " " + e.getMessage()));
+        } finally {
+            if (!srcProc.waitFor(10L, TimeUnit.SECONDS)) srcProc.destroyForcibly();
+            srcErrDrainer.join(300);
+        }
+        if (!pmProc.waitFor(605L, TimeUnit.SECONDS)) {
+            pmProc.destroyForcibly();
+            throw new IOException("宿主机 pm install-write 超时");
+        }
+        pmOutDrainer.join(500);
+        String res = pmOut.toString(StandardCharsets.UTF_8.name());
+        if (pmProc.exitValue() != 0 || !res.contains("Success")) {
+            throw new IOException("宿主机 install-write 失败：" + trimMsg(res));
+        }
+        if (written != expectedLen || srcProc.exitValue() != 0) {
+            throw new IOException("容器读取不完整：" + trimMsg(srcErr.toString(StandardCharsets.UTF_8.name())));
+        }
+    }
+
+    private static int resolveHostAppUid(String pkg) {
+        try {
+            String out = runHost(15, "/system/bin/sh", "-c",
+                "dumpsys package \"$1\" | /data/irisbox/host/bin/busybox sed -n 's/.*userId=\\([0-9][0-9]*\\).*/\\1/p' | /data/irisbox/host/bin/busybox head -n 1",
+                "sh", pkg).trim();
+            if (out.matches("[0-9]+")) return Integer.parseInt(out);
+        } catch (Exception ignored) {}
+        return -1;
     }
 
     private void execute(Job job) {
@@ -641,7 +959,7 @@ final class HostAppImporter {
     }
 
     /** 安全将容器内 /data/... 路径映射到宿主机 instances/<id>/data/... 物理路径（禁止符号链接越界） */
-    private static Path safeInstanceDataPath(int id, String guestPath) {
+    static Path safeInstanceDataPath(int id, String guestPath) {
         try {
             if (id <= 0 || guestPath == null || !guestPath.startsWith("/data/") || guestPath.contains("..")) return null;
             Path inst = Paths.get(BASE, "instances", Integer.toString(id));
@@ -664,7 +982,7 @@ final class HostAppImporter {
         }
     }
 
-    private static void ensureDirOwned(Path dir, int hostUid, int hostGid, int mode) throws Exception {
+    static void ensureDirOwned(Path dir, int hostUid, int hostGid, int mode) throws Exception {
         if (!Files.exists(dir, LinkOption.NOFOLLOW_LINKS)) {
             Path parent = dir.getParent();
             if (parent != null && !Files.exists(parent, LinkOption.NOFOLLOW_LINKS)) {
@@ -915,7 +1233,80 @@ final class HostAppImporter {
         return s.length() > 220 ? s.substring(0, 220) : s;
     }
 
-    private static String runHost(int timeoutSec, String... cmd) throws Exception {
+    static void scanMediaFileHost(String publicSdcardPath) {
+        if (publicSdcardPath == null || publicSdcardPath.isEmpty()) return;
+        try {
+            runHost(10, "/system/bin/am", "broadcast", "-a", "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
+                "-d", "file://" + publicSdcardPath);
+        } catch (Exception ignored) {}
+    }
+
+    /** 直接解析 APK 中 AndroidManifest.xml 的 application:label（优先简体中文），带 LRU 缓存 */
+    static String resolveApkLabel(Path hostApk, String fallbackPkg) {
+        if (hostApk == null) return fallbackPkg;
+        try {
+            if (Files.isSymbolicLink(hostApk) || !Files.isRegularFile(hostApk, LinkOption.NOFOLLOW_LINKS)) {
+                return fallbackPkg;
+            }
+            long size = Files.size(hostApk);
+            long mtime = Files.getLastModifiedTime(hostApk).toMillis();
+            String cacheKey = hostApk.toString() + ":" + mtime + ":" + size;
+            String cached = LABEL_CACHE.get(cacheKey);
+            if (cached != null) return cached;
+
+            AssetManager am = null;
+            XmlResourceParser parser = null;
+            String resolved = null;
+            try {
+                am = AssetManager.class.getDeclaredConstructor().newInstance();
+                Integer cookieObj = (Integer) AssetManager.class.getMethod("addAssetPath", String.class)
+                    .invoke(am, hostApk.toString());
+                int cookie = cookieObj != null ? cookieObj : 0;
+                if (cookie != 0) {
+                    parser = am.openXmlResourceParser(cookie, "AndroidManifest.xml");
+                    int event = parser.getEventType();
+                    while (event != XmlResourceParser.END_DOCUMENT) {
+                        if (event == XmlResourceParser.START_TAG && "application".equals(parser.getName())) {
+                            int attrCount = parser.getAttributeCount();
+                            for (int i = 0; i < attrCount; i++) {
+                                if (!"label".equals(parser.getAttributeName(i))) continue;
+                                int resId = parser.getAttributeResourceValue(i, 0);
+                                if (resId != 0) {
+                                    Configuration cfg = new Configuration();
+                                    cfg.setLocale(Locale.SIMPLIFIED_CHINESE);
+                                    DisplayMetrics dm = new DisplayMetrics();
+                                    dm.setToDefaults();
+                                    Resources res = new Resources(am, dm, cfg);
+                                    CharSequence cs = res.getText(resId);
+                                    if (cs != null) resolved = cs.toString().trim();
+                                } else {
+                                    String direct = parser.getAttributeValue(i);
+                                    if (direct != null && !direct.startsWith("@")) resolved = direct.trim();
+                                }
+                                break;
+                            }
+                            break;
+                        }
+                        event = parser.next();
+                    }
+                }
+            } finally {
+                if (parser != null) {
+                    try { parser.close(); } catch (Throwable ignored) {}
+                }
+                if (am != null) {
+                    try { am.close(); } catch (Throwable ignored) {}
+                }
+            }
+            if (resolved != null && !resolved.isEmpty()) {
+                LABEL_CACHE.put(cacheKey, resolved);
+                return resolved;
+            }
+        } catch (Throwable ignored) {}
+        return fallbackPkg;
+    }
+
+    static String runHost(int timeoutSec, String... cmd) throws Exception {
         ArrayList<String> full = new ArrayList<>();
         full.add(BB);
         full.add("timeout");

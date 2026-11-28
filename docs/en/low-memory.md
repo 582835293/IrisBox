@@ -19,9 +19,9 @@ Automatic restore requires the user's normally installed, working host Magisk. E
 
 After host reboot, check Active capacity before starting guests. Memory pressure does not establish damaged game data. If restore fails, retain the error and check host root, kernel and storage support. Private receipts live under `/data/irisbox/host/swap/`; boot results are in its `boot.log`. Keep original records private. Pending engine maintenance prevents boot restore; recover the transaction using the [maintenance guide](building.md).
 
-Disabled files are retained and reused when selecting the same size, avoiding repeated allocation. Different sizes can leave multiple files; Allocated files reports their total. The three sizes total at most 7 GiB, excluding interrupted temporary allocations. Creation also requires 2 GiB disk headroom. Never delete active swap. Cleanup requires prior deactivation and ownership checks.
+When switching tiers or turning swap off (`0.3.1` / `0.3.1-e42`), `host_swap.sh` creates and activates the target tier first (keeping any previous file as a rollback fallback on error), then automatically deletes other `swap-*.img` and `.record` files once the switch succeeds so multiple tiers do not accumulate on disk. Before allocation or cleanup, it still checks disk headroom (`2 GiB`), `512 MiB` physical reclaim headroom on `swapoff`, root ownership, link count, and exclusive receipts.
 
-Uninstalling only the APK leaves retained data and boot settings. Before complete removal, normally disable swap and automatic restore in the App, then follow the project's maintenance procedure. Do not delete other projects or disable their swap.
+Standard APK uninstallation leaves retained data and boot scripts intact so user instances are not wiped accidentally. Since `0.3.1`, **SetupActivity** provides **Clean up & uninstall** (`HostCleanup` + memory-piped `uninstall_cleanup.sh`), which requires all guests to be stopped manually first (`STOP_INSTANCES` / `SUBMOUNT_ACTIVE`), verifies the `512 MiB` swapoff margin and `# IRISBOX_MANAGED_*` hook signatures, cleans `/data/irisbox` and IrisBox-owned boot hooks (unmounting external SSD data storage if bound, without deleting external disk backups or touching system `zram` or the shared eBPF dispatcher), and launches Android's `ACTION_DELETE` dialog.
 
 ## Ownership and guards
 

@@ -36,4 +36,7 @@ with zipfile.ZipFile(ROOT/'app/viewer/assets/engine.zip') as archive:
     assert elf[:4]==b'\x7fELF' and elf[4]==2 and int.from_bytes(elf[18:20],'little')==183
     assert '$BASE/irisbox_ns' in (ROOT/'engine/runtime/ctl.sh').read_text(encoding='utf-8')
     assert '$BASE/irisbox_userns' in (ROOT/'engine/runtime/wrapper.sh').read_text(encoding='utf-8')
+    installer_src=(ROOT/'app/viewer/src/com/iris/viewer/buffer/EngineInstaller.java').read_text(encoding='utf-8')
+    installer_ver=re.search(r'static final String VERSION = "([^"]+)";',installer_src)
+    assert installer_ver and installer_ver[1]==engine['version'],(installer_ver and installer_ver[1],engine['version'])
     print('Engine source/payload matches APK asset:',len(engine['files']),'files PASS')

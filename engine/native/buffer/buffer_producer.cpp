@@ -167,7 +167,8 @@ static bool previewWrite(int fd,const void* data,size_t size) {
     return true;
 }
 static int previewOnce(const Options& option) {
-    if(getuid()!=0||!guestIdentity(option.initTick)||option.width!=640||option.height!=360)return 3;
+    bool validSize=(option.width==640&&option.height==360)||(option.width==360&&option.height==640);
+    if(getuid()!=0||!guestIdentity(option.initTick)||!validSize)return 3;
     ProcessState::self()->setThreadPoolMaxThreadCount(0);ProcessState::self()->startThreadPool();
     auto id=SurfaceComposerClient::getInternalDisplayId();if(!id)return 4;
 #ifdef IRIS_AOSP_12
@@ -176,18 +177,25 @@ static int previewOnce(const Options& option) {
     gui::DisplayCaptureArgs args;
 #endif
     args.displayToken=SurfaceComposerClient::getPhysicalDisplayToken(*id);
-    args.width=option.width;args.height=option.height;if(!args.displayToken)return 4;
+    if(!args.displayToken)return 4;
+    ui::DisplayState dispState;
+    uint32_t targetW=option.width,targetH=option.height;
+    if(SurfaceComposerClient::getDisplayState(args.displayToken,&dispState)==OK&&
+        dispState.layerStackSpaceRect.getWidth()<dispState.layerStackSpaceRect.getHeight()&&targetW>targetH) {
+        std::swap(targetW,targetH);
+    }
+    args.width=targetW;args.height=targetH;args.captureSecureLayers=true;
     sp<SyncScreenCaptureListener> listener=new SyncScreenCaptureListener();
     if(ScreenshotClient::captureDisplay(args,listener)!=NO_ERROR)return 5;
     const ScreenCaptureResults result=listener->waitForResults();
     if(result.result!=NO_ERROR||!result.buffer)return 5;
     sp<GraphicBuffer> buffer=result.buffer;void* pixels=nullptr;
-    if(buffer->getWidth()!=640||buffer->getHeight()!=360||buffer->lock(GraphicBuffer::USAGE_SW_READ_OFTEN,&pixels)!=NO_ERROR||!pixels)return 5;
+    if(buffer->getWidth()!=targetW||buffer->getHeight()!=targetH||buffer->lock(GraphicBuffer::USAGE_SW_READ_OFTEN,&pixels)!=NO_ERROR||!pixels)return 5;
     AndroidBitmapInfo info{};auto format=buffer->getPixelFormat();
     if(format==PIXEL_FORMAT_RGB_565)info.format=ANDROID_BITMAP_FORMAT_RGB_565;
     else if(format==PIXEL_FORMAT_RGBA_8888||format==PIXEL_FORMAT_RGBX_8888)info.format=ANDROID_BITMAP_FORMAT_RGBA_8888;
     else {buffer->unlock();return 5;}
-    info.flags=ANDROID_BITMAP_FLAGS_ALPHA_PREMUL;info.width=640;info.height=360;info.stride=buffer->getStride()*bytesPerPixel(format);
+    info.flags=ANDROID_BITMAP_FLAGS_ALPHA_PREMUL;info.width=targetW;info.height=targetH;info.stride=buffer->getStride()*bytesPerPixel(format);
     int fd=STDOUT_FILENO;
     int encoded=AndroidBitmap_compress(&info,int32_t(result.capturedDataspace),pixels,ANDROID_BITMAP_COMPRESS_FORMAT_JPEG,65,&fd,
         [](void* context,const void* bytes,size_t size){return previewWrite(*static_cast<int*>(context),bytes,size);});
@@ -318,6 +326,9 @@ public:
         server=listenSocket(option,&ownerLock);if(server<0){perror("IGB listen");return 4;}
         peer=acceptPeer(server);if(peer<0){fprintf(stderr,"IGB_ERROR no valid root peer before deadline\n");return 5;}
         close(server);server=-1;
+        // SurfaceFlinger::createDisplay(..., true) 仅允许 AID_SYSTEM(1000) 或 AID_GRAPHICS(1003)。
+        // socket/identity 校验已完成，在首次 open(/dev/binder) 前切换 effective uid=1000。
+        if(setegid(1000)||seteuid(1000)){fprintf(stderr,"IGB_ERROR seteuid(1000) failed\n");return 5;}
         armOperation();ProcessState::self()->setThreadPoolMaxThreadCount(2);ProcessState::self()->startThreadPool();
         const auto id=SurfaceComposerClient::getInternalDisplayId();
         if(!id){disarmOperation();return 6;}
@@ -355,7 +366,7 @@ private:
         gui::DisplayCaptureArgs args;
 #endif
         args.displayToken=sourceToken;
-        args.width=option.width;args.height=option.height;args.pixelFormat=ui::PixelFormat::RGBA_8888;args.dataspace=ui::Dataspace::V0_SRGB;
+        args.width=option.width;args.height=option.height;args.pixelFormat=ui::PixelFormat::RGBA_8888;args.dataspace=ui::Dataspace::V0_SRGB;args.captureSecureLayers=true;
         armOperation();++captureCalls;const status_t requested=ScreenshotClient::captureDisplay(args,callback);disarmOperation();
         if(requested!=OK)return 7;gui::ScreenCaptureResults result;if(!callback->wait(&result)||result.result!=OK||!result.buffer)return 7;
         captureOwner=result.buffer;maximumInFlight=1;
@@ -425,7 +436,8 @@ private:
         newOutput->setName(String8::format("IrisBufferOutput-%d",option.id));
         sp<FrameListener> newListener=new FrameListener();newOutput->setFrameAvailableListener(newListener);disarmOperation();
         if(result!=OK)return false;
-        armOperation();sp<IBinder> newDisplay=SurfaceComposerClient::createDisplay(String8::format("IrisBuffer-%d-%llu",option.id,(unsigned long long)option.initPid),false);
+        armOperation();sp<IBinder> newDisplay=SurfaceComposerClient::createDisplay(String8::format("IrisBuffer-%d-%llu",option.id,(unsigned long long)option.initPid),true);
+        if(!newDisplay){fprintf(stderr,"IGB_WARN secure createDisplay denied, fallback non-secure\n");newDisplay=SurfaceComposerClient::createDisplay(String8::format("IrisBuffer-%d-%llu",option.id,(unsigned long long)option.initPid),false);}
         if(!newDisplay){disarmOperation();return false;}
         SurfaceComposerClient::Transaction tx;result=tx.setDisplaySurface(newDisplay,newEndpoint);
         tx.setDisplayLayerStack(newDisplay,next.layerStack);
@@ -463,6 +475,7 @@ private:
      */
     void cleanup() {
         if(cleaned)return;cleaned=true;
+        seteuid(0);setegid(0);
         // Never hand an uncertain Host-used item back to a live producer. Stop
         // private display first; abandonment prevents subsequent overwrites.
         const bool hadDisplay=displayToken!=nullptr,hadQueue=output!=nullptr;

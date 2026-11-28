@@ -41,7 +41,7 @@ public final class HostSwapActivity extends Activity {
             startForegroundService(new Intent(this,SetupService.class).putExtra("action","swap").putExtra("mib",HostSwap.SIZES[index]).putExtra("automatic",automatic.isChecked()));
             result.setText(I18n.known("正在设置交换空间，请等待完成…"));
         });
-        body.addView(text(I18n.known("交换空间由所有实例共享，不会增加物理内存。开机恢复仅启用交换空间，不会启动实例。关闭后文件保留；切换大小可能占用额外磁盘。"),14));
+        body.addView(text(I18n.known("交换空间由所有实例共享，不会增加物理内存。开机恢复仅启用交换空间，不会启动实例。关闭或切换大小成功时会自动删除不再使用的旧交换文件，释放磁盘空间。"),14));
         result=text("",14);result.setTextIsSelectable(true);body.addView(result);
         LinearLayout footer=new LinearLayout(this);body.addView(footer);
         Button update=new Button(this);update.setText(I18n.known("刷新状态"));update.setOnClickListener(v->{needRead=true;read();});footer.addView(update,new LinearLayout.LayoutParams(0,-2,1));

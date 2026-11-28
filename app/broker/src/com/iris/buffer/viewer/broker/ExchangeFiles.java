@@ -2,11 +2,13 @@ package com.irisbox.buffer.viewer.broker;
 
 import android.os.SystemClock;
 import android.system.Os;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.*;
@@ -26,6 +28,7 @@ final class ExchangeFiles implements AutoCloseable {
         boolean stopping(int id);
     }
     private static final String BASE="/data/irisbox/runtime", BB="/data/irisbox/host/bin/busybox";
+    private static final String HOST_EXPORT_ROOT="/data/media/0/Download/IrisBoxExport";
     private static final Path DIRECTORY=Paths.get(BASE,"display/buffer_viewer");
     private final State state;
     private final Object lock=new Object();
@@ -254,10 +257,18 @@ final class ExchangeFiles implements AutoCloseable {
         if(!InstanceCatalog.contains(id))throw new Failure(400,"INVALID_INSTANCE","实例编号不正确");
         String expected=query.getOrDefault("session","");
         if(expected.isEmpty())throw new Failure(409,"SESSION_CHANGED","实例会话已改变，请返回列表重新进入");
-        boolean importing=path.equals("/files/import")&&method.equals("POST"),exporting=path.equals("/files/export")&&method.equals("GET"),listing=path.equals("/files")&&method.equals("GET");
-        if(!importing&&!exporting&&!listing)throw new Failure(404,"UNKNOWN_ENDPOINT","没有这个文件操作");
-        Set<String> allowed=new HashSet<>(Arrays.asList("id","session"));if(!listing)allowed.add("name");
+        boolean importing=path.equals("/files/import")&&method.equals("POST"),
+                exporting=path.equals("/files/export")&&method.equals("GET"),
+                exportingHost=path.equals("/files/export_host")&&method.equals("POST"),
+                listing=path.equals("/files")&&method.equals("GET");
+        if(!importing&&!exporting&&!exportingHost&&!listing)throw new Failure(404,"UNKNOWN_ENDPOINT","没有这个文件操作");
+        boolean hasDir=query.containsKey("dir");
+        if(importing&&hasDir)throw new Failure(400,"INVALID_QUERY","文件操作参数不正确");
+        Set<String> allowed=new HashSet<>(Arrays.asList("id","session"));
+        if(!listing)allowed.add("name");
+        if(hasDir&&!importing)allowed.add("dir");
         if(!allowed.equals(query.keySet()))throw new Failure(400,"INVALID_QUERY","文件操作参数不正确");
+        String dir=hasDir?ExchangeProtocol.relativeDir(query.get("dir")):ExchangeProtocol.DIRECTORY;
         String name=listing?"":ExchangeProtocol.filename(query.get("name"));
         long length=importing?ExchangeProtocol.contentLength(contentLength):0;
         if(importing&&!"application/octet-stream".equalsIgnoreCase(contentType))throw new Failure(400,"INVALID_CONTENT_TYPE","需要原始文件数据");
@@ -275,13 +286,21 @@ final class ExchangeFiles implements AutoCloseable {
         try {
             expiry=deadlines.schedule(()->job.cancel("TRANSFER_TIMEOUT","文件操作超时"),ExchangeProtocol.TRANSFER_SECONDS,TimeUnit.SECONDS);
             socket.setSoTimeout(ExchangeProtocol.IDLE_SECONDS*1000);
-            recover(job);
             if(listing){
-                JSONObject result;
-                try(Helper helper=new Helper(job,"list")){result=helper.phase("listed");helper.finish();}
-                job.check();result.remove("phase");result.put("id",id).put("session",expected).put("directory",ExchangeProtocol.DIRECTORY).put("maxFileBytes",ExchangeProtocol.MAX_FILE_BYTES);
-                respond(socket,200,result);
+                if(!hasDir){
+                    recover(job);
+                    JSONObject result;
+                    try(Helper helper=new Helper(job,"list")){result=helper.phase("listed");helper.finish();}
+                    job.check();result.remove("phase");
+                    result.put("id",id).put("session",expected).put("dir",ExchangeProtocol.DIRECTORY)
+                        .put("directory",ExchangeProtocol.DIRECTORY).put("dirs",new JSONArray())
+                        .put("maxFileBytes",ExchangeProtocol.MAX_FILE_BYTES);
+                    respond(socket,200,result);
+                }else{
+                    respond(socket,200,listDirectChildren(job,id,expected,dir));
+                }
             }else if(importing){
+                recover(job);
                 String transaction=token();record(job,transaction,name);
                 JSONObject committed;
                 try(Helper helper=new Helper(job,"import",transaction,name,Long.toString(length))){
@@ -296,7 +315,10 @@ final class ExchangeFiles implements AutoCloseable {
                     helper.finish();
                 }
                 job.check();Files.delete(journal(id));committed.remove("phase");committed.put("id",id).put("session",expected);respond(socket,201,committed);
-            }else{
+            }else if(exportingHost){
+                respond(socket,200,exportDirectToHost(job,id,expected,dir,name));
+            }else if(!hasDir){
+                recover(job);
                 try(Helper helper=new Helper(job,"export",name)){
                     JSONObject metadata=helper.phase("export");long bytes=metadata.optLong("bytes",-1);String digest=metadata.optString("sha256");
                     if(!name.equals(metadata.optString("name"))||bytes<0||bytes>ExchangeProtocol.MAX_FILE_BYTES||!digest.matches("[0-9a-f]{64}"))throw new Failure(503,"HELPER_PROTOCOL","实例文件信息不正确");
@@ -307,6 +329,20 @@ final class ExchangeFiles implements AutoCloseable {
                     if(!copied.sha256.equals(digest))throw new Failure(409,"FILE_CHANGED","导出时文件已改变，不能确认完成");
                     helper.finish();job.check();
                 }
+            }else{
+                Path hostSrc=resolveSharedFile(id,dir,name);
+                long bytes=Files.size(hostSrc);
+                if(bytes>ExchangeProtocol.MAX_FILE_BYTES)throw new Failure(413,"FILE_TOO_LARGE","单个文件不能超过 4 GiB");
+                String digest=sha256File(hostSrc,bytes,job);
+                job.check();
+                OutputStream output=socket.getOutputStream();
+                responseStarted=true;
+                output.write(("HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nContent-Length: "+bytes+"\r\nX-Iris-Session: "+expected+"\r\nX-Iris-SHA256: "+digest+"\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n").getBytes(StandardCharsets.US_ASCII));
+                try(InputStream fileIn=Files.newInputStream(hostSrc,LinkOption.NOFOLLOW_LINKS)){
+                    ExchangeProtocol.Copied copied=ExchangeProtocol.copyExactly(fileIn,output,bytes,job);output.flush();
+                    if(!copied.sha256.equals(digest))throw new Failure(409,"FILE_CHANGED","导出时文件已改变，不能确认完成");
+                }
+                job.check();
             }
         }catch(Exception failure){
             // Never append JSON to a response that already advertised raw bytes.
@@ -317,6 +353,149 @@ final class ExchangeFiles implements AutoCloseable {
             releaseRecoveryLease(job);
             synchronized(lock){if(active==job)active=null;lock.notifyAll();}
         }
+    }
+
+    private static Path resolveSharedPath(int id,String cleanDir,String cleanName)throws Failure {
+        StringBuilder guestPath=new StringBuilder("/data/media/0");
+        if(!cleanDir.isEmpty())guestPath.append('/').append(cleanDir);
+        if(cleanName!=null&&!cleanName.isEmpty())guestPath.append('/').append(cleanName);
+        Path resolved=HostAppImporter.safeInstanceDataPath(id,guestPath.toString());
+        if(resolved==null)throw new Failure(400,"INVALID_PATH","非法共享存储路径");
+        return resolved;
+    }
+
+    private static Path resolveSharedFile(int id,String cleanDir,String cleanName)throws Failure {
+        Path hostSrc=resolveSharedPath(id,cleanDir,cleanName);
+        if(!Files.exists(hostSrc,LinkOption.NOFOLLOW_LINKS)||Files.isSymbolicLink(hostSrc)||!Files.isRegularFile(hostSrc,LinkOption.NOFOLLOW_LINKS)){
+            throw new Failure(404,"FILE_NOT_FOUND","实例中未找到该文件："+cleanName);
+        }
+        return hostSrc;
+    }
+
+    private JSONObject listDirectChildren(Job job,int id,String expected,String dir)throws Exception {
+        job.check();
+        Path hostDir=resolveSharedPath(id,dir,null);
+        JSONArray dirsJson=new JSONArray(),filesJson=new JSONArray();
+        if(!Files.exists(hostDir,LinkOption.NOFOLLOW_LINKS)){
+            if(dir.equals(ExchangeProtocol.DIRECTORY)){
+                return new JSONObject().put("id",id).put("session",expected).put("dir",dir)
+                    .put("directory",dir).put("dirs",dirsJson).put("files",filesJson)
+                    .put("maxFileBytes",ExchangeProtocol.MAX_FILE_BYTES);
+            }
+            throw new Failure(404,"DIR_NOT_FOUND","实例目录不存在："+(dir.isEmpty()?"/sdcard":dir));
+        }
+        if(Files.isSymbolicLink(hostDir)||!Files.isDirectory(hostDir,LinkOption.NOFOLLOW_LINKS)){
+            throw new Failure(400,"NOT_A_DIRECTORY","目标路径不是有效目录");
+        }
+        ArrayList<String> subdirs=new ArrayList<>();
+        ArrayList<JSONObject> entries=new ArrayList<>();
+        try(DirectoryStream<Path> ds=Files.newDirectoryStream(hostDir)){
+            int scanned=0;
+            for(Path entry:ds){
+                if(++scanned>2048)break;
+                job.check();
+                String entryName=entry.getFileName().toString();
+                if(entryName.startsWith(".")||Files.isSymbolicLink(entry))continue;
+                if(dir.isEmpty()&&"Android".equalsIgnoreCase(entryName))continue;
+                if(Files.isDirectory(entry,LinkOption.NOFOLLOW_LINKS)){
+                    subdirs.add(entryName);
+                }else if(Files.isRegularFile(entry,LinkOption.NOFOLLOW_LINKS)){
+                    try{
+                        entries.add(new JSONObject().put("name",entryName)
+                            .put("bytes",Files.size(entry))
+                            .put("modifiedAt",Files.getLastModifiedTime(entry).toMillis()));
+                    }catch(IOException ignored){}
+                }
+            }
+        }
+        Collections.sort(subdirs,String.CASE_INSENSITIVE_ORDER);
+        Collections.sort(entries,(a,b)->{
+            int cmp=Long.compare(b.optLong("modifiedAt",0),a.optLong("modifiedAt",0));
+            return cmp!=0?cmp:a.optString("name").compareToIgnoreCase(b.optString("name"));
+        });
+        int limit=ExchangeProtocol.MAX_LIST_ENTRIES;
+        for(int i=0;i<subdirs.size()&&i<limit;i++){
+            dirsJson.put(new JSONObject().put("name",subdirs.get(i)));
+        }
+        int fileBudget=Math.max(0,limit-dirsJson.length());
+        for(int i=0;i<entries.size()&&i<fileBudget;i++){
+            filesJson.put(entries.get(i));
+        }
+        return new JSONObject().put("id",id).put("session",expected).put("dir",dir)
+            .put("directory",dir.isEmpty()?"/sdcard":dir)
+            .put("dirs",dirsJson).put("files",filesJson)
+            .put("maxFileBytes",ExchangeProtocol.MAX_FILE_BYTES);
+    }
+
+    private static String sha256File(Path src,long expectedLen,Job job)throws Exception {
+        MessageDigest digest=MessageDigest.getInstance("SHA-256");
+        byte[] buf=new byte[ExchangeProtocol.BLOCK_BYTES];
+        long total=0;
+        try(InputStream in=Files.newInputStream(src,LinkOption.NOFOLLOW_LINKS)){
+            int n;
+            while((n=in.read(buf))!=-1){
+                job.check();
+                digest.update(buf,0,n);
+                total+=n;
+                if(total>expectedLen)throw new Failure(409,"FILE_CHANGED","文件在读取过程中发生变化，请重试");
+            }
+        }
+        if(total!=expectedLen)throw new Failure(409,"FILE_CHANGED","文件大小已变化，请重试");
+        byte[] hash=digest.digest();
+        char[] hex="0123456789abcdef".toCharArray();
+        char[] out=new char[hash.length*2];
+        for(int i=0;i<hash.length;i++){out[i*2]=hex[(hash[i]&255)>>>4];out[i*2+1]=hex[hash[i]&15];}
+        return new String(out);
+    }
+
+    private static Path allocateUniqueExportPath(Path root,String name)throws Failure {
+        Path direct=root.resolve(name).normalize();
+        if(!direct.startsWith(root))throw new Failure(400,"INVALID_NAME","非法目标文件名");
+        if(!Files.exists(direct,LinkOption.NOFOLLOW_LINKS))return direct;
+        int dot=name.lastIndexOf('.');
+        String stem=(dot>0)?name.substring(0,dot):name;
+        String ext=(dot>0)?name.substring(dot):"";
+        for(int idx=1;idx<1000;idx++){
+            String candName=stem+" ("+idx+")"+ext;
+            Path cand=root.resolve(candName).normalize();
+            if(cand.startsWith(root)&&!Files.exists(cand,LinkOption.NOFOLLOW_LINKS))return cand;
+        }
+        Path ts=root.resolve(stem+"_"+System.currentTimeMillis()+ext).normalize();
+        if(!ts.startsWith(root)||Files.exists(ts,LinkOption.NOFOLLOW_LINKS))throw new Failure(409,"TARGET_EXISTS","目标文件名冲突，无法写入");
+        return ts;
+    }
+
+    private JSONObject exportDirectToHost(Job job,int id,String expected,String dir,String name)throws Exception {
+        Path hostSrc=resolveSharedFile(id,dir,name);
+        long bytes=Files.size(hostSrc);
+        if(bytes>ExchangeProtocol.MAX_FILE_BYTES)throw new Failure(413,"FILE_TOO_LARGE","单个文件不能超过 4 GiB");
+        Path exportRoot=Paths.get(HOST_EXPORT_ROOT);
+        HostAppImporter.ensureDirOwned(exportRoot,1023,1079,0775);
+        Path hostDst=allocateUniqueExportPath(exportRoot,name);
+        ExchangeProtocol.Copied copied;
+        boolean completed=false;
+        try(InputStream in=Files.newInputStream(hostSrc,LinkOption.NOFOLLOW_LINKS);
+            OutputStream out=Files.newOutputStream(hostDst,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE)){
+            copied=ExchangeProtocol.copyExactly(in,out,bytes,job);
+            out.flush();
+            completed=true;
+        }finally{
+            if(!completed)try{Files.deleteIfExists(hostDst);}catch(IOException ignored){}
+        }
+        String dstVerifySha=sha256File(hostDst,bytes,job);
+        if(!copied.sha256.equals(dstVerifySha)){
+            try{Files.deleteIfExists(hostDst);}catch(IOException ignored){}
+            throw new Failure(500,"VERIFY_FAILED","宿主机导出文件校验不一致");
+        }
+        Os.lchown(hostDst.toString(),1023,1079);
+        Os.chmod(hostDst.toString(),0664);
+        try{HostAppImporter.runHost(10,"/system/bin/restorecon",hostDst.toString());}catch(Exception ignored){}
+        String savedName=hostDst.getFileName().toString();
+        String hostPublicPath="/sdcard/Download/IrisBoxExport/"+savedName;
+        HostAppImporter.scanMediaFileHost(hostPublicPath);
+        return new JSONObject().put("id",id).put("session",expected).put("dir",dir)
+            .put("name",name).put("savedName",savedName).put("hostPath",hostPublicPath)
+            .put("bytes",copied.bytes).put("sha256",copied.sha256);
     }
 
     /** 停止Guest之前先打断本会话的传输并等待Helper回收，不能只关UI留后台继续写。

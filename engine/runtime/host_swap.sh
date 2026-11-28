@@ -163,6 +163,14 @@ if [ "$HS_NEW" != 0 ]; then
         hs_fail ENABLE_FAILED
     fi
 fi
+# 新档位已成功启用（或已安全关闭），清理旧档位残留的交换镜像与记录，避免重复切档长期占满存储。
+for HS_M in 1024 2048 4096; do
+    [ "$HS_M" != "$HS_NEW" ] || continue
+    for HS_P in "$HS_DIR/swap-$HS_M.img" "$HS_DIR/swap-$HS_M.record"; do
+        [ ! -L "$HS_P" ] || hs_fail UNSAFE_PATH
+        [ ! -e "$HS_P" ] || "$BB" rm -f "$HS_P" || hs_fail CLEANUP_FAILED
+    done
+done
 if [ "$HS_NEW_AUTO" = 1 ]; then
     "$BB" mkdir -p /data/adb/service.d
     HS_HOOK_TMP=$("$BB" mktemp /data/adb/service.d/.irisbox-swap.XXXXXX)

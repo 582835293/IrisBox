@@ -8,9 +8,20 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * 虹膜空间音频桥接（AudioBridge）：
+ * 1. Guest 侧捕获 RemoteSubmix PCM (48kHz/立体声/16bit) 经私有 Unix Socket 送至宿主机；
+ * 2. 宿主机侧使用独立读取线程 + 有界缓冲队列解耦 AudioTrack 播放，避免热循环磁盘 I/O 卡顿；
+ * 3. 后台每 1500ms 异步更新一次状态文件，每 300ms 热加载实例音频配置（音量、静音、开关）。
+ */
 public final class AudioBridge {
+    private static final String AUDIO_CONF_DIR = "/data/irisbox/runtime/config/audio_v1";
+
     static Object call(Object target,String name,Class<?>[] types,Object... args)throws Exception{return target.getClass().getMethod(name,types).invoke(target,args);}
     static Context context()throws Exception{
         Looper.prepareMainLooper();
@@ -44,7 +55,7 @@ public final class AudioBridge {
     public static void main(String[] args){
         int exitCode=0;
         try{run(args);}catch(Throwable failure){failure.printStackTrace();exitCode=4;}
-        // ActivityThread creates non-daemon Binder threads. Exit only after audio cleanup.
+        // ActivityThread 会创建非守护 Binder 线程；需在清理音频资源后显式退出。
         System.exit(exitCode);
     }
     static void run(String[] args)throws Exception{
@@ -56,7 +67,82 @@ public final class AudioBridge {
         System.err.println("IRISBOX_AUDIO_CONTEXT_READY");
         try{if(mode.equals("guest"))capture(ctx,socket,readToken(args[2]),status,seconds);else if(mode.equals("host-mapped"))play(Integer.parseInt(socket),status,seconds);else throw new IllegalArgumentException();}catch(IOException disconnected){System.err.println("IRISBOX_AUDIO_DISCONNECTED "+disconnected.getClass().getSimpleName());}
     }
+
+    /** 读取实时音量、静音及输出开关配置（仅在文件修改时间戳变化时读取，避免热循环磁盘 I/O） */
+    static final class AudioControl {
+        final File confFile;
+        long lastCheckMs = 0L;
+        long lastMtime = -1L;
+        boolean outputEnabled = true;
+        boolean muted = false;
+        int volume = 100;
+        float appliedGain = -1.0f;
+
+        AudioControl(int id) {
+            this.confFile = new File(AUDIO_CONF_DIR, id + ".conf");
+        }
+
+        void applyIfNeeded(AudioTrack track, long nowMs) {
+            if (nowMs - lastCheckMs < 300L && appliedGain >= 0.0f) return;
+            lastCheckMs = nowMs;
+            try {
+                if (confFile.isFile()) {
+                    long mtime = confFile.lastModified();
+                    if (mtime != lastMtime) {
+                        lastMtime = mtime;
+                        boolean en = true, m = false;
+                        int vol = 100;
+                        try (BufferedReader br = new BufferedReader(new FileReader(confFile))) {
+                            String line;
+                            while ((line = br.readLine()) != null) {
+                                int eq = line.indexOf('=');
+                                if (eq <= 0) continue;
+                                String k = line.substring(0, eq).trim();
+                                String v = line.substring(eq + 1).trim();
+                                if ("output_enabled".equals(k)) en = !"0".equals(v) && !"false".equalsIgnoreCase(v);
+                                else if ("muted".equals(k)) m = "1".equals(v) || "true".equalsIgnoreCase(v);
+                                else if ("volume".equals(k)) {
+                                    try { vol = Math.max(0, Math.min(100, Integer.parseInt(v))); } catch (NumberFormatException ignored) {}
+                                }
+                            }
+                        }
+                        outputEnabled = en;
+                        muted = m;
+                        volume = vol;
+                    }
+                }
+            } catch (Throwable ignored) {}
+            float targetGain = (!outputEnabled || muted) ? 0.0f : (volume / 100.0f);
+            if (Math.abs(targetGain - appliedGain) > 0.001f) {
+                track.setVolume(targetGain);
+                appliedGain = targetGain;
+            }
+        }
+    }
+
+    static Thread startStatsReporter(final String statusPath, final AtomicBoolean running,
+                                       final AtomicLong bytesRef, final AtomicLong nzRef,
+                                       final AtomicInteger peakRef, final AtomicLong headRef) {
+        Thread t = new Thread(() -> {
+            while (running.get()) {
+                try {
+                    Thread.sleep(1500L);
+                } catch (InterruptedException ignored) {
+                    if (!running.get()) break;
+                }
+                if (!running.get()) break;
+                try {
+                    stats(statusPath, bytesRef.get(), nzRef.get(), peakRef.get(), headRef.get());
+                } catch (Throwable ignored) {}
+            }
+        }, "IrisAudioStats");
+        t.setDaemon(true);
+        t.start();
+        return t;
+    }
+
     static void capture(Context ctx,String path,String token,String status,int seconds)throws Exception{
+        try { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO); } catch (Throwable ignored) {}
         Class<?> ruleClass=Class.forName("android.media.audiopolicy.AudioMixingRule");
         Object rules=Class.forName("android.media.audiopolicy.AudioMixingRule$Builder").getConstructor().newInstance();
         for(int usage:new int[]{0,1,4,5,6,7,8,9,10,11,12,13,14,16}){
@@ -99,20 +185,34 @@ public final class AudioBridge {
                 if(!token.equals(input.readUTF()))throw new SecurityException("token");
                 DataOutputStream out=new DataOutputStream(client.getOutputStream());
                 out.writeInt(0x52564131);out.writeInt(48000);out.writeInt(2);out.flush();
-                record.startRecording();if(record.getRecordingState()!=AudioRecord.RECORDSTATE_RECORDING)throw new IllegalStateException("record start");
-                long end=SystemClock.elapsedRealtime()+seconds*1000L,last=0,bytes=0,nz=0;int peak=0;
-                byte[] buffer=new byte[3840];
-                while(seconds==0||SystemClock.elapsedRealtime()<end){
-                    int count=record.read(buffer,0,buffer.length);if(count<0)throw new IOException("read="+count);
-                    for(int i=0;i+1<count;i+=2){int s=(short)((buffer[i]&255)|(buffer[i+1]<<8));if(s!=0)nz++;peak=Math.max(peak,Math.abs(s));}
-                    out.write(buffer,0,count);bytes+=count;
-                    if(SystemClock.elapsedRealtime()-last>1000){stats(status,bytes,nz,peak,-1);last=SystemClock.elapsedRealtime();}
+                record.startRecording();
+                final AtomicBoolean running=new AtomicBoolean(true);
+                final AtomicLong bytesRef=new AtomicLong(0),nzRef=new AtomicLong(0),headRef=new AtomicLong(-1);
+                final AtomicInteger peakRef=new AtomicInteger(0);
+                Thread reporter=startStatsReporter(status,running,bytesRef,nzRef,peakRef,headRef);
+                try {
+                    long end=SystemClock.elapsedRealtime()+seconds*1000L;
+                    byte[] buffer=new byte[3840];
+                    while(seconds==0||SystemClock.elapsedRealtime()<end){
+                        int count=record.read(buffer,0,buffer.length);if(count<0)throw new IOException("read="+count);
+                        long frameNz=0;int framePeak=peakRef.get();
+                        for(int i=0;i+1<count;i+=2){int s=(short)((buffer[i]&255)|(buffer[i+1]<<8));if(s!=0)frameNz++;int a=s<0?-s:s;if(a>framePeak)framePeak=a;}
+                        out.write(buffer,0,count);
+                        bytesRef.addAndGet(count);
+                        if(frameNz>0)nzRef.addAndGet(frameNz);
+                        if(framePeak>peakRef.get())peakRef.set(framePeak);
+                    }
+                    try{stats(status,bytesRef.get(),nzRef.get(),peakRef.get(),-1);}catch(Throwable ignored){}
+                } finally {
+                    running.set(false);
+                    reporter.interrupt();
                 }
             }
         }finally{
-            if(record!=null){try{record.stop();}catch(IllegalStateException ignored){}record.release();}
-            manager.getClass().getMethod("unregisterAudioPolicy",policyClass).invoke(manager,policy);
-            bind.close();if(bound)new File(path).delete();
+            if(record!=null){try{record.stop();}catch(RuntimeException ignored){}record.release();}
+            if(bound)try{new File(path).delete();}catch(RuntimeException ignored){}
+            try{bind.close();}catch(IOException ignored){}
+            try{manager.getClass().getMethod("unregisterAudioPolicyAsync",policyClass).invoke(manager,policy);}catch(Exception ignored){}
         }
     }
     static InputStream mappedAudio(int id)throws Exception{
@@ -139,20 +239,89 @@ public final class AudioBridge {
         }finally{if(received!=null)Os.close(received);if(helper!=null&&helper.isAlive())helper.destroyForcibly();server.close();timer.shutdownNow();}
     }
     static void play(int id,String status,int seconds)throws Exception{
+        try { android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO); } catch (Throwable ignored) {}
         try(DataInputStream in=new DataInputStream(mappedAudio(id))){
             if(in.readInt()!=0x52564131||in.readInt()!=48000||in.readInt()!=2)throw new IOException("format");
             int min=AudioTrack.getMinBufferSize(48000,AudioFormat.CHANNEL_OUT_STEREO,AudioFormat.ENCODING_PCM_16BIT);
-            AudioTrack track=new AudioTrack.Builder().setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build()).setAudioFormat(format()).setBufferSizeInBytes(Math.max(min,15360)).setTransferMode(AudioTrack.MODE_STREAM).build();
+            int bufSize=Math.max(min*2,49152);
+            AudioTrack track=new AudioTrack.Builder()
+                .setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
+                .setAudioFormat(format())
+                .setBufferSizeInBytes(bufSize)
+                .setTransferMode(AudioTrack.MODE_STREAM)
+                .build();
             if(track.getState()!=AudioTrack.STATE_INITIALIZED)throw new IllegalStateException("track initialization");
-            try{
-                track.play();long end=SystemClock.elapsedRealtime()+seconds*1000L,last=0,bytes=0,nz=0;int peak=0;byte[] buffer=new byte[3840];
-                while((seconds==0||SystemClock.elapsedRealtime()<end)&&alive()){
-                    in.readFully(buffer);int count=buffer.length;
-                    for(int i=0;i+1<count;i+=2){int s=(short)((buffer[i]&255)|(buffer[i+1]<<8));if(s!=0)nz++;peak=Math.max(peak,Math.abs(s));}
-                    int offset=0;while(offset<count){int n=track.write(buffer,offset,count-offset);if(n<=0)throw new IOException("write="+n);offset+=n;}
-                    bytes+=count;if(SystemClock.elapsedRealtime()-last>1000){stats(status,bytes,nz,peak,track.getPlaybackHeadPosition());last=SystemClock.elapsedRealtime();}
+            final AtomicBoolean running=new AtomicBoolean(true);
+            final AtomicLong bytesRef=new AtomicLong(0),nzRef=new AtomicLong(0),headRef=new AtomicLong(0);
+            final AtomicInteger peakRef=new AtomicInteger(0);
+            final AudioControl control=new AudioControl(id);
+            final ArrayBlockingQueue<byte[]> queue=new ArrayBlockingQueue<>(64);
+            final Throwable[] readError=new Throwable[1];
+            final AtomicBoolean eof=new AtomicBoolean(false);
+            Thread reader=new Thread(()->{
+                try{
+                    android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_URGENT_AUDIO);
+                }catch(Throwable ignored){}
+                try{
+                    long end=SystemClock.elapsedRealtime()+seconds*1000L;
+                    while(running.get()&&(seconds==0||SystemClock.elapsedRealtime()<end)&&alive()){
+                        byte[] frame=new byte[3840];
+                        in.readFully(frame);
+                        while(running.get()){
+                            if(queue.offer(frame,200,TimeUnit.MILLISECONDS))break;
+                            if(!alive()){running.set(false);break;}
+                        }
+                    }
+                }catch(Throwable t){
+                    readError[0]=t;
+                }finally{
+                    eof.set(true);
                 }
-            }finally{track.stop();track.release();}
+            },"IrisAudioReader");
+            reader.setDaemon(true);
+            Thread reporter=startStatsReporter(status,running,bytesRef,nzRef,peakRef,headRef);
+            try{
+                control.applyIfNeeded(track,SystemClock.elapsedRealtime());
+                track.play();
+                reader.start();
+                long end=SystemClock.elapsedRealtime()+seconds*1000L;
+                while((seconds==0||SystemClock.elapsedRealtime()<end)&&alive()){
+                    byte[] frame=queue.poll(200,TimeUnit.MILLISECONDS);
+                    if(frame==null){
+                        if(eof.get()){
+                            if(readError[0]!=null){
+                                if(readError[0] instanceof Exception)throw (Exception)readError[0];
+                                throw new IOException(readError[0]);
+                            }
+                            break;
+                        }
+                        control.applyIfNeeded(track,SystemClock.elapsedRealtime());
+                        continue;
+                    }
+                    long now=SystemClock.elapsedRealtime();
+                    control.applyIfNeeded(track,now);
+                    int count=frame.length;
+                    long frameNz=0;int framePeak=peakRef.get();
+                    for(int i=0;i+1<count;i+=2){int s=(short)((frame[i]&255)|(frame[i+1]<<8));if(s!=0)frameNz++;int a=s<0?-s:s;if(a>framePeak)framePeak=a;}
+                    int offset=0;
+                    while(offset<count){
+                        int n=track.write(frame,offset,count-offset);
+                        if(n<=0)throw new IOException("write="+n);
+                        offset+=n;
+                    }
+                    bytesRef.addAndGet(count);
+                    if(frameNz>0)nzRef.addAndGet(frameNz);
+                    if(framePeak>peakRef.get())peakRef.set(framePeak);
+                    headRef.set(track.getPlaybackHeadPosition()&0xFFFFFFFFL);
+                }
+                try{stats(status,bytesRef.get(),nzRef.get(),peakRef.get(),track.getPlaybackHeadPosition()&0xFFFFFFFFL);}catch(Throwable ignored){}
+            }finally{
+                running.set(false);
+                reader.interrupt();
+                reporter.interrupt();
+                try{track.stop();}catch(RuntimeException ignored){}
+                track.release();
+            }
         }
     }
 }

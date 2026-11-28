@@ -101,6 +101,20 @@ if [ -f "$RUN/google.core.enabled" ] || [ "$(rom_google_mode "$ROM")" = builtin 
     MAX_TASKS=$BOARD_GOOGLE_MAX_TASKS
 fi
 
+# 读取实例精准调优配置中的 pids_max 覆盖（若合法则接管板卡默认上限）
+TUNING_CONF=$BASE/config/tuning_v1/$ID.conf
+if [ ! -L "$BASE/config" ] && [ ! -L "$BASE/config/tuning_v1" ] && [ ! -L "$TUNING_CONF" ] && [ -f "$TUNING_CONF" ]; then
+    _T_PIDS=$($BB sed -n 's/^pids_max=//p' "$TUNING_CONF" | $BB head -n 1)
+    case "$_T_PIDS" in
+        ''|*[!0-9]*) ;;
+        *)
+            if [ "${#_T_PIDS}" -le 6 ] && [ "$_T_PIDS" -ge 2048 ] && [ "$_T_PIDS" -le 16384 ]; then
+                MAX_TASKS=$_T_PIDS
+            fi
+            ;;
+    esac
+fi
+
 # ------------------------------------------------------------------------------
 # 【内存配置读写与校验函数】
 # ------------------------------------------------------------------------------

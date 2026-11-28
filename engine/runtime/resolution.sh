@@ -123,9 +123,24 @@ apply)
     [ "$PHYSICAL_SIZE" = 1920x1080 ] || { echo 'Unsupported physical display geometry' >&2; exit 7; }
     case "$PHYSICAL_DENSITY" in ''|*[!0-9]*) exit 7 ;; esac
     DPI=$(( (PHYSICAL_DENSITY*LW+960)/1920 ))
-    [ "$DPI" -ge 72 ] && [ "$DPI" -le 1000 ] || exit 7
-    if [ "$LW" = 1920 ]; then SIZE_TEXT=$(guest_apply reset reset)
-    else SIZE_TEXT=$(guest_apply "${LW}x${LH}" "$DPI"); fi
+    TUNED_DPI=auto
+    TUNING_CONF=$BASE/config/tuning_v1/$ID.conf
+    if [ ! -L "$BASE/config" ] && [ ! -L "$BASE/config/tuning_v1" ] && [ ! -L "$TUNING_CONF" ] && [ -f "$TUNING_CONF" ]; then
+        _T_DPI=$($BB sed -n 's/^display_dpi=//p' "$TUNING_CONF" | $BB head -n 1)
+        case "$_T_DPI" in
+            ''|*[!0-9]*) ;;
+            *) [ "$_T_DPI" -ge 120 ] && [ "$_T_DPI" -le 640 ] && TUNED_DPI=$_T_DPI ;;
+        esac
+    fi
+    if [ "$TUNED_DPI" != auto ]; then
+        DPI=$TUNED_DPI
+        [ "$DPI" -ge 72 ] && [ "$DPI" -le 1000 ] || exit 7
+        SIZE_TEXT=$(guest_apply "${LW}x${LH}" "$DPI")
+    else
+        [ "$DPI" -ge 72 ] && [ "$DPI" -le 1000 ] || exit 7
+        if [ "$LW" = 1920 ]; then SIZE_TEXT=$(guest_apply reset reset)
+        else SIZE_TEXT=$(guest_apply "${LW}x${LH}" "$DPI"); fi
+    fi
     measure_text
     session_check
     umask 077

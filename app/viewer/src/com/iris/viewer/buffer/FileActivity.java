@@ -1,6 +1,7 @@
 package com.irisbox.viewer;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
@@ -17,6 +18,7 @@ import android.provider.OpenableColumns;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
@@ -51,7 +53,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class FileActivity extends Activity {
     @Override protected void attachBaseContext(android.content.Context base) {super.attachBaseContext(I18n.wrap(base));}
 
-    private static final int PICK_IMPORT=51,PICK_EXPORT=52;
+    private static final int PICK_IMPORT=51,PICK_EXPORT=52,MAX_ENTRIES=512;
+    private static final String DEFAULT_EXCHANGE_DIR="Download/IrisExchange";
     private static final long MAX_BYTES=TransferIO.MAX_BYTES,DEADLINE_MS=1800000L;
     private final Handler ui=new Handler(Looper.getMainLooper());
     private final ExecutorService worker=Executors.newSingleThreadExecutor();
@@ -63,24 +66,24 @@ public final class FileActivity extends Activity {
     private volatile Operation operation;
     private int id,number;
     private volatile int epoch;
-    private String session,token,base,selectedName="";
+    private String session,token,base,selectedName="",currentDir=DEFAULT_EXCHANGE_DIR;
     private long selectedBytes=-1;
     private Uri pendingUri;
     private boolean pendingImport,loading;
     private LinearLayout fileRows;
-    private TextView status,transfer;
+    private TextView status,transfer,dirSummary;
     private ProgressBar progress;
-    private Button importButton,refreshButton,cancelButton;
+    private Button importButton,upButton,refreshButton,cancelButton;
 
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved); I18n.init(this);Intent i=getIntent();id=i.getIntExtra("instanceId",0);number=i.getIntExtra("instanceNumber",0);
         session=i.getStringExtra("session");token=i.getStringExtra("brokerToken");
         if((id<7||id>65535)||!InstanceNames.valid(number)||session==null||!session.matches("[1-9][0-9]*:[1-9][0-9]*")||token==null||token.isEmpty()||i.getIntExtra("brokerPort",19762)!=19762){finish();return;}
         base="http://127.0.0.1:19762";
-        if(saved!=null){selectedName=saved.getString("selectedName","");selectedBytes=saved.getLong("selectedBytes",-1);}
+        if(saved!=null){selectedName=saved.getString("selectedName","");selectedBytes=saved.getLong("selectedBytes",-1);currentDir=saved.getString("currentDir",DEFAULT_EXCHANGE_DIR);}
         makeUi();
     }
-    @Override protected void onSaveInstanceState(Bundle b){super.onSaveInstanceState(b);b.putString("selectedName",selectedName);b.putLong("selectedBytes",selectedBytes);}
+    @Override protected void onSaveInstanceState(Bundle b){super.onSaveInstanceState(b);b.putString("selectedName",selectedName);b.putLong("selectedBytes",selectedBytes);b.putString("currentDir",currentDir);}
     @Override protected void onResume(){super.onResume();if(status==null)return;resumed=true;sessionValid=false;loading=false;int e=++epoch;monitor=Executors.newSingleThreadScheduledExecutor();monitor.scheduleWithFixedDelay(()->observe(e),0,1000,TimeUnit.MILLISECONDS);if(pendingUri!=null)runPicked();else refresh();}
     @Override protected void onPause(){resumed=false;loading=false;sessionValid=false;++epoch;if(monitor!=null)monitor.shutdownNow();monitor=null;cancel(I18n.s(R.string.ui_ad3b13c31706));for(HttpURLConnection c:connections)closeAsync(c::disconnect);super.onPause();}
     @Override protected void onDestroy(){destroyed=true;cancel(I18n.s(R.string.ui_6c0c3a871ed5));worker.shutdownNow();closer.shutdown();super.onDestroy();}
@@ -91,14 +94,25 @@ public final class FileActivity extends Activity {
     private void makeUi(){
         LinearLayout root=column();root.setPadding(dp(18),dp(10),dp(18),dp(10));root.setBackgroundColor(Color.rgb(20,24,30));
         LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);top.addView(label(InstanceNames.title(number)+I18n.s(R.string.ui_21cf7ddb41e1),24),new LinearLayout.LayoutParams(0,-2,1));top.addView(button(I18n.s(R.string.ui_53505b1fcd1a),"files-back",this::finish));root.addView(top);
-        root.addView(label(I18n.s(R.string.ui_6bac12d05195),15));
+        dirSummary=label(formatDirSummary(currentDir),14);root.addView(dirSummary);
+        HorizontalScrollView quickScroll=new HorizontalScrollView(this);quickScroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout quickBar=new LinearLayout(this);
+        String[][] presets={{I18n.known("交换目录"),DEFAULT_EXCHANGE_DIR},{I18n.known("下载"),"Download"},{I18n.known("图片"),"Pictures"},{I18n.known("相册"),"DCIM"},{I18n.known("文档"),"Documents"},{I18n.known("全部存储"),""}};
+        for(int p=0;p<presets.length;p++){final String labelText=presets[p][0],target=presets[p][1];quickBar.addView(button(labelText,"files-dir-"+p,()->navigateTo(target)));}
+        quickScroll.addView(quickBar);root.addView(quickScroll);
         status=label(I18n.s(R.string.ui_84cb10f62524),14);status.setContentDescription(InstanceNames.description("files-status",number));root.addView(status);
-        LinearLayout actions=new LinearLayout(this);importButton=button(I18n.s(R.string.ui_8fb6f00ec5b5),"files-import",this::pickImport);refreshButton=button(I18n.s(R.string.ui_bd82e40e45a0),"files-refresh",this::refresh);actions.addView(importButton);actions.addView(refreshButton);root.addView(actions);
+        LinearLayout actions=new LinearLayout(this);importButton=button(I18n.s(R.string.ui_8fb6f00ec5b5),"files-import",this::pickImport);upButton=button(I18n.known("上一级"),"files-up",this::navigateUp);refreshButton=button(I18n.s(R.string.ui_bd82e40e45a0),"files-refresh",this::refresh);actions.addView(importButton);actions.addView(upButton);actions.addView(refreshButton);root.addView(actions);
         transfer=label(I18n.s(R.string.ui_4dc252ccceba),14);transfer.setContentDescription(InstanceNames.description("files-progress",number));root.addView(transfer);
         LinearLayout meter=new LinearLayout(this);meter.setGravity(Gravity.CENTER_VERTICAL);progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(1000);meter.addView(progress,new LinearLayout.LayoutParams(0,dp(28),1));cancelButton=button(I18n.s(R.string.ui_965b34119adf),"files-cancel",()->cancel(I18n.s(R.string.ui_910383278517)));meter.addView(cancelButton);root.addView(meter);
         ScrollView scroll=new ScrollView(this);fileRows=column();scroll.addView(fileRows);root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));setContentView(root);controls();
     }
-    private void controls(){boolean free=operation==null&&!loading;importButton.setEnabled(sessionValid&&free);refreshButton.setEnabled(free);cancelButton.setEnabled(operation!=null);}
+    private String formatDirSummary(String dir){
+        String pathLine=(dir==null||dir.isEmpty())?I18n.known("当前位置：/sdcard"):(I18n.known("当前位置：/sdcard/")+dir);
+        return pathLine+"\n"+I18n.known("（可浏览并导出容器存储文件；点击导入默认存入 Download/IrisExchange）");
+    }
+    private void navigateTo(String target){if(operation!=null)return;currentDir=target==null?"":target;dirSummary.setText(formatDirSummary(currentDir));controls();refresh();}
+    private void navigateUp(){if(operation!=null||currentDir.isEmpty())return;int slash=currentDir.lastIndexOf('/');currentDir=slash>0?currentDir.substring(0,slash):"";dirSummary.setText(formatDirSummary(currentDir));controls();refresh();}
+    private void controls(){boolean free=operation==null&&!loading;importButton.setEnabled(sessionValid&&free);upButton.setEnabled(sessionValid&&free&&!currentDir.isEmpty());refreshButton.setEnabled(free);cancelButton.setEnabled(operation!=null);}
     private void observe(int e){
         try{
             JSONObject state=json("GET","/state",200,null);JSONArray rows=state.getJSONArray("instances");boolean found=false;
@@ -113,49 +127,77 @@ public final class FileActivity extends Activity {
         for(int n=0;n<rows.length();n++){JSONObject r=rows.getJSONObject(n);if(r.optInt("id")==id&&session.equals(r.optString("session"))&&r.optBoolean("running")&&r.optBoolean("ready"))return;}
         throw new IOException(I18n.s(R.string.ui_5fc688314cb0));
     }
-    private String query(String action,String name)throws Exception{return "/files"+action+"?id="+id+"&session="+URLEncoder.encode(session,"UTF-8")+(name==null?"":"&name="+URLEncoder.encode(name,"UTF-8"));}
+    private String query(String action,String dir,String name)throws Exception{
+        StringBuilder sb=new StringBuilder("/files").append(action).append("?id=").append(id).append("&session=").append(URLEncoder.encode(session,"UTF-8"));
+        if(dir!=null)sb.append("&dir=").append(URLEncoder.encode(dir,"UTF-8"));
+        if(name!=null)sb.append("&name=").append(URLEncoder.encode(name,"UTF-8"));
+        return sb.toString();
+    }
     private void refresh(){refresh(false);}
     private void refresh(boolean automaticAfterTransfer){
-        if(!resumed||loading||operation!=null)return;loading=true;controls();final int e=epoch;
+        if(!resumed||loading||operation!=null)return;loading=true;controls();final int e=epoch;final String targetDir=currentDir;
         worker.execute(()->{try{
             DirectoryRefresh.Guard guard=()->{if(destroyed||!resumed||e!=epoch||operation!=null)throw new IOException(I18n.s(R.string.ui_16ff9253f805));};
-            DirectoryRefresh.Get<JSONObject> request=deadline->{try{guard.check();checkLive(deadline);guard.check();JSONObject value=json("GET",query("",null),200,null,deadline);requireIdentity(value);return value;}
+            DirectoryRefresh.Get<JSONObject> request=deadline->{try{guard.check();checkLive(deadline);guard.check();JSONObject value=json("GET",query("",targetDir,null),200,null,deadline);requireIdentity(value);return value;}
                 catch(IOException error){throw error;}catch(Exception error){throw new IOException(message(error),error);}};
             JSONObject result=automaticAfterTransfer?DirectoryRefresh.get(request,guard,SystemClock::elapsedRealtime,Thread::sleep,
                 ()->ui.post(()->{if(e==epoch&&resumed){status.setText(I18n.s(R.string.ui_73685fac59f8));}})):request.get(0);
-            guard.check();JSONArray files=result.getJSONArray("files");if(files.length()>128)throw new IOException(I18n.s(R.string.ui_6a061766d816));
-            ui.post(()->{if(e!=epoch||!resumed)return;loading=false;sessionValid=true;status.setText(I18n.s(R.string.ui_9a15c8d8f000));renderFiles(files);controls();});
+            guard.check();JSONArray dirs=result.optJSONArray("dirs");if(dirs==null)dirs=new JSONArray();
+            JSONArray files=result.getJSONArray("files");if(dirs.length()+files.length()>MAX_ENTRIES)throw new IOException(I18n.known("实例返回文件列表条目过多，请刷新或进入子目录查看"));
+            final String resolvedDir=result.optString("dir",targetDir);final JSONArray finalDirs=dirs;
+            ui.post(()->{if(e!=epoch||!resumed)return;loading=false;sessionValid=true;currentDir=resolvedDir;dirSummary.setText(formatDirSummary(resolvedDir));status.setText(I18n.known("文件列表：已显示当前目录内容"));renderFiles(finalDirs,files);controls();});
         }catch(Exception failure){ui.post(()->{if(e!=epoch||!resumed)return;loading=false;fileRows.removeAllViews();status.setText(I18n.s(R.string.ui_f636fbcd54c5)+message(failure));controls();});}});
     }
-    private void renderFiles(JSONArray files){fileRows.removeAllViews();if(files.length()==0){fileRows.addView(label(I18n.s(R.string.ui_b9e4148e0282),17));return;}
+    private void renderFiles(JSONArray dirs,JSONArray files){fileRows.removeAllViews();if(dirs.length()==0&&files.length()==0){fileRows.addView(label(I18n.known("当前目录为空，暂无可浏览或导出的项目"),16));return;}
+        for(int n=0;n<dirs.length();n++){JSONObject dir=dirs.optJSONObject(n);if(dir==null)continue;String name=dir.optString("name","");if(!validName(name))continue;
+            LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);TextView title=label(I18n.known("[目录] ")+name,17);title.setTextColor(0xFF90CAF9);title.setPadding(dp(8),dp(8),dp(8),dp(8));row.addView(title,new LinearLayout.LayoutParams(0,-2,1));
+            final String next=currentDir.isEmpty()?name:(currentDir+"/"+name);Button enter=button(I18n.known("进入"),"files-enter-"+n,()->navigateTo(next));row.addView(enter);fileRows.addView(row);}
         for(int n=0;n<files.length();n++){JSONObject file=files.optJSONObject(n);if(file==null)continue;String name=file.optString("name","");long bytes=file.optLong("bytes",-1);if(!validName(name)||bytes<0||bytes>MAX_BYTES)continue;
-            LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);TextView title=label(name+"\n"+size(bytes),17);title.setPadding(dp(8),dp(8),dp(8),dp(8));row.addView(title,new LinearLayout.LayoutParams(0,-2,1));Button export=button(I18n.s(R.string.ui_188896795f1d),"files-export-"+n,()->pickExport(name,bytes));row.addView(export);fileRows.addView(row);}
+            LinearLayout row=new LinearLayout(this);row.setGravity(Gravity.CENTER_VERTICAL);TextView title=label(name+"\n"+size(bytes),17);title.setPadding(dp(8),dp(8),dp(8),dp(8));row.addView(title,new LinearLayout.LayoutParams(0,-2,1));Button export=button(I18n.s(R.string.ui_188896795f1d),"files-export-"+n,()->chooseExportMode(name,bytes));row.addView(export);fileRows.addView(row);}
+    }
+    private void chooseExportMode(String name,long bytes){
+        if(operation!=null||!sessionValid)return;
+        String[] opts={I18n.known("一键导出至宿主下载目录 (Download/IrisBoxExport)"),I18n.known("自选保存位置（系统文件选择器）")};
+        new AlertDialog.Builder(this).setTitle(I18n.known("导出文件到宿主机")+" · "+name)
+            .setItems(opts,(d,which)->{if(which==0)startExportToHost(name,bytes);else pickExport(name,bytes);})
+            .setNegativeButton(I18n.s(R.string.ui_4d0b4688c787),null).show();
+    }
+    private void startExportToHost(String name,long bytes){
+        if(operation!=null||!sessionValid)return;
+        Operation op=new Operation(null,false,true,currentDir,name,bytes);operation=op;loading=false;progress.setIndeterminate(true);transfer.setText(I18n.known("正在导出到宿主机下载目录…")+" "+name);controls();ui.postDelayed(op.timeout,DEADLINE_MS);worker.execute(()->execute(op));
     }
     private void pickImport(){if(operation!=null||!sessionValid)return;Intent choose=new Intent(Intent.ACTION_OPEN_DOCUMENT);choose.addCategory(Intent.CATEGORY_OPENABLE);choose.setType("*/*");try{startActivityForResult(choose,PICK_IMPORT);}catch(Exception e){transfer.setText(I18n.s(R.string.ui_4fae6a2dba6f));}}
     private void pickExport(String name,long bytes){if(operation!=null||!sessionValid)return;selectedName=name;selectedBytes=bytes;Intent choose=new Intent(Intent.ACTION_CREATE_DOCUMENT);choose.addCategory(Intent.CATEGORY_OPENABLE);choose.setType("application/octet-stream");choose.putExtra(Intent.EXTRA_TITLE,name);try{startActivityForResult(choose,PICK_EXPORT);}catch(Exception e){transfer.setText(I18n.s(R.string.ui_d5a6a98e28f7));}}
     @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request!=PICK_IMPORT&&request!=PICK_EXPORT)return;if(result!=RESULT_OK||data==null||data.getData()==null){if(transfer!=null)transfer.setText(I18n.s(R.string.ui_0a522ea5c033));return;}pendingUri=data.getData();pendingImport=request==PICK_IMPORT;if(resumed)runPicked();}
-    private void runPicked(){Uri uri=pendingUri;pendingUri=null;if(uri==null||operation!=null)return;Operation op=new Operation(uri,pendingImport,selectedName,selectedBytes);operation=op;loading=false;progress.setProgress(0);transfer.setText(op.upload?I18n.s(R.string.ui_cc8c3ff296c3):I18n.s(R.string.ui_91783c475b4b));controls();ui.postDelayed(op.timeout,DEADLINE_MS);worker.execute(()->execute(op));}
+    private void runPicked(){Uri uri=pendingUri;pendingUri=null;if(uri==null||operation!=null)return;Operation op=new Operation(uri,pendingImport,false,currentDir,selectedName,selectedBytes);operation=op;loading=false;progress.setIndeterminate(false);progress.setProgress(0);transfer.setText(op.upload?I18n.s(R.string.ui_cc8c3ff296c3):I18n.s(R.string.ui_91783c475b4b));controls();ui.postDelayed(op.timeout,DEADLINE_MS);worker.execute(()->execute(op));}
     /** 成功以身份/大小/SHA256回执为准；导入回执丢失可能已发布，先刷新而不是盲目重传。
      * 导出失败只尝试删除本次用户选择的未完成文档，不能扩展成任意目录清理。
      */
     private void execute(Operation op){
         boolean exported=false;String outcome;
-        try{checkLive();op.check();if(op.upload){upload(op);outcome=I18n.s(R.string.ui_2295848aae55)+op.name+I18n.s(R.string.ui_785dd9ea5202);}else{download(op);exported=true;outcome=I18n.s(R.string.ui_f1dc2ddf285a)+op.name;}}
+        try{checkLive();op.check();if(op.upload){upload(op);outcome=I18n.s(R.string.ui_2295848aae55)+op.name+I18n.s(R.string.ui_785dd9ea5202);}else if(op.exportToHost){String hostPath=exportToHost(op);exported=true;outcome=I18n.known("已导出至宿主机下载目录：")+hostPath;}else{download(op);exported=true;outcome=I18n.s(R.string.ui_f1dc2ddf285a)+op.name;}}
         catch(Exception e){outcome=(op.cancelled?op.reason:I18n.s(R.string.ui_d423be219c7c)+message(e));if(op.upload&&op.requestStarted)outcome+=I18n.s(R.string.ui_7e893fad9c38);}
         finally{ui.removeCallbacks(op.timeout);op.close();}
-        if(!op.upload&&!exported&&!deleteIncomplete(op.uri))outcome+=I18n.s(R.string.ui_0aaab18dfb19);
-        final String text=outcome;final boolean success=exported||op.completed;ui.post(()->{if(operation!=op)return;operation=null;if(destroyed)return;transfer.setText(text);progress.setProgress(success?1000:0);controls();if(resumed)refresh(true);});
+        if(!op.upload&&!op.exportToHost&&!exported&&op.uri!=null&&!deleteIncomplete(op.uri))outcome+=I18n.s(R.string.ui_0aaab18dfb19);
+        final String text=outcome;final boolean success=exported||op.completed;ui.post(()->{if(operation!=op)return;operation=null;if(destroyed)return;if(op.upload&&success){currentDir=DEFAULT_EXCHANGE_DIR;dirSummary.setText(formatDirSummary(currentDir));}progress.setIndeterminate(false);transfer.setText(text);progress.setProgress(success?1000:0);controls();if(resumed)refresh(true);});
+    }
+    private String exportToHost(Operation op)throws Exception{
+        if(!validName(op.name)||op.total<0||op.total>MAX_BYTES)throw new IOException(I18n.s(R.string.ui_7d5bec2673bb));
+        op.check();JSONObject receipt=json("POST",query("/export_host",op.dir,op.name),200,op);requireIdentity(receipt);
+        if(!op.name.equals(receipt.optString("name"))||receipt.optLong("bytes",-1)!=op.total||!receipt.optString("sha256").matches("[0-9a-f]{64}"))throw new IOException(I18n.s(R.string.ui_32e568babef7));
+        op.check();checkLive();op.check();op.completed=true;
+        return receipt.optString("hostPath","/sdcard/Download/IrisBoxExport/"+op.name);
     }
     private void upload(Operation op)throws Exception{
         String name=null;long total=-1;try(Cursor c=getContentResolver().query(op.uri,new String[]{OpenableColumns.DISPLAY_NAME,OpenableColumns.SIZE},null,null,null,op.signal)){if(c!=null&&c.moveToFirst()){int ni=c.getColumnIndex(OpenableColumns.DISPLAY_NAME),si=c.getColumnIndex(OpenableColumns.SIZE);if(ni>=0)name=c.getString(ni);if(si>=0&&!c.isNull(si))total=c.getLong(si);}}
         if(!validName(name))throw new IOException(I18n.s(R.string.ui_826bfe2082bf));if(total<0)throw new IOException(I18n.s(R.string.ui_d32e536f4db2));if(total>MAX_BYTES)throw new IOException(I18n.s(R.string.ui_1068ea092b81));op.name=name;op.total=total;op.check();
-        HttpURLConnection c=open("POST",query("/import",name),op);c.setDoOutput(true);c.setFixedLengthStreamingMode(total);c.setRequestProperty("Content-Type","application/octet-stream");
+        HttpURLConnection c=open("POST",query("/import",null,name),op);c.setDoOutput(true);c.setFixedLengthStreamingMode(total);c.setRequestProperty("Content-Type","application/octet-stream");
         MessageDigest digest=MessageDigest.getInstance("SHA-256");AssetFileDescriptor descriptor=getContentResolver().openAssetFileDescriptor(op.uri,"r",op.signal);if(descriptor==null)throw new IOException(I18n.s(R.string.ui_63bda37a9075));op.provider=descriptor;op.check();op.input=descriptor.createInputStream();op.requestStarted=true;op.output=c.getOutputStream();copy(op,op.input,op.output,total,digest);op.output.close();op.output=null;op.check();
         int code=c.getResponseCode();if(code!=201)throw rejected(c,code);JSONObject receipt=readJson(c);requireIdentity(receipt);if(!name.equals(receipt.optString("name"))||receipt.optLong("bytes",-1)!=total||!hex(digest.digest()).equalsIgnoreCase(receipt.optString("sha256")))throw new IOException(I18n.s(R.string.ui_32e568babef7));op.check();checkLive();op.check();op.completed=true;
     }
     private void download(Operation op)throws Exception{
         if(!validName(op.name)||op.total<0||op.total>MAX_BYTES)throw new IOException(I18n.s(R.string.ui_7d5bec2673bb));
-        HttpURLConnection c=open("GET",query("/export",op.name),op);int code=c.getResponseCode();if(code!=200)throw rejected(c,code);if(!session.equals(c.getHeaderField("X-Iris-Session")))throw new IOException(I18n.s(R.string.ui_c01087274984));long bytes=c.getContentLengthLong();if(bytes!=op.total||bytes<0||bytes>MAX_BYTES)throw new IOException(I18n.s(R.string.ui_2450efc254e9));
+        HttpURLConnection c=open("GET",query("/export",op.dir,op.name),op);int code=c.getResponseCode();if(code!=200)throw rejected(c,code);if(!session.equals(c.getHeaderField("X-Iris-Session")))throw new IOException(I18n.s(R.string.ui_c01087274984));long bytes=c.getContentLengthLong();if(bytes!=op.total||bytes<0||bytes>MAX_BYTES)throw new IOException(I18n.s(R.string.ui_2450efc254e9));
         String sha=c.getHeaderField("X-Iris-SHA256");if(sha==null||!sha.matches("[0-9a-f]{64}"))throw new IOException(I18n.s(R.string.ui_b22e5edeb5a7));
         op.check();op.input=c.getInputStream();ParcelFileDescriptor descriptor=getContentResolver().openFileDescriptor(op.uri,"wt",op.signal);if(descriptor==null)throw new IOException(I18n.s(R.string.ui_8c9d5291cf02));op.provider=descriptor;op.check();op.output=new ParcelFileDescriptor.AutoCloseOutputStream(descriptor);MessageDigest digest=MessageDigest.getInstance("SHA-256");copy(op,op.input,op.output,bytes,digest);op.output.flush();op.output.close();op.output=null;if(!sha.equals(hex(digest.digest())))throw new IOException(I18n.s(R.string.ui_fbc96d57a5de));op.check();checkLive();op.check();op.completed=true;
     }
@@ -176,14 +218,14 @@ public final class FileActivity extends Activity {
     }
     private void cancel(String why){Operation op=operation;if(op==null||op.completed||op.cancelled)return;op.reason=why;op.cancelled=true;closeAsync(op.signal::cancel);closeAsync(op::close);ui.post(()->{if(operation==op&&!destroyed){transfer.setText(why+I18n.s(R.string.ui_5d8e922bf35b));cancelButton.setEnabled(false);}});}
     private final class Operation {
-        final Uri uri;final boolean upload;final long started=SystemClock.elapsedRealtime();final CancellationSignal signal=new CancellationSignal();
+        final Uri uri;final boolean upload,exportToHost;final String dir;final long started=SystemClock.elapsedRealtime();final CancellationSignal signal=new CancellationSignal();
         final Runnable timeout=()->{if(operation==this)cancel(I18n.s(R.string.ui_48f281f5f7ef));};
         volatile boolean cancelled,completed,requestStarted;volatile String reason=I18n.s(R.string.ui_c2013c9c102f);String name="";long total;volatile HttpURLConnection connection;volatile InputStream input;volatile OutputStream output;volatile Closeable provider;
-        Operation(Uri uri,boolean upload,String name,long bytes){this.uri=uri;this.upload=upload;this.name=name;this.total=bytes;}
+        Operation(Uri uri,boolean upload,boolean exportToHost,String dir,String name,long bytes){this.uri=uri;this.upload=upload;this.exportToHost=exportToHost;this.dir=dir==null?"":dir;this.name=name;this.total=bytes;}
         void check()throws IOException{if(cancelled||destroyed||!resumed)throw new IOException(reason);if(SystemClock.elapsedRealtime()-started>=DEADLINE_MS)throw new IOException(I18n.s(R.string.ui_491a0837c76c));}
         void close(){HttpURLConnection c=connection;if(c!=null){c.disconnect();connections.remove(c);}closeQuietly(provider);closeQuietly(input);closeQuietly(output);}
     }
-    private HttpURLConnection open(String method,String path,Operation op)throws Exception{int openedEpoch=epoch;HttpURLConnection c=(HttpURLConnection)new URL(base+path).openConnection();connections.add(c);try{if(destroyed||!resumed||openedEpoch!=epoch)throw new IOException(I18n.s(R.string.ui_dca586ba4d8b));if(op!=null){op.connection=c;op.check();}c.setRequestMethod(method);c.setConnectTimeout(5000);c.setReadTimeout(15000);c.setInstanceFollowRedirects(false);c.setUseCaches(false);c.setRequestProperty("Authorization","Bearer "+token);return c;}catch(Exception failure){c.disconnect();connections.remove(c);throw failure;}}
+    private HttpURLConnection open(String method,String path,Operation op)throws Exception{int openedEpoch=epoch;HttpURLConnection c=(HttpURLConnection)new URL(base+path).openConnection();connections.add(c);try{if(destroyed||!resumed||openedEpoch!=epoch)throw new IOException(I18n.s(R.string.ui_dca586ba4d8b));if(op!=null){op.connection=c;op.check();}c.setRequestMethod(method);c.setConnectTimeout(5000);c.setReadTimeout(op!=null&&op.exportToHost?600000:15000);c.setInstanceFollowRedirects(false);c.setUseCaches(false);c.setRequestProperty("Authorization","Bearer "+token);return c;}catch(Exception failure){c.disconnect();connections.remove(c);throw failure;}}
     private JSONObject json(String method,String path,int expected,Operation op)throws Exception{return json(method,path,expected,op,0);}
     private JSONObject json(String method,String path,int expected,Operation op,long deadline)throws Exception{
         HttpURLConnection c=open(method,path,op);Runnable expiry=()->closeAsync(c::disconnect);

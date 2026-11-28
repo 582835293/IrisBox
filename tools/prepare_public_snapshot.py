@@ -38,7 +38,7 @@ def main():
             text=data.decode('utf8')
             rel_prefix='../'*(len(Path(name).parts)-1)
             # Keep exact Android build fingerprints; remove local machine paths, LAN IPs and absolute IDE links.
-            text=text.replace('AOSP_BUILD_HOST','AOSP_BUILD_HOST').replace('DEVICE_SERIAL','DEVICE_SERIAL').replace('DEVICE_SERIAL','DEVICE_SERIAL').replace('DEVICE_IP','DEVICE_IP')
+            text=text.replace('AOSP_BUILD_HOST','AOSP_BUILD_HOST').replace('DEVICE_SERIAL','DEVICE_SERIAL').replace('DEVICE_SERIAL','DEVICE_SERIAL').replace('DEVICE_IP','DEVICE_IP').replace('DEVICE_SERIAL','DEVICE_SERIAL').replace('DEVICE_IP','DEVICE_IP')
             text=re.sub(r'/home/[^/\s"\']+/aosp-rpi4','/path/to/aosp-rpi4',text)
             text=re.sub(r'[a-z0-9._-]+@AOSP_BUILD_HOST','builder@AOSP_BUILD_HOST',text).replace('id_ed25519','id_ed25519')
             text=re.sub(r'file:///[A-Za-z]:[/\\]Users[/\\][^/\\\s"\'\)]+[/\\]Desktop[/\\]agyProgram[/\\]IrisBox[/\\]',rel_prefix,text)

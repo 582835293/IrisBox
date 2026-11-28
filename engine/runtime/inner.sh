@@ -164,6 +164,10 @@ else
     exit 3
 fi
 /system/bin/chcon u:object_r:vendor_file:s0 "$AUDIO_PROP"
+if $BB grep -q '^persist\.sys\.app\.rotation=force_land$' "$AUDIO_PROP" 2>/dev/null; then
+    $BB sed -i 's/^persist\.sys\.app\.rotation=force_land$/persist.sys.app.rotation=original/' "$AUDIO_PROP"
+    /system/bin/chcon u:object_r:vendor_file:s0 "$AUDIO_PROP"
+fi
 # The Guest has no physical video/VPU nodes. Do not advertise Host-only hardware codecs.
 if [ -n "$BOARD_REMOVE_CODEC_INCLUDES" ]; then
     for CODEC_BASE in media_codecs.xml media_codecs_c2.xml; do
@@ -231,7 +235,9 @@ boot_step "开始准备显示和服务配置"
 # 单次触发的 640×360 列表缩略图采集器（供 BufferBroker 抓取小窗画面）；
 # 交互式全屏图形渲染仍通过 Gralloc 共享物理显存缓冲区进行。
 PRODUCER_BIN=$BASE/display/buffer_bridge/iris_buffer_producer
-if [ -f "$COMPAT/payload/iris_buffer_producer" ]; then
+if [ -n "${BOARD_PROFILE:-}" ] && [ -f "$BASE/display/buffer_bridge/iris_buffer_producer.$BOARD_PROFILE" ] && [ ! -L "$BASE/display/buffer_bridge/iris_buffer_producer.$BOARD_PROFILE" ]; then
+    PRODUCER_BIN=$BASE/display/buffer_bridge/iris_buffer_producer.$BOARD_PROFILE
+elif [ -f "$COMPAT/payload/iris_buffer_producer" ]; then
     PRODUCER_BIN=$COMPAT/payload/iris_buffer_producer
 fi
 copy_payload "$PRODUCER_BIN" "$ROOT/system/bin/iris_preview_capture"
@@ -551,6 +557,74 @@ $BB chmod 0600 "$AD/token" "$AD/session"
 $BB sed "s/IRISBOX_SESSION/$NETWORK_SESSION/g" "$BASE/audio/guest.rc" > "$ROOT/system/etc/init/zz_irisbox_audio.rc"
 $BB chmod 0644 "$ROOT/system/etc/init/zz_irisbox_audio.rc"
 /system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/etc/init/zz_irisbox_audio.rc"
+
+# 【应用精准调优配置（dexopt、编译线程数与 Rockchip 启动旋转属性）】：
+T_DEXOPT=verify
+T_THREADS=4
+T_CONF=$BASE/config/tuning_v1/$ID.conf
+if [ ! -L "$BASE/config" ] && [ ! -L "$BASE/config/tuning_v1" ] && [ ! -L "$T_CONF" ] && [ -f "$T_CONF" ]; then
+    _V_DEX=$($BB sed -n 's/^dexopt_install=//p' "$T_CONF" | $BB head -n 1)
+    case "$_V_DEX" in verify|speed-profile|speed|quicken|everything) T_DEXOPT=$_V_DEX ;; esac
+    _V_THR=$($BB sed -n 's/^dex2oat_threads=//p' "$T_CONF" | $BB head -n 1)
+    case "$_V_THR" in ''|*[!0-9]*) ;; *) [ "$_V_THR" -ge 0 ] && [ "$_V_THR" -le 8 ] && T_THREADS=$_V_THR ;; esac
+fi
+{
+    printf 'on early-init\n'
+    printf '    setprop pm.dexopt.install %s\n' "$T_DEXOPT"
+    if [ "$T_THREADS" -gt 0 ]; then
+        printf '    setprop dalvik.vm.dex2oat-threads %s\n' "$T_THREADS"
+        printf '    setprop dalvik.vm.boot-dex2oat-threads %s\n' "$T_THREADS"
+    fi
+    if [ "${BOARD_PROFILE:-}" = "opi5-a12-v1" ]; then
+        printf '    setprop persist.sys.app.rotation original\n'
+    fi
+    if [ "${BOARD_PROFILE:-}" = "opi5-a12-v1" ]; then
+        printf 'on post-fs-data\n'
+        printf '    setprop persist.sys.app.rotation original\n'
+    fi
+    printf 'on property:sys.boot_completed=1\n'
+    printf '    setprop pm.dexopt.install %s\n' "$T_DEXOPT"
+    if [ "$T_THREADS" -gt 0 ]; then
+        printf '    setprop dalvik.vm.dex2oat-threads %s\n' "$T_THREADS"
+    fi
+    if [ "${BOARD_PROFILE:-}" = "opi5-a12-v1" ]; then
+        printf '    setprop persist.sys.app.rotation original\n'
+    fi
+} > "$ROOT/system/etc/init/zz_irisbox_tuning.rc"
+$BB chmod 0644 "$ROOT/system/etc/init/zz_irisbox_tuning.rc"
+/system/bin/chcon u:object_r:system_file:s0 "$ROOT/system/etc/init/zz_irisbox_tuning.rc"
+
+# 默认启用 Launcher3 允许主屏幕旋转（兼容 420dpi 手机模式下横竖屏最近任务卡片方向），保留用户后续手改
+L3_PREFS=$RUN/data/data/com.android.launcher3/shared_prefs/com.android.launcher3.prefs.xml
+L3_SAFE=1
+for L3_NODE in "$RUN/data" "$RUN/data/data" \
+    "$RUN/data/data/com.android.launcher3" \
+    "$RUN/data/data/com.android.launcher3/shared_prefs" "$L3_PREFS"; do
+    if [ -L "$L3_NODE" ]; then L3_SAFE=0; break; fi
+done
+if [ "$L3_SAFE" = 1 ] && [ -f "$L3_PREFS" ]; then
+    L3_BYTES=$($BB wc -c < "$L3_PREFS" 2>/dev/null || echo 999999)
+    if [ "$L3_BYTES" -le 65536 ] && $BB grep -q '</map>' "$L3_PREFS" 2>/dev/null && ! $BB grep -q 'name="pref_allowRotation"' "$L3_PREFS" 2>/dev/null; then
+        L3_TMP=$RUN/launcher3.prefs.tmp.$$
+        if $BB sed 's|</map>|    <boolean name="pref_allowRotation" value="true" />\n</map>|' "$L3_PREFS" > "$L3_TMP" 2>/dev/null && [ -s "$L3_TMP" ]; then
+            cat "$L3_TMP" > "$L3_PREFS" 2>/dev/null || true
+        fi
+        $BB rm -f "$L3_TMP" 2>/dev/null || true
+    fi
+fi
+
+# 一次性清理历史因 Rockchip force_land 污染的 package_cache（仅重建 APK 清单解析缓存，不删除应用与数据）
+if [ "${BOARD_PROFILE:-}" = "opi5-a12-v1" ] && [ ! -f "$RUN/rk_package_cache_cleaned.v1" ]; then
+    PKG_CACHE=$RUN/data/system/package_cache
+    PKG_CACHE_SAFE=1
+    for PC_NODE in "$RUN/data" "$RUN/data/system" "$PKG_CACHE"; do
+        if [ -L "$PC_NODE" ]; then PKG_CACHE_SAFE=0; break; fi
+    done
+    if [ "$PKG_CACHE_SAFE" = 1 ] && [ -d "$PKG_CACHE" ]; then
+        $BB rm -rf "$PKG_CACHE"/* 2>/dev/null || true
+    fi
+    printf '%s\n' 1 > "$RUN/rk_package_cache_cleaned.v1" 2>/dev/null || true
+fi
 
 # 【发布网络准备握手请求】：
 # 向宿主机日志目录发布网络布线请求 network.request，由 Host 侧看门狗负责创建 veth 对并接入网桥

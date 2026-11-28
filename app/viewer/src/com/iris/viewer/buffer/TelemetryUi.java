@@ -286,7 +286,7 @@ final class TelemetryUi {
         brokerRequest(token, "POST", "/recents?id=" + id + "&session=" + session);
     }
 
-    private static JSONObject brokerRequest(String token, String method, String path) throws Exception {
+    static JSONObject brokerRequest(String token, String method, String path) throws Exception {
         HttpURLConnection conn = (HttpURLConnection) new URL("http://127.0.0.1:19762" + path).openConnection();
         try {
             conn.setConnectTimeout(3000);
